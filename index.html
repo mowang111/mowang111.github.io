@@ -138,6 +138,616 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-面试/重点面试整理" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/22/%E9%9D%A2%E8%AF%95/%E9%87%8D%E7%82%B9%E9%9D%A2%E8%AF%95%E6%95%B4%E7%90%86/">面试题整理</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/22/%E9%9D%A2%E8%AF%95/%E9%87%8D%E7%82%B9%E9%9D%A2%E8%AF%95%E6%95%B4%E7%90%86/" class="archive-article-date">
+  	<time datetime="2023-03-22T11:35:59.167Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="C"><a href="#C" class="headerlink" title="C++"></a>C++</h1><h2 id="cpp是如何运行起来的？"><a href="#cpp是如何运行起来的？" class="headerlink" title="cpp是如何运行起来的？"></a>cpp是如何运行起来的？</h2><p>【预处理阶段】：预处理根据#开头的命令，修改原始的程序，如把头文件插入到程序文本中，删除所有注释等。<br>【编译阶段】：编译过程就是把预处理完的文件进行一些了的词法分析、语法分析、语义分析等，最终产生相应的<strong>汇编语言文件</strong>，不同的高级语言翻译的汇编语言相同。编译是对源文件分别进行的，每个源文件都产生一个目标文件。<br>【汇编阶段】：把汇编语言翻译成目标机器指令<br>链接阶段：将有关的目标文件和库文件相连接，使得所有的这些文件能够被操作系统装入执行的统一整体。链接处理分为两种：</p>
+<ul>
+<li>静态链接：静态链接时把要调用的函数或者过程连接到可执行文件中，称为可执行文件中的一部分。</li>
+<li>动态链接：<strong>函数的代码被放到称作是动态链接或共享对象的某个目标文件中。链接程序要做的只是在最终的可执行文件中记录下相对应的信息。在可执行文件被执行时，根据可执行程序中记录的信息，将动态链接库的全部内容映射到相应运行程序的虚拟地址空间上</strong>。<br>【运行】：最后，操作系统会加载可执行文件到内存中，并执行其中的代码。程序运行时会分配内存，执行指令，读写文件等操作，直到程序退出。</li>
+</ul>
+<h2 id="C和C-的内存管理"><a href="#C和C-的内存管理" class="headerlink" title="C和C++的内存管理"></a>C和C++的内存管理</h2><p>c和c++的程序内存空间包括栈区、堆区、全局数据区、常量区、代码区</p>
+<ul>
+<li>栈区：由编译器自动分配释放，存放函数运行的局部变量，函数参数，返回数据，返回地址等。</li>
+<li>堆区：一般由程序员分配释放，若程序员不释放，程序结束时可能由操作系统回收。</li>
+<li>全局数据区：也叫静态区，存放全局变量，静态数据。程序结束后由系统释放。</li>
+<li>常量区：存放常量字符串等，其值不可变</li>
+<li>代码区：存放函数体的二进制代码。</li>
+</ul>
+<h2 id="基础语言特性"><a href="#基础语言特性" class="headerlink" title="基础语言特性"></a>基础语言特性</h2><h3 id="指针和引用的区别"><a href="#指针和引用的区别" class="headerlink" title="指针和引用的区别"></a>指针和引用的区别</h3><ol>
+<li>指针是一个变量，这个变量存储的是一个地址，指向内存的一个存储单元；而引用相当于原来变量的一个别名</li>
+<li>指针定义时不必初始化，引用定义是必须初始化</li>
+<li>指针定义是可以初始化为NULL，引用不能初始化为NULL</li>
+<li>非常指针在指针赋值后可以改变指针值；引用在初始化后不能再作为别的变量的别名</li>
+<li>siezeof 运算符作用于指针变量得到指针变量自身的大小；作用于引用，得到引用所指向的变量的大小。</li>
+<li>指针可以有多级，引用只有一级</li>
+</ol>
+<h3 id="c-中的四种类型转换"><a href="#c-中的四种类型转换" class="headerlink" title="c++中的四种类型转换"></a>c++中的四种类型转换</h3><ul>
+<li>static_cast（静态类型转换）<ul>
+<li>静态类型转换，编译时c++编译器会做类型检查，基本类型能转换但是不能转换指针类型。</li>
+</ul>
+</li>
+<li>reinterpreter_cast（重新解释类型转换）<ul>
+<li>static_cast对于基本类型可以转换，但是不能转换指针类型</li>
+<li>若不同类型之间，进行强制类型转换，用reinterpret_cast进行重新解释</li>
+</ul>
+</li>
+<li>dynamic_cast（动态类型转换）<ul>
+<li>c++中重要的，安全的基类和子类之间转换，运行时类型检查</li>
+<li>dynamic_cast可以将一个基类对象指针（或引用）转换到继承类指针，dynamic_cast会根据基类指针是否真正指向继承类指针来做相应处理。</li>
+</ul>
+</li>
+<li>const_cast（常量类型转换）<ul>
+<li>去除变量的只读属性</li>
+<li>const_cast 是用来移除变量的const或volatile限定符。</li>
+</ul>
+</li>
+</ul>
+<h2 id="智能指针"><a href="#智能指针" class="headerlink" title="智能指针"></a>智能指针</h2><ul>
+<li>unique_pointer</li>
+<li>shared_pointer</li>
+<li>weak_pointer<br>在c++中，内存泄漏的主要原因就是程序员在申请内存后没有及时释放没用的内存空间，甚至消灭了指针后导致该区域内存空间没发释放。<br>为了减少出现这种内存泄漏的情况，STL中使用了智能指针，智能指针是一个类，这个类的构造函数中传入一个普通指针，析构函数中释放传入的指针。智能指针的类都是栈上的对象，所以当函数或程序结束是会被自动释放。</li>
+</ul>
+<p>具体分为unique_ptr（独占指针）, shared_ptr（共享指针）,和 weak_ptr:</p>
+<ul>
+<li><p>独占指针就是同一时刻只能由一个指针指向动态分配的资源，内部禁止拷贝和赋值，但是有移动构造函数</p>
+</li>
+<li><p>共享指针就是同一时刻可以有多个指针指向同一个动态分配的资源，内部通过一个引用计数表示该资源被多少个指针指向。当一个共享指针离开作用域时，会将引用计数减一，引用计数为0时才真正释放资源。</p>
+</li>
+<li><p>为了解决共享指针的循环引用<a target="_blank" rel="noopener" href="https://www.cnlzhnn.com/%E6%B5%85%E8%B0%88shared_ptr%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8%E9%97%AE%E9%A2%98/">循环引用</a>的问题，引入了weak pointer, 一个弱指针指向一个共享对象时不会增加引用计数。</p>
+</li>
+</ul>
+<h3 id="unique-pointer"><a href="#unique-pointer" class="headerlink" title="unique_pointer"></a>unique_pointer</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">unique_ptr</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">unique_ptr</span>(T* ptr_ = <span class="literal">nullptr</span>):<span class="built_in">ptr</span>(ptr_)&#123;&#125;</span><br><span class="line">	~<span class="built_in">unique_ptr</span>()&#123;</span><br><span class="line">		<span class="keyword">if</span>(ptr) <span class="keyword">delete</span> ptr;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">unique_ptr</span>(unique_ptr&amp;&amp; rhs)&#123;</span><br><span class="line">		ptr = rhs.<span class="built_in">release</span>();</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	unique_ptr&amp; <span class="keyword">operator</span>= (unique_ptr rhs)&#123;</span><br><span class="line">		rhs.<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">		<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(unique_ptr&amp; rhs)</span></span>&#123;</span><br><span class="line">		<span class="keyword">using</span> std::swap;</span><br><span class="line">		<span class="built_in">swap</span>(ptr, rhs.ptr);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function">unique_ptr&amp; <span class="title">release</span><span class="params">()</span></span>&#123;</span><br><span class="line">		T* ptr_ = ptr;</span><br><span class="line">		ptr = <span class="literal">nullptr</span>;</span><br><span class="line">		<span class="keyword">return</span> ptr_;</span><br><span class="line">	&#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	T* ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="shared-pointer"><a href="#shared-pointer" class="headerlink" title="shared_pointer"></a>shared_pointer</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Count</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">Count</span>():<span class="built_in">cnt</span>(<span class="number">0</span>)&#123;&#125;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">add_count</span><span class="params">()</span></span>&#123;</span><br><span class="line">		cnt++;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="type">long</span> <span class="title">reduce_count</span><span class="params">()</span></span>&#123;</span><br><span class="line">		<span class="keyword">return</span> --cnt;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="function"><span class="type">int</span> <span class="title">get_count</span><span class="params">()</span></span>&#123;</span><br><span class="line">		<span class="keyword">return</span> cnt;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="type">long</span> cnt;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Shared_ptr</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">Shared_ptr</span>(T* ptr_ = <span class="literal">nullptr</span>):<span class="built_in">ptr</span>(ptr_)&#123;</span><br><span class="line">		<span class="keyword">if</span>(ptr) cnt = <span class="keyword">new</span> <span class="built_in">Count</span>();</span><br><span class="line">	&#125;</span><br><span class="line">	~<span class="built_in">Shared_ptr</span>()&#123;</span><br><span class="line">		<span class="keyword">if</span>(ptr&amp;&amp;!cnt.<span class="built_in">reduce</span>())&#123;</span><br><span class="line">			<span class="keyword">delete</span> cnt;</span><br><span class="line">			<span class="keyword">delete</span> ptr;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">Shared_ptr</span>(<span class="type">const</span> Shared_ptr&amp; other)&#123;</span><br><span class="line">		ptr = othre.ptr;</span><br><span class="line">		<span class="keyword">if</span>(ptr)&#123;</span><br><span class="line">			cnt = other.cnt;</span><br><span class="line">			cnt_.<span class="built_in">add_count</span>();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="built_in">Shared_ptr</span>(Shared_ptr&amp;&amp; other)&#123;</span><br><span class="line">		ptr_ = other.ptr;</span><br><span class="line">		<span class="keyword">if</span>(ptr_)&#123;</span><br><span class="line">			other.ptr = <span class="literal">nullptr</span>;</span><br><span class="line">			cnt = other.cnt;</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	Shared_ptr&amp; <span class="keyword">operator</span>= (Shared_ptr rhs)&#123;</span><br><span class="line">		rhs.<span class="built_in">swap</span>(*<span class="keyword">this</span>);</span><br><span class="line">		<span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(Shared_ptr&amp; rhs)</span></span>&#123;</span><br><span class="line">		<span class="keyword">using</span> std::swap;</span><br><span class="line">		<span class="built_in">swap</span>(ptr, rhs.ptr);</span><br><span class="line">		<span class="built_in">swap</span>(cnt, rhs.cnt);</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	Count* cnt;</span><br><span class="line">	T* ptr;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="STL相关"><a href="#STL相关" class="headerlink" title="STL相关"></a>STL相关</h2><h3 id="STL中常见容器的实现原理"><a href="#STL中常见容器的实现原理" class="headerlink" title="STL中常见容器的实现原理"></a>STL中常见容器的实现原理</h3><p>STL容器分为序列性容器和关联性容器<br>序列性容器</p>
+<ul>
+<li>array:固定大小的顺序容器，它们保存了一个以严格的线性顺序排列的特定数量的元素</li>
+<li>vector动态数组<ul>
+<li>动态空间，随着元素的加入，它的内部机制会自行扩充空间以容纳新元素。vector的数据结构其实就是三个迭代器构成的，一个指向目前使用的空间头，一个指向目前使用的空间尾，一个指向目前可用的空间尾。当有新元素插入时，如果目前容量够则直接插入；如果不够则扩充至两倍，依次类推。扩充的过程时重新申请一块连续内存，将原有数据拷贝到新空间，再释放原有空间，扩充后原有的迭代器会失效。</li>
+<li>remove()的实现原理：在遍历容器中的元素时，一旦遇到目标元素，就做上标记，然后继续遍历，知道找到一个非目标元素，用此元素将最先做标记的位置覆盖掉，同时将此目标元素所在的位置也做上标记，等待找到新的非目标元素将其覆盖。remove()不会该表其容量大小，而erase()可以改变其容量大小，通常将remove()返回的迭代器传入erase()中清除后续无用的元素。</li>
+<li>注意事项：<ul>
+<li>插入和删除元素后，由于内存重分配则会导致迭代器全部失效；没有重分配则插入和删除之后的迭代器失效</li>
+<li>清空vector数据时，如果保存的数据项是指针类型，需要逐项delete，否则会造成内存泄漏</li>
+<li>频繁调用push_back的影响：向vector的尾部添加元素，很可能引起整个对象存储空间的重新分配，这个过程是耗时耗力的。C++11之后，新增emplace_back()方法，都是添加元素，但是该方法效率更高。emplace_back在内存优化方面和运行效率方面有改下，内存优化方面主要体现在就地构造（直接在容器内构造对象，不用拷贝一个再使用）+强制类型转换，由于省去了拷贝构造，效率有提高。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>list链表：双向链表，常量性能的增删，不支持随机访问</li>
+<li>deque<ul>
+<li>支持从头尾两端进行元素的插入和删除操作，没有容量的概念，因为它是动态地以【分段连续空间】组合而成，随时可以增加一段新的空间并连接起来，但是拥有复杂的迭代器结构。deque采用一块所谓的map作为主控，这里的map实际就是一块大小连续的空间，其中每一个元素都称为节点node,都指向了另一段连续线性空间，该空间是deque真正的存储空间。</li>
+<li>实现原理<ul>
+<li>迭代器是一个类，其中迭代器中的node变量指向map的一个单元，而map中的每个单元指向当前迭代器对应的数据（缓冲区）。</li>
+<li>当某个缓冲区头部或尾部已满时，将回到map中定位到相邻的数据缓冲区。内部分段连续实现</li>
+<li>当插入元素时，当前位置位于首部或尾部时，直接插入；否则比较当前元素距离首部近还是尾部近，距离那边近则将当前位置那段的元素整体移动，再插入当前元素<br>  关联性容器</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>map,multimap: 以Key建立的红黑树</li>
+<li>set, multiset：红黑树，multiset支持重复，而set会去重</li>
+<li>unordered_map：<ul>
+<li>所有无序容器的底层实现都是Hash Map</li>
+<li>无序容器存储键值对时，会先申请一整块连续的存储空间，但此空间并不是来直接存储键值对，而是存储各个链表的的头指针，称之为【桶】，各个键值对真正存储位置是各个链表的节点</li>
+</ul>
+</li>
+</ul>
+<h3 id="STL中resize-和reserve-的区别"><a href="#STL中resize-和reserve-的区别" class="headerlink" title="STL中resize()和reserve()的区别"></a>STL中resize()和reserve()的区别</h3><ul>
+<li>resize(n)是调整容器的长度大小，使其能容纳n个元素，如果n小于容器的当前size,则删除多出来的元素，否则添加采用值初始化的元素</li>
+<li>resize(n,t)多一个参数t, 将所有新添加的元素初始化为t</li>
+<li>reserver(n)预分配n个元素的存储空间</li>
+<li>两者的区别主要是容器的capacity和size的区别<ul>
+<li>size是指容器当前拥有的元素个数</li>
+<li>capacity是指容器必须分配新存储空间之前可用存储的元素总数，即预分配存储空间的大小</li>
+</ul>
+</li>
+</ul>
+<h2 id="面向对象"><a href="#面向对象" class="headerlink" title="面向对象"></a>面向对象</h2><p>三大特性：封装、继承、多态</p>
+<h3 id="谈一谈对多态的理解"><a href="#谈一谈对多态的理解" class="headerlink" title="谈一谈对多态的理解"></a>谈一谈对多态的理解</h3><p>通过父类的指针指向子类的对象，达到重写函数的目的。<br>一句话定义：多态就是一个函数的多种形态，比较常见的就是函数重载和函数重写，也就是函数静态多态和动态多态。<br>下面我分开说说我对这两种多态的理解。<br>函数重载也叫编译时多态，就是在同一个作用域下有相同的函数名，不同的函数签名（比如函数参数列表不同等）的函数。如果没有函数重载，很多功能相似但是不完全相同的函数就要取很多不同的名字，比如double和int等等不同类型的参数对应的加法函数就不相同，就要实现很多不同名称的函数，函数重载使得代码编写更加合理。然后cpp函数重载底层汇编代码实现其实还是对这些不同函数命了不同的名称，每个函数对应不同的函数签名，而c语言反汇编后的代码则没有这样的处理，所以c语言不支持重载。<br>另一种就是函数重写，是指在派生类中覆盖基类中的同名函数，也叫函数覆盖，要求基类函数必须是虚函数，我也研究过函数重写的原理，基类中如果有虚函数，编译器会自动为每个含有虚函数的类生成一份虚表，可以理解为一个一维数组，虚表里面保存了虚函数的入口地址，编译的时候会在每个对象的前四个或八个字节中保存一个虚表指针，这个虚表指针指向所属类的虚表，在构造的时候，根据对象的类型初始化虚表指针，从而让虚表指针指向正确的虚表，在调用虚函数的时候能找到正确的函数，这个虚表在运行是是不能被修改的，而且全局可见，所以不是放在堆区，栈区，也不是放在代码区，全局区，而是放在常量区。</p>
+<h3 id="构造函数可以是虚函数吗？析构函数为什么定义为虚函数？"><a href="#构造函数可以是虚函数吗？析构函数为什么定义为虚函数？" class="headerlink" title="构造函数可以是虚函数吗？析构函数为什么定义为虚函数？"></a>构造函数可以是虚函数吗？析构函数为什么定义为虚函数？</h3><ul>
+<li>先构造函数，再初始化虚函数表，如果构造函数为虚函数，当创建对象时，就需要去找虚函数表，但是此时虚函数表还没有初始化。</li>
+<li>析构函数定义为虚函数是为了防止内存泄漏，因为当基类的指针或引用指向或绑定到派生类的对象时，如果未将析构函数定义为虚函数，只会调用基类的析构函数，那么只能将基类的程序所占用的空间释放掉，派生类中特有的就无法释放内存空间，导致内存泄漏。</li>
+<li>我们将析构函数定义为虚函数，再指向析构时，则根据对象的类型来指向析构函数，此时派生类的资源得到释放</li>
+</ul>
+<h3 id="为什么拷贝构造函数必须是引用传递？"><a href="#为什么拷贝构造函数必须是引用传递？" class="headerlink" title="为什么拷贝构造函数必须是引用传递？"></a>为什么拷贝构造函数必须是引用传递？</h3><p>为了防止递归调用。当一个对象需要以值方式传递时，编译器会生成代码调用它的拷贝构造函数生成一个副本，如果该类的拷贝构造函数的参数不是引用传递，而是值传递，那么就需要创建传递给拷贝构造函数参数的临时对象，而又一次调用该类的拷贝构造函数，无限递归。</p>
+<h1 id="数据结构与算法"><a href="#数据结构与算法" class="headerlink" title="数据结构与算法"></a>数据结构与算法</h1><h2 id="红黑树"><a href="#红黑树" class="headerlink" title="红黑树"></a>红黑树</h2><ul>
+<li>每个节点是红色或者黑色，根节点必须是黑色的</li>
+<li>红色节点的孩子节点必须是黑色的，黑色节点则无要求</li>
+<li>从根节点到任意叶子节点都包含相同数量的黑色节点</li>
+<li>红黑树的高度最多是<code>2*log_2 (n+1)</code></li>
+</ul>
+<h2 id="排序算法"><a href="#排序算法" class="headerlink" title="排序算法"></a>排序算法</h2><p>分析以下几种排序方法的时空复杂度和稳定性</p>
+<ul>
+<li>冒泡排序</li>
+<li>快速排序</li>
+<li>归并排序</li>
+<li>堆排序</li>
+</ul>
+<h1 id="计网"><a href="#计网" class="headerlink" title="计网"></a>计网</h1><h2 id="键入网址到网页显示，期间发生了什么？"><a href="#键入网址到网页显示，期间发生了什么？" class="headerlink" title="键入网址到网页显示，期间发生了什么？"></a>键入网址到网页显示，期间发生了什么？</h2><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230221230905.png" alt="image.png"></p>
+<ol>
+<li>浏览器做的第一步工作就是解析URL</li>
+<li>经过URL进行解析之后，浏览器确定了Web服务器和文件名，接下来就是根据这些信息来生成HTTP请求消息</li>
+<li>在发送消息之前，需要查询服务器域名对应的IP地址——DNS协议(首先是查询缓存有没有对应域名，然后看hosts文件，最后才会去问【本地DNS服务器】)</li>
+<li>通过DNS获取到IP后，将HTTP的传输工作交给操作系统中的协议栈。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230221232124.png" alt="image.png"><br>应用程序（浏览器）通过调用Socket库，来委托协议栈工作。协议栈的上半部分有两块，分别是负责收发数据的TCP和UDP协议，这两个传输协议会接受应用层的委托执行收发数据的操作</li>
+</ol>
+<p>协议栈的下面一半是用IP协议控制网络包收发操作，在互联网上传数据时，数据会被切分成一块块的网络包，而将网络包发送给对方的操作就是由IP负责。</p>
+<p>此外IP中还包括ICMP协议和ARP协议</p>
+<ul>
+<li>ICMP用于告知网络包传送过程中产生的错误以及各种控制信息。</li>
+<li>ARP用于根据IP地址查询相应的以太网MAC地址</li>
+</ul>
+<p>IP下面的网卡驱动程序负责控制网卡硬件</p>
+<ul>
+<li>当存在多个网卡时，在填写源地址IP时，就需要判断到底应该填写哪个地址。这个判断相当于在多块网卡中判断应该使用哪个网卡发送包<ul>
+<li>这时候需要根据【路由表规则】，来判断哪个网卡作为源地址IP。<ul>
+<li>IP地址分别和路由表中对应的子网掩码进行与运算，发现和目的IP匹配，则确定发送的网卡</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>最下面的网卡则负责完成实际的收发操作，也就是对网线中的信号执行发送和接收操作</p>
+<ul>
+<li>在生成了IP头部之后，接下来网络包还需要在IP头部前面加上MAC头部</li>
+<li>一般在TCP&#x2F;IP通信里，MAC包头协议类型只使用：<ul>
+<li>0800：IP协议</li>
+<li>0806：ARP协议</li>
+</ul>
+</li>
+<li>MAC头部里需要发送方MAC地址和接收方的目标MAC地址，用于两点之间的传输</li>
+<li>那么如何知道接收方的MAC地址呢？<ul>
+<li>首先在路由表中已经查到下一跳的目标IP</li>
+<li>然后使用ARP协议找到对应MAC地址</li>
+</ul>
+</li>
+</ul>
+<p>网络包只是存放在内存中的一串二进制数字信息，没办法直接发送给对方，需要使用网卡将数字信号转换为电信号，要控制网卡还需要靠网卡驱动程序。</p>
+<ul>
+<li>网卡驱动获取网络包之后，会将其复制到网卡内的缓存区中，接着会在其开头加上报头和起始帧分界符，在末尾加上用于检测错误的帧校验序列</li>
+</ul>
+<p>网络包到达交换机，交换机根据MAC地址表查找MAC地址，然后将信号发送到相应的端口。</p>
+<ul>
+<li>交换机的MAC地址表主要包含两个信息：<ul>
+<li>一个是设备的MAC地址</li>
+<li>一个是该设备连接在交换机的哪个端口上</li>
+</ul>
+</li>
+<li>如果地址表中找不到指定的MAC地址，可能是因为具有该地址的设备还没有向交换机发送过包，或者这个设备一段时间没有工作导致地址被从地址表中删除了。这种情况下，交换机将包转发到除源端口之外的所有端口。</li>
+</ul>
+<blockquote>
+<p>计算机的网卡本身具有MAC地址，并通过核对收到的包的接收方MAC地址判断是不是发给自己的，如果不是发给自己的则丢弃；相对地，交换机的端口不核对接收方的MAC地址，而是直接接收所有的包并存放到缓冲区。因此，和网卡不同，交换机的端口不具有MAC地址。</p>
+</blockquote>
+<p>网络包经过交换机之后，到达了路由器，并再次被转发到了下一个路由器或目标设备</p>
+<ul>
+<li>路由器是基于IP设计的，是三层网络设备，路由器的各个端口都具有MAC地址和IP地址</li>
+<li>而交换机是基于以太网设计的，是二层网络设备，交换机的端口不具有MAC地址</li>
+</ul>
+<p>当转发包时，首先路由器端口会接收发给自己的以太网包，然后路由表查询转发目标，再由相应的端口作为发送方将以太网包发送出去</p>
+<ul>
+<li>路由器会检测MAC头部的接收方MAC地址，判断是否是发给自己的 </li>
+<li>完成包接收操作之后，路由器就会去掉包开头的MAC头部，MAC头部的作用就是将包送达路由器</li>
+<li>接下来，路由器会根据MAC头部后方的IP头部中的内容进行包的转发<ul>
+<li>首先查询路由表判断转发目标</li>
+<li>进入包的发送操作<ul>
+<li>根据路由表的【网关列】判断对方的地址<ul>
+<li>如果网关是一个IP，就需要继续路由器转发</li>
+<li>如果网关为空，则IP头部中的接收方IP地址就是要转发的目标地址</li>
+</ul>
+</li>
+<li>再次使用ARP协议根据IP地址查询MAC地址</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>数据包到达服务器后，服务器就会以此检查MAC头部，IP头部，TCP头部，到达HTTP进程，然后返回HTTP响应报文。</p>
+<h2 id="ISO七层模型，TCP-x2F-IP四层模型，以及每层模型的协议"><a href="#ISO七层模型，TCP-x2F-IP四层模型，以及每层模型的协议" class="headerlink" title="ISO七层模型，TCP&#x2F;IP四层模型，以及每层模型的协议"></a>ISO七层模型，TCP&#x2F;IP四层模型，以及每层模型的协议</h2><h3 id="OSI七层模型"><a href="#OSI七层模型" class="headerlink" title="OSI七层模型"></a>OSI七层模型</h3><ol>
+<li>物理层：确保原始数据可以在各种物理媒介上传输。这一层是bit流。传输协议有IEEE 802.1A等。</li>
+<li>数据链路层：在不可靠的物理介质上提供可靠的传输。包括物理地址寻址、流量控制、数据的检错和重发。这一层将bit流封装成frame帧。传输协议有MAC等。</li>
+<li>网络层：负责对子网间的数据包进行路由选择，目的是实现两个端系统之间的数据透明传送。这一层数据的单位是数据包。协议有IP、ICMP、ARP、RARP等。</li>
+<li>传输层：负责将上层数据分段并提供端到端的传输。这一层数据的单位称为数据段（segment），传输协议有TCP、UDP等</li>
+<li>会话层：管理主机之间的会话进程，如建立会话、session认证、断点续传等。传输协议有SMTP等。</li>
+<li>表示层：主要解决用户信息的语法表示问题。数据的压缩和解压缩、加密和解密等工作由该层负责。</li>
+<li>应用层：为操作系统或网络应用程序提供访问网络服务的接口。传输协议由FTP、HTTP、Telnet、DNS等。</li>
+</ol>
+<h3 id="TCP-x2F-IP四层模型"><a href="#TCP-x2F-IP四层模型" class="headerlink" title="TCP&#x2F;IP四层模型"></a>TCP&#x2F;IP四层模型</h3><ul>
+<li>应用层<ul>
+<li>HTTP</li>
+<li>FTP</li>
+<li>SMTP</li>
+<li>TELNET</li>
+<li>DNS<ul>
+<li>域名系统（Domain Name System）是域名映射IP地址的分布式数据库，端口号53</li>
+</ul>
+</li>
+<li>DHCP<ul>
+<li>动态主机配置协议（Dynamic Host Configuration Protocol）的主要作用是集中管理、动态分配IP地址，提升地址的使用率</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>传输层<ul>
+<li>TCP</li>
+<li>UDP</li>
+</ul>
+</li>
+<li>网络层<ul>
+<li>IP<ul>
+<li>网际协议（Internet Protocol）是用于分组交换数据的一种协议，功能包括寻址、路由、尽最大努力交付数据包</li>
+</ul>
+</li>
+<li>ICMP<ul>
+<li>互联网控制消息协议（Internet Control Message Protocol）用于返回同学环境的错误消息。分为两类，一类是【差错报文】，这类报文主要用来响应网络错误，比如目标不可达和重定向，比如traceroute是通过发送含有特殊TTL的包，定位到目标主机之间的所有路由器；另一类是查询报文，这类报文用来查询网络信息，比如ping程序利用此类报文查看目标是否可达。ICMP报文使用16位校验和字段对整个报文（包括头部）进行循环冗余校验（CRC），以检验报文在传输过程中是否损坏</li>
+</ul>
+</li>
+<li>IGMP<ul>
+<li>因特网组管理协议（Internet Group Management Protocol）管理IP协议多播组成员</li>
+</ul>
+</li>
+<li>OSFP<ul>
+<li>开放式最短路径优先（Open Shortest Path First）是一种内部网关协议（IGP）,使用Dijkstra算法计算最短路径，是链路状态路由协议的一种实现。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>数据链路层<ul>
+<li>ARP*<ul>
+<li>地址解析协议（Address Resolution Protocol）通过IP寻找MAC地址。</li>
+<li>工作原理：主机向自己所在的网络广播一个ARP请求，该请求包含目标机器的网络地址。此网络上的其他机器都将收到这个请求，但只有被请求的目标会回应一个ARP应答，其中包含自己的物理地址。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>物理层<ul>
+<li>IEEE802<ul>
+<li>IEEE802指IEEE标准中关于局域网和城域网的一系列标准，其中最广泛使用的有以太网、令牌环、无线局域网等。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>ARP协议属于哪一层？一种说法是属于网络层，因为IP协议使用ARP协议；另一种说法是属于数据链路层，因为MAC地址是数据链路层的内容。在OSI模型中，ARP协议属于数据链路层；而在TCP&#x2F;IP模型中，ARP协议属于网络层。</p>
+</blockquote>
+<h2 id="HTTP"><a href="#HTTP" class="headerlink" title="HTTP"></a>HTTP</h2><p>请求报文由请求行、请求头、（空行以及）消息体组成<br>响应报文由状态行、响应头、（空行以及）消息体组成</p>
+<h3 id="GET和POST的区别"><a href="#GET和POST的区别" class="headerlink" title="GET和POST的区别"></a>GET和POST的区别</h3><p>GET是从服务器获取指定资源，比如静态文本，页面，图片，视频等。GET请求的参数位置一般是写在URL中，URL规定只能支持ASCII，所以GET请求的参数只允许ASCII字符，而且浏览器会对URL的长度有限制（HTTP协议本身对URL的长度没有任何规定）。<br>POST是对指定的资源进行处理，具体的处理方式视资源的类型而不同。POST请求携带的数据位置一般是写在报文body中，body中的数据可以是任意格式的数据，只要客户端和服务端协商好，而且浏览器不会对body大小做限制。</p>
+<ul>
+<li>作用上：GET获取服务器资源，可被缓存，POST添加&#x2F;修改服务器资源，不能被缓存</li>
+<li>幂等&#x2F;安全性：GET是幂等安全的，POST是非幂等不安全的</li>
+<li>参数位置：GET暴露在URL链接中，POST在消息体中</li>
+<li>参数长度：GET由浏览器限制，POST无限制</li>
+</ul>
+<h3 id="HTTPS"><a href="#HTTPS" class="headerlink" title="HTTPS"></a>HTTPS</h3><p>HTTPS解决了HTTP的哪些问题？</p>
+<ul>
+<li>窃听风险，比如通信链路上可以获取通信内容</li>
+<li>篡改风险，比如强制植入垃圾广告</li>
+<li>冒充风险，比如冒充淘宝网站</li>
+</ul>
+<p>HTTPS在HTTP和TCP层之间加入了<code>SSL/TLS</code>协议，解决上述问题：</p>
+<ul>
+<li>信息加密：交互信息无法被窃取</li>
+<li>校验机制：无法篡改通信内容，篡改了就不能正常显示</li>
+<li>身份证书：证明网站的真实性</li>
+</ul>
+<p>如果解决上述问题的：</p>
+<ul>
+<li><strong>混合加密</strong>的方式实现信息的机密性，解决了窃听的风险</li>
+<li><strong>摘要算法</strong>的方式来实现完整性，它能够为数据生成独一无二的指纹，指纹用于校验数据的完整性，解决了篡改的风险</li>
+<li>将服务器公钥放入到<strong>数字证书</strong>中，解决了冒充的风险。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230322150912.png" alt="image.png"></li>
+</ul>
+<h3 id="HTTP协议版本"><a href="#HTTP协议版本" class="headerlink" title="HTTP协议版本"></a>HTTP协议版本</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230218215342.png" alt="image.png"></p>
+<h4 id="HTTP-x2F-1-1"><a href="#HTTP-x2F-1-1" class="headerlink" title="HTTP&#x2F;1.1"></a>HTTP&#x2F;1.1</h4><p>简答，灵活和易于扩展、应用广泛和跨平台<br>HTTP协议里的各类请求方法、URI&#x2F;URL、状态码、头字段等每个组成要求都没有被固定死，都允许开发人员自定义和扩充<br>同时HTTP由于是工作在应用层，它下层可以随意变化</p>
+<ul>
+<li>HTTPS就是在HTTP与TCP层之间增加了SSL&#x2F;TLS安全传输层；</li>
+<li>HTTP&#x2F;1.1和HTTP2.0传输协议用的是TCP协议，而到了HTTP&#x2F;3.0 传输层协议改用了UDP协议<br>HTTP协议有优缺点一体的双刃剑，分别是【无状态、明文传输】，不安全<br>性能：长连接、管道网络传输（有这个功能，没有被使用）-&gt;队头阻塞</li>
+</ul>
+<h5 id="HTTP-x2F-1-1相比HTTP-x2F-1-0性能上的改进"><a href="#HTTP-x2F-1-1相比HTTP-x2F-1-0性能上的改进" class="headerlink" title="HTTP&#x2F;1.1相比HTTP&#x2F;1.0性能上的改进"></a>HTTP&#x2F;1.1相比HTTP&#x2F;1.0性能上的改进</h5><ul>
+<li>使用长连接的方式改善了HTTP&#x2F;1.0短连接造成的性能开销，不过长连接会占用服务器资源</li>
+<li>支持管道（pipeline）网络传输，只要第一个请求发出去了，不必等其回来，就可以发第二个请求出去，可以减少整体的响应时间</li>
+</ul>
+<h5 id="性能瓶颈"><a href="#性能瓶颈" class="headerlink" title="性能瓶颈"></a>性能瓶颈</h5><ul>
+<li>请求&#x2F;响应头部未经压缩发送，首部信息越多延迟越大，且每次互相发送相同的首部造成的浪费较多</li>
+<li>服务器是按请求的顺序响应的，如果服务器响应慢，会导致客户端一直请求不到数据，也就是队头阻塞；</li>
+<li>没有请求优先级控制；</li>
+<li>请求只能从客户端开始，服务器只能被动响应</li>
+</ul>
+<h5 id="如何优化？"><a href="#如何优化？" class="headerlink" title="如何优化？"></a>如何优化？</h5><ul>
+<li>尽量避免发送HTTP请求：尽量使用缓存处理。</li>
+<li>尽量减少请求次数：利用代理服务器等减少重定向请求次数；合并请求资源；延迟发送请求。</li>
+<li>减少响应的数据大小：通过有损或无损压缩对响应的资源进行压缩</li>
+</ul>
+<h4 id="HTTP-x2F-2-0"><a href="#HTTP-x2F-2-0" class="headerlink" title="HTTP&#x2F;2.0"></a>HTTP&#x2F;2.0</h4><p>HTTP&#x2F;2协议是基于HTTPS的<br>改进点：</p>
+<ol>
+<li>Header压缩：头部的编码通过【静态表（保存常用字段编码并固定在协议中）、动态表（动态添加静态表中没有的字段编码）、Huffman编码】共同完成。</li>
+<li>二进制分帧：HTTP&#x2F;1.x采用文本格式传输数据。HTTP&#x2F;2.0将所有传输信息分割为若干个帧，采用二进制格式进行编码。具体实现上，是在应用层（HTTP）和传输层（TCP）之间增加一个二进制分帧层。每个请求对应一个流，有个唯一的标识符。请求报文会被拆分为一个或多个帧（帧头+消息负载），每个帧有序列号，以及自己所属流的标识符，接收端自行合并。同时，二进制分帧采用的流传输也为多路复用提供了基础。</li>
+<li>多路复用：每个请求或响应的数据包称为一个数据流，每个数据流都有唯一的编号，因此不同流的帧可以乱序发送（即可以并发不同的流）。因为每个帧的头部会携带流编号信息，所以接收端可以通过流编号有序拼接HTTP消息。客户端和服务器双方都可以建立流，其中客户端建立的流编号必须是奇数号，而服务器建立的流编号必须是偶数号。客户端还可以指定数据流的优先级。</li>
+<li>服务端推送：服务端会根据客户端的请求，提前推送额外的资源给客户端，可以减轻数据传输的冗余步骤，同时加快页面响应速度，提升用户体验。比如在发送页面HTML时主动推送其它CSS&#x2F;JS资源，而不用等到浏览器解析到相应位置，发起请求再相应。<br>HTTP&#x2F;2.0缺陷：</li>
+</ol>
+<ul>
+<li>HTTP队头阻塞。HTTP&#x2F;2是基于TCP协议来传输数据的，TCP是字节流协议，TCP层必须保证收到的字节数据是完整且连续的，这样内核才会将缓冲区里的数据返回给HTTP应用，那么当【前1个字节数据】没有到达时，后受到的字节数据只能存放再内核缓冲区里，只有等到这1个字节数据到达时，HTTP&#x2F;2应用层才能从内核中拿到数据，这就是HTTP&#x2F;2队头阻塞问题。所以，一旦发送了丢包现象，就会触发TCP的重传机制，这样在一个TCP连接中的所有的HTTP请求都必须等待这个丢了的包被重传回来。</li>
+<li>慢启动降低效率。TCP由于具有【拥塞控制】的特性，所以刚建立连接的TCP会有个【慢启动】的过程，它会对TCP连接产生“减速”效果。</li>
+<li>网络切换重连。一个TCP连接是由四元组（源IP地址，源端口，目标IP地址，目标端口）确定的，这意味着如果IP地址或者端口变动了，就会导致需要TCP于TLS重新握手，不利于移动设备切换网络的场景，比如4G网络环境切换成WIFI。</li>
+</ul>
+<h4 id="HTTP-x2F-3-0-x2F-QUIC"><a href="#HTTP-x2F-3-0-x2F-QUIC" class="headerlink" title="HTTP&#x2F;3.0&#x2F;QUIC"></a>HTTP&#x2F;3.0&#x2F;QUIC</h4><p>HTTP&#x2F;3优化：</p>
+<ul>
+<li>改进头部压缩算法。HTTP&#x2F;3中的QPACK也采用了静态表、动态表以及Huffman编码。HTTP&#x2F;2和HTTP&#x2F;3的动态表编解码方式不同，QUIC会有两个特殊的单向流，这两个特殊的单向流是用来同步双方的动态表，编码方收到解码方更新确认的通知后，才使用动态表编码HTTP头部</li>
+<li>更换传输协议。HTTP&#x2F;2虽然通过多个请求复用一个TCP连接解决了HTTP的队头阻塞，但是一旦发生丢包，就会阻塞住所有的HTTP请求，这属于TCP层队头阻塞。所以HTTP&#x2F;3把HTTP下层的TCP协议改成了UDP，基于UDP的QUIC协议可以实现类似TCP的可靠传输</li>
+</ul>
+<p>QUIC实现了两种级别的流量控制，分别为Stream和Connection两种级别：</p>
+<ul>
+<li>Stream流量控制：每个HTTP请求对应一个流，每个Stream都有独立的滑动窗口，所以每个Stream都可以做流量控制，防止单个Stream占用连接的全部接收缓冲。</li>
+<li>Connection流量控制：限制连接中所有Stream加起来的总字节数，防止发送方超过连接的缓冲容量。</li>
+</ul>
+<p>QUIC有以下3个特点：</p>
+<ul>
+<li>无队头阻塞：当某个流发生丢包时，只会阻塞这个流，其他流不会受到影响，因此不存在队头阻塞的问题。而HTTP&#x2F;2只要某个流中的数据包丢失了，其他流也会受到影响。</li>
+<li>更快的建立连接：对于HTTPS和HTTP&#x2F;2协议，TCP和TLS时分层的，需要分批次来握手，先TCP握手，再TLS握手。HTTP&#x2F;3在传输数据前虽然需要QUIC协议握手，这个握手过程只需要1RTT，握手的目的是为了确认双方的【连接ID】,连接迁移就是基于连接ID实现的。不过QUIC协议并不是与TLS分层，其内部包含了TLS，再加上QUIC使用的是TLS&#x2F;1.3，因此仅需1个RTT就可以【同时】完成建立连接与密钥协商。</li>
+<li>连接迁移：基于TCP传输协议的HTTP协议，由于是通过四元组（源IP，源端口，目的IP、目的端口）确定一条TCP连接，那么当移动设备的网络从4G切换到WIFI时，意味着IP地址变化了，那么就必须要断开连接，然后重新建立连接。而建立连接的过程包含TCP三次握手和TLS四次握手的时延，以及TCP慢启动的减速过程，给用户的感觉时网络突然卡顿，因此连接的迁移成本很高。<ul>
+<li>而QUIC协议没有用四元组的方式绑定连接，而是通过连接ID来标记通信的两个端点，客户端和服务器可以各自选择一组ID来标记自己，因此即使移动设备的网络IP地址变化了，只要仍保有上下文信息（比如连接ID、TLS密钥等），就可以“无缝”地复用原连接。</li>
+</ul>
+</li>
+</ul>
+<h2 id="TCP"><a href="#TCP" class="headerlink" title="TCP"></a>TCP</h2><h3 id="TCP和UDP的区别"><a href="#TCP和UDP的区别" class="headerlink" title="TCP和UDP的区别"></a>TCP和UDP的区别</h3><p>TCP是面向连接的、端对端的、基于字节流的可靠传输层协议，而UDP不需要连接、支持多对多的、一个包一个包发送的不可靠传输层协议。<br>此外，TCP的首部开销较长，在没有使用【选项】字段时是20个字节，而UDP首部只有8个字节，固定不变，开销较小<br>TCP拥有流量控制和拥塞控制，而UDP则没有，即使网络拥堵，也不会影响UDP的发送速率<br>另外，TCP的数据大小如果大于MSS（最大报文长度）大小，会在传输层进行分片，UDP的数据大小如果大于MTU（最大传输大小），则会在IP层进行分片。</p>
+<h3 id="TCP-三次握手和四次挥手过程"><a href="#TCP-三次握手和四次挥手过程" class="headerlink" title="TCP 三次握手和四次挥手过程"></a>TCP 三次握手和四次挥手过程</h3><p>三次握手<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230124232346.png" alt="image.png"><br>TCP是面向连接的协议，所以使用TCP前必须先建立连接，而建立连接时通过三次握手来进行的，其过程如下：</p>
+<ul>
+<li>一开始，客户端和服务器都处于<code>CLOSE</code>状态。先是服务端主动监听某个端口，处于<code>LISTEN</code>状态</li>
+<li>客户端会随机初始化序号（<code>client_isn</code>），将此序号置于TCP首部的序号字段中，同时把<code>SYN</code>标志位置设为1，表示<code>SYN</code>报文，然后把第一个<code>SYN</code>报文发送给服务端，表示向服务端发起连接，该报文不包含应用层数据，之后客户端处于<code>SYN-SENT</code>状态。</li>
+<li>服务端收到客户端的<code>SYN</code>报文后，首先服务端也随机初始化自己的序号（<code>server_isn</code>）,将此序号填入TCP首部的序号字段，其次把TCP首部的确认应答号字段填入<code>client_isn + 1</code>, 接着把<code>SYN</code>和<code>ACK</code>标志位置设为1，最后把报文发给客户端，该报文也不包含应用层数据，之后服务端处于<code>SYN-RCVD</code>状态。</li>
+<li>客户端收到服务端报文后，还要向服务端回应最后一个应答报文，首先该应答报文TCP首部<code>ACK</code>标志位置设为1，其次确认应答号字段填入<code>server_isn + 1</code>，最后把报文发送给服务端，这次报文可以写道客户到服务端的数据，之后客户端处于<code>ESTABLISHED</code>状态。</li>
+<li>服务端收到客户端的应答报文后，也进入<code>ESTABLISHED</code>状态</li>
+</ul>
+<p>四次挥手<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230124232355.png" alt="image.png"></p>
+<p>TCP断开连接<br>双方都可以主动断开连接，断开连接后主机中的资源将被释放，四次挥手的过程如下：</p>
+<ul>
+<li>客户端打算关闭连接，会发送一个TCP首部<code>FIN</code>标志位被置为1的报文，也即<code>FIN</code>报文，之后客户端进入<code>FIN_WAIT_1</code>状态</li>
+<li>服务端收到该报文后，就向客户端发送<code>ACK</code>应答报文，接着服务端进入<code>CLOSE_WAIT</code>状态</li>
+<li>客户端收到服务端的<code>ACK</code>应答报文后，之后进入<code>FIN_WAIT_2</code>状态</li>
+<li>等待服务端处理完数据后，也向客户端发送<code>FIN</code>报文，之后服务器进入<code>LAST_ACK</code>状态。</li>
+<li>客户端收到服务端的<code>FIN</code>报文后，回一个<code>ACK</code>应答报文，之后进入<code>TIME_WAIT</code>状态</li>
+<li>服务端收到了<code>ACK</code>应答报文后，就进入了<code>CLOSE</code>状态，至此服务端已经完成连接的关闭</li>
+<li>客户端在经过<code>2MSL</code>一段时间后，自动进入<code>CLOSE</code>状态，至此客户端也完成了连接的关闭</li>
+</ul>
+<p>主动关闭连接的，才有 TIME_WAIT 状态。</p>
+<h4 id="为什么是三次握手？不是两次、四次？"><a href="#为什么是三次握手？不是两次、四次？" class="headerlink" title="为什么是三次握手？不是两次、四次？"></a>为什么是三次握手？不是两次、四次？</h4><ul>
+<li>三次握手才可以阻止重复历史连接的初始化（主要原因）<ul>
+<li>当客户端发送SYN报文后宕机，客户端重启后重新发送一个新的SYN报文，当服务器先收到旧SYN报文，返回SYN+ACK，客户端发现确认号对不上，于是发给服务端RST报文以释放连接，新的SYN+ACK到达后，开始正常完成三次握手</li>
+<li>在两次握手的情况下，服务端没有中间状态给客户端来阻止历史连接，导致服务端可能建立一个历史连接，造成资源浪费</li>
+</ul>
+</li>
+<li>三次握手才可以同步双方的初始序列号<ul>
+<li>TCP协议的通信双方，都必须维护一个【序列号】，序列号是可靠传输的一个关键因素，他的作用：<ul>
+<li>接收方可以去除重复的数据</li>
+<li>接收方可以根据数据包的序列号按序接收</li>
+<li>可以标识发送出去的数据包中，哪些是已经被对方收到的(通过ACK报文中的序列号知道)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>三次握手才可以避免资源浪费</li>
+</ul>
+<h4 id="为什么需要四次挥手？"><a href="#为什么需要四次挥手？" class="headerlink" title="为什么需要四次挥手？"></a>为什么需要四次挥手？</h4><ul>
+<li>TCP是全双工的，关闭连接时，客户端向服务端发送<code>FIN</code>时，仅仅表示客户端不再发送数据了但还是能接收数据</li>
+<li>服务端收到客户端的<code>FIN</code>报文时，先回一个<code>ACK</code>应答报文，而服务端可能还有数据需要处理和发送，等服务端不再发送数据时，才发送<code>FIN</code>报文给客户端来表示同意现在关闭连接<br>从上面过程可知，服务端通常需要等待完成数据的发送和处理，所以服务端的<code>ACK</code>和<code>FIN</code>一般都是分开发送的，因此需要四次挥手。</li>
+</ul>
+<h4 id="为什么需要TIME-WAIT状态？为什么TIME-WAIT等待时间是2MSL"><a href="#为什么需要TIME-WAIT状态？为什么TIME-WAIT等待时间是2MSL" class="headerlink" title="为什么需要TIME_WAIT状态？为什么TIME_WAIT等待时间是2MSL?"></a>为什么需要TIME_WAIT状态？为什么TIME_WAIT等待时间是2MSL?</h4><p>MSL:Maximum Segment Lifetime，报文最大生存时间，他是任何报文在网络上存在的最长时间，超过这个时间报文将被丢弃。</p>
+<ul>
+<li>确保ACK报文能够到达服务端，从而使服务端正常关闭连接。<ul>
+<li>第四次挥手时，客户端第四次挥手的ACK报文不一定会到达服务端。服务端会超时重传FIN&#x2F;ACK报文，如果此时客户端已经断开连接，那么就无法响应服务端的二次请求，这样服务端迟迟收不到FIN&#x2F;ACK报文的确认，就无法正常断开连接。MSL时报文段在网络上存活 最长时间，客户端等待2MSL时间，即【客户端ACK报文1MSL超时+服务端FIN报文1MSL传输】,就能够收到服务端重传的FIN&#x2F;ACK报文，然后客户端重传依次ACK报文，并重新启动2MSL计时器。如此保证服务端能够正常关闭。</li>
+</ul>
+</li>
+<li>防止历史连接中的数据，被后面相投四元组的连接错误的接收<ul>
+<li><strong>序列号和初始化序列号并不是无限递增的，会发生回绕为初始值的情况，这意味着无法根据序列号来判断新老数据</strong></li>
+<li>2MSL时间足以让两个方向上的数据包都被丢弃，使得原来连接的数据包在网络中都自然消失，再出现的数据包一定都是新建立连接所产生的。<br> 2MSL时长相当于至少运行报文丢失一次</li>
+</ul>
+</li>
+</ul>
+<h3 id="谈一谈TCP的流量控制和拥塞控制"><a href="#谈一谈TCP的流量控制和拥塞控制" class="headerlink" title="谈一谈TCP的流量控制和拥塞控制"></a>谈一谈TCP的流量控制和拥塞控制</h3><p>首先谈一谈流量控制，在网络传输过程中，发送方发送数据时必须考虑接收方的处理能力，如果一直无脑发送数据给对方，但是对方处理不过来，就会触发重传机制，导致了网络流量的浪费，为了解决这种现象，TCP提供了流量控制的机制，让发送方根据接收方的实际接收能力控制发送的数据量。<br>流量控制实现的关键就是滑动窗口，通过发送方和接收方之间的窗口大小来控制数据的发送速率。发送方会根据接收方返回的确认信息和窗口大小，动态调整发送窗口的大小，以确保网络不会出现拥塞。</p>
+<p>流量控制是避免发送方的数据填满接收方的缓存，但是并不知道网络中会发生什么，拥塞控制的目的就是避免发送方的数据填满整个网络。<br>拥塞控制的关键是通过拥塞窗口，它会根据网络的拥塞程度动态变化，主要是通过拥塞控制的四个算法来实现，包括慢启动、拥塞避免、拥塞发生，快速恢复。<br>具体过程是，刚开始使用慢启动算法，此时拥塞窗口的大小呈指数级增长，当达到慢启动门限时，改为拥塞避免，拥塞窗口为线性增长，当触发超时重传，慢启动门限减为一半，重启开始慢启动，当触发快速重传，慢启动门限设置为当前拥塞窗口的一半，拥塞窗口等于慢启动门限，进入拥塞避免。</p>
+<h1 id="操作系统"><a href="#操作系统" class="headerlink" title="操作系统"></a>操作系统</h1><h2 id="进程管理"><a href="#进程管理" class="headerlink" title="进程管理"></a>进程管理</h2><h3 id="进程和线程的区别？"><a href="#进程和线程的区别？" class="headerlink" title="进程和线程的区别？"></a>进程和线程的区别？</h3><ul>
+<li>首先，进程是资源分配的最小单位，而线程是cpu调度的最小单位</li>
+<li>进程都有自己独立的地址空间，每启动一个进程，系统都会为其分配地址空间，建立数据来维护代码段、堆栈段和数据段，线程没有独立的地址空间，它使用相同的地址空间共享数据</li>
+<li>线程的创建以及切换的开销，还有占用的资源比进程小</li>
+<li>进程间的通信一般需要通过IPC机制来实现，比如信号，管道，信号量，共享内存，消息队列等，而线程间的通信可以通过全局变量来实现，当然线程间的同步方式还包括互斥锁、读写锁、条件变量、信号量等。</li>
+</ul>
+<h3 id="进程的同步方式"><a href="#进程的同步方式" class="headerlink" title="进程的同步方式"></a>进程的同步方式</h3><p>信号<br>信号量<br>管道<br>消息队列<br>共享内存</p>
+<h3 id="线程的同步方式"><a href="#线程的同步方式" class="headerlink" title="线程的同步方式"></a>线程的同步方式</h3><p>互斥锁，读写锁<br>信号量<br>条件变量</p>
+<h1 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h1><h2 id="MySQL索引"><a href="#MySQL索引" class="headerlink" title="MySQL索引"></a>MySQL索引</h2><p>MySQL中的索引分为三类：B+树索引、Hash索引、全文索引</p>
+<h3 id="B-树"><a href="#B-树" class="headerlink" title="B+树"></a>B+树</h3><ul>
+<li>叶子节点存放所有数据，而非叶子节点只存储索引</li>
+<li>每个叶子节点存放一页的记录，页与页之间按照顺序排成一个双向链表，页内记录按照顺序排成单向链表</li>
+</ul>
+<h2 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h2><p>事务：一组逻辑处理单元，使数据从一种状态变换到另一种状态。<br>事务处理的原则：保证所有事务都作为一个工作单元来执行，即使出现了故障，都不能改变这种执行方式。当在一个事务中执行多个操作时，要么所有的事务都被提交，那么这些修改就永久地保存下来，要么数据库管理系统将放弃所作的所有修改，整个事务回滚到最初状态。<br>事务的ACID特性：</p>
+<ul>
+<li>原子性（atomicity）<ul>
+<li>事务的所有操作都是一个整体</li>
+</ul>
+</li>
+<li>一致性（consistency）<ul>
+<li>一致性是指事务执行前后，数据从一个合法状态变换到另一个合法状态，这种状态是语义上的而不是语法上的，跟具体业务有关。</li>
+</ul>
+</li>
+<li>隔离性（isolation）<ul>
+<li>事务的隔离性是指一个事务的执行不能被其他事务干扰，即一个事务内部的操作和使用的数据对并发的其他事务是隔离的，并发执行的各个事务之间不能相互干扰。</li>
+<li>事务的隔离性由【锁机制】实现</li>
+</ul>
+</li>
+<li>持久性（durability）<ul>
+<li>事务一旦提交，它对数据库中的数据的改变就是永久性的</li>
+<li>持久性是通过事务日志来保证的。日志包括了重做日志（redo）日志和回滚日志。当我们通过事务对数据进行修改时，首先会将数据库的变化信息记录在重做日志中，然会再对数据库中的对应行进行修改。</li>
+</ul>
+</li>
+<li>事务的原子性、一致性和持久性由事务的redo日志和undo日志来保证<ul>
+<li>redolog，提供再写入操作，恢复提交事务修改的页操作，用来保证事务的持久性</li>
+<li>undolog，回滚行记录到某个特定版本，用来保证事务的原子性、一致性</li>
+</ul>
+</li>
+</ul>
+<h3 id="数据并发问题"><a href="#数据并发问题" class="headerlink" title="数据并发问题"></a>数据并发问题</h3><ol>
+<li>脏写<br> 如果事务Session A修改了另一个未提交的Session B修改过的数据，就意味着发生了脏写</li>
+<li>脏读<br> 如果Session A读取了已经被Session B更新但还没有被提交的字段</li>
+<li>不可重复读<br> Session A读取了一个字段，然后Session B更新了该字段，之后Session A再次读取了同一个字段，值就不同了</li>
+<li>幻读<br> Session A从一个表中读取了一个字段，然后Session B在该表中插入了一个新的行，之后，如果Session A再次读取同一个表，就会多出几行，意味着发生了幻读</li>
+</ol>
+<h3 id="事务隔离级别"><a href="#事务隔离级别" class="headerlink" title="事务隔离级别"></a>事务隔离级别</h3><p>数据库的隔离级别有四个，由低到高依次为：Read uncommitted、Read committed、Repeatable read、Serializble，这四个级别分别解决脏写、脏读、不可重复读、幻读这几类问题。</p>
+<ul>
+<li>Read uncommitted（读未提交）：这是最低的隔离级别，允许读取未提交的数据，它可能导致脏读、不可重复读和幻读</li>
+<li>Read committed（读已提交）：禁止读取未提交的数据。它可以避免脏读，但仍然可能导致不可重复读和幻读。</li>
+<li>Repeatable read（可重复读）：禁止读取已提交的数据的修改。它可以避免脏读和不可重复读，但仍然可能导致幻读。</li>
+<li>Serializable（串行化）：这是最高的隔离级别，禁止读取已提交的数据的修改和插入。它可以避免脏读、不可重复读和幻读。</li>
+</ul>
+<h3 id="并发问题的解决方案"><a href="#并发问题的解决方案" class="headerlink" title="并发问题的解决方案"></a>并发问题的解决方案</h3><p>如何解决脏读、不可重复读、幻读这些问题：</p>
+<ul>
+<li>方案一：读操作利用多版本并发控制（MVCC），写操作进行加锁<ul>
+<li>MVCC，就是生成一个ReadView，通过ReadView找到符合条件的记录版本（历史版本由undo日志构建）。查询语句只能读到在生成Readview之前已提交事务所做的更改，在生成ReadView之前未提交的事务或者之后再开启的事务所作的更改时看不到的。而写操作肯定是针对最新版本的记录，读记录的历史版本和改动记录的最新版本本身并不冲突，也就是采用MVCC时，读-写操作并不冲突</li>
+<li>普通的SELECT语句在READ COMMITTED和REPEATALE READ隔离级别下会使用到MVCC读取记录<ul>
+<li>在READ COMMITTED隔离级别下，一个事务在执行过程中每次执行SELECT操作时都会生成一个ReadView，ReadView的存在本身就保证了事务不可以读到未提交的事务所作的更改，也就避免了脏读的现象</li>
+<li>在REPEATABLE READ隔离级别下，一个事务在执行过程中只有第一次执行SELECT操作才会生成一个ReadView，之后的SELECT操作都复用这个ReadView，这样就比避免了不可重复读和幻读的问题</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>方案二：读和写操作都用加锁<ul>
+<li>显然可以解决脏读和不可重复读的问题</li>
+<li>幻读的问题的产生是因为当前事务读取了一个范围的记录，然后另外的事务向该范围内插入了新记录，当前事务再次读取该范围的记录时发现了新插入的新记录，采用加锁的方式解决幻读的问题就有点麻烦，因为当前事务在第一次读取记录的时候幻影记录并不存在，所以读取时不知道怎么加锁。</li>
+</ul>
+</li>
+<li>对比<ul>
+<li>采用MVCC方式的话，读-写操作并不冲突，性能更高</li>
+<li>采用加锁方式的话，读-写操作彼此需要排队执行，影响性能</li>
+</ul>
+</li>
+</ul>
+<h2 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h2><h3 id="锁的分类"><a href="#锁的分类" class="headerlink" title="锁的分类"></a>锁的分类</h3><p>按照对数据的操作类型划分，分为读锁&#x2F;共享锁，写锁&#x2F;排他锁<br>按照对锁的粒度划分，分为表级锁、页级锁、行级锁</p>
+<ul>
+<li>表级锁又包括了表级别的读写锁，意向锁，自增锁，元数据锁</li>
+<li>行级锁又包括了记录锁，间隙锁，临建锁，插入意向锁<br>按照对待锁的态度划分，分为悲观锁和乐观锁<br>按照加锁方式划分，分为隐式锁和显示锁</li>
+</ul>
+<h2 id="MVCC"><a href="#MVCC" class="headerlink" title="MVCC"></a>MVCC</h2><p>MVCC，多版本并发控制，是通过数据行的多个版本管理来实现数据库的并发控制，这项技术使得InnoDB的事务隔离级别下执行【一致性读】操作有了保证。换言之，就是为了查询一些正在被另一个事务更新的行，并且可以看到他们被更新之前的值，这样在做查询的时候就不用等待另一个事务释放锁了。</p>
+<h3 id="MVCC的实现原理"><a href="#MVCC的实现原理" class="headerlink" title="MVCC的实现原理"></a>MVCC的实现原理</h3><p>MVCC实现依赖于：隐藏字段、Undo log、Read View</p>
+<h4 id="隐藏字段、Undo-log版本链"><a href="#隐藏字段、Undo-log版本链" class="headerlink" title="隐藏字段、Undo log版本链"></a>隐藏字段、Undo log版本链</h4><ul>
+<li>trx_id：每次一个事务对某条聚簇索引记录进行改动时，都会把该事务的事务id赋值给trx_id隐藏列。</li>
+<li>roll_pointer：每次对某条聚簇索引记录进行改动时，都会把旧的版本写入到undo日志中，然后这个隐藏列就相当于一个指针，可以通过它来找到该记录修改前的值<br>每次对记录进行改动，都会记录一条undo日志，每条undo日志都有一个roll_pointer属性（INSERT操作对应日志没有该属性，因为该记录没有更早的版本），将这些undo日志都连起来，串成一个链表：<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230226211117.png" alt="image.png"></li>
+</ul>
+<h4 id="ReadView"><a href="#ReadView" class="headerlink" title="ReadView"></a>ReadView</h4><p>ReadView就是事务再使用MVCC机制进行快照读操作时产生了读视图。当事务启动时，会生成数据库系统当前的一个快照，InnoDB为每个事务构造了一个数字，用来记录并维护系统当前活跃事务的ID。</p>
+<h4 id="设计思路"><a href="#设计思路" class="headerlink" title="设计思路"></a>设计思路</h4><p>使用【读未提交】隔离级别的事务，由于可以读到未提交事务修改过的记录，所以直接读取记录的最新版本就好。<br>使用【串行化】隔离级别的事务，InnoDB规定必须使用加锁的方式来记录<br>使用【读已提交】和【可重复读】隔离级别的事务，就必须保证读到已经提交了的事务修改过的记录。如果另一个事务已经修改了记录但是尚未提交，是不能直接读取到最新版本的记录的，核心问题就是【需要判断一下版本链中哪个版本是当前事务可见的】，这是ReadView需要解决的问题。<br>ReadView包含了4个主要的内容：创建ReadView的事务ID，生成ReadView时当前系统中活跃的读写事务id表，活跃事务中最小的事务ID以及当前系统应该分配给下一个事务的id。<br>从undo版本链中从新到就寻找当前事务可访问的版本，如果版本的事务id和ReadView的事务id相同，就说明是当前事务的版本，可以访问，否则如果事务id小于ReadView中活跃事务中的最小id，说明已提交可以访问，如果大于等于当前系统应该分配给下一个事务的id，就说明当前事务在ReadView生成后才开启，不能访问，如果处于两者之间，就判断是否在活跃列表，不在则可以访问，在则不能访问。</p>
+<h1 id="网络模型"><a href="#网络模型" class="headerlink" title="网络模型"></a>网络模型</h1><h2 id="零拷贝技术"><a href="#零拷贝技术" class="headerlink" title="零拷贝技术"></a>零拷贝技术</h2><p>sendfile系统调用实现了零拷贝技术，零拷贝技术的文件传输方式相比于传统文件传输方式，减少了2次上下文切换和数据拷贝次数，只需要2次上下文切换和数据拷贝次数，就可以完成文件的传输，而且2次的数据拷贝过程，都不需要通过CPU，2次都是由DMA来搬运，使用零拷贝的项目有nginx,kafka。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230319223442.png" alt="image.png"></p>
+<h2 id="线程池的实现"><a href="#线程池的实现" class="headerlink" title="线程池的实现"></a>线程池的实现</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="keyword">class</span> <span class="title class_">threadpool</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="built_in">threadpool</span>(<span class="type">int</span> thread_nums = <span class="number">8</span>, <span class="type">int</span> max_requests = <span class="number">10000</span>);</span><br><span class="line">	~<span class="built_in">thread</span>();</span><br><span class="line">	<span class="function"><span class="type">bool</span> <span class="title">append</span><span class="params">(T* request)</span></span>;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">work</span><span class="params">(<span class="type">void</span>* args)</span></span>;</span><br><span class="line">	<span class="function"><span class="type">void</span> <span class="title">run</span><span class="params">()</span></span>;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="type">int</span> m_thread_nums;</span><br><span class="line">	<span class="type">int</span> m_max_requests;</span><br><span class="line">	<span class="type">pthread_t</span>* m_threads;</span><br><span class="line">	std::list&lt;T*&gt; m_workqueue;</span><br><span class="line">	locker m_queuelocker;</span><br><span class="line">	sem m_queuestat;</span><br><span class="line">	<span class="type">bool</span> m_stop;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">threadpool&lt;T&gt;::<span class="built_in">threadpool</span>(<span class="type">int</span> thread_nums, <span class="type">int</span> max_requests)::<span class="built_in">m_thread_nums</span>(thread_nums), <span class="built_in">m_max_requests</span>(max_requests)&#123;</span><br><span class="line">	<span class="keyword">if</span>((thread_nums &lt;= <span class="number">0</span>) || (max_requests &lt;= <span class="number">0</span>)) <span class="keyword">throw</span> std::<span class="built_in">exception</span>();</span><br><span class="line">	m_threads = <span class="keyword">new</span> <span class="type">pthread_t</span>[thread_nums];</span><br><span class="line">	<span class="keyword">if</span>(!m_threads) <span class="keyword">throw</span> std::<span class="built_in">exception</span>();</span><br><span class="line">	<span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>; i &lt; thread_nums; i++)&#123;</span><br><span class="line">		<span class="keyword">if</span>(<span class="built_in">pthread_create</span>(m_threads+i, <span class="literal">NULL</span>, work, <span class="keyword">this</span>)!=<span class="number">0</span>)&#123;</span><br><span class="line">			<span class="keyword">delete</span>[] m_threads;</span><br><span class="line">			<span class="keyword">throw</span> std::<span class="built_in">expection</span>();</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">if</span>(<span class="built_in">pthread_deatch</span>(m_threads[i]))&#123;</span><br><span class="line">			<span class="keyword">delete</span>[] m_threads;</span><br><span class="line">			<span class="keyword">throw</span> std::<span class="built_in">expection</span>();</span><br><span class="line">		&#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line">threadpool&lt;T&gt;::~<span class="built_in">threadpool</span>()&#123;</span><br><span class="line">	<span class="keyword">delete</span>[] m_threads;</span><br><span class="line">	m_stop = <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="type">bool</span> threadpool&lt;T&gt;::<span class="built_in">append</span>(T* request)&#123;</span><br><span class="line">	m_queuelocker.<span class="built_in">lock</span>();</span><br><span class="line">	<span class="keyword">if</span>(m_workqueue.<span class="built_in">size</span>() &gt;= m_max_requests)&#123;</span><br><span class="line">		m_queuelocker.<span class="built_in">unlock</span>();</span><br><span class="line">		<span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">	&#125;</span><br><span class="line">	m_workqueue.<span class="built_in">push_back</span>(request);</span><br><span class="line">	m_queuelocker.<span class="built_in">unlock</span>();</span><br><span class="line">	m_queuestat.<span class="built_in">post</span>();</span><br><span class="line">	<span class="keyword">return</span> ture;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="type">void</span>* threadpool&lt;T&gt;::<span class="built_in">work</span>(<span class="type">void</span>* args)&#123;</span><br><span class="line">	threadpool* pool = (threadpool*) args;</span><br><span class="line">	pool-&gt;<span class="built_in">run</span>();</span><br><span class="line">	<span class="keyword">return</span> pool;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span>&lt;<span class="keyword">typename</span> T&gt;</span><br><span class="line"><span class="type">void</span> threadpool&lt;T&gt;::<span class="built_in">run</span>()&#123;</span><br><span class="line">	<span class="keyword">while</span>(!m_stop)&#123;</span><br><span class="line">		m_queuestat.<span class="built_in">wait</span>();</span><br><span class="line">		m_queuelocker.<span class="built_in">lock</span>();</span><br><span class="line">		<span class="keyword">if</span>(m_workqueue.<span class="built_in">empty</span>())&#123;</span><br><span class="line">			m_queuelocker.<span class="built_in">unlock</span>();</span><br><span class="line">			<span class="keyword">continue</span>;</span><br><span class="line">		&#125;</span><br><span class="line">		T* request = m_queue.<span class="built_in">front</span>();</span><br><span class="line">		m_queue.<span class="built_in">pop</span>();</span><br><span class="line">		m_queuelocker.<span class="built_in">unlock</span>();</span><br><span class="line">		<span class="keyword">if</span>(!request) <span class="keyword">continue</span>;</span><br><span class="line">		request-&gt;<span class="built_in">process</span>();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="设计模式"><a href="#设计模式" class="headerlink" title="设计模式"></a>设计模式</h1><h2 id="单例模式"><a href="#单例模式" class="headerlink" title="单例模式"></a>单例模式</h2><h3 id="饿汉模式"><a href="#饿汉模式" class="headerlink" title="饿汉模式"></a>饿汉模式</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Singleton</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="type">static</span> Singleton&amp; getInstance&#123;</span><br><span class="line">		<span class="keyword">return</span> instance;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="comment">//禁用拷贝构造函数和赋值运算符</span></span><br><span class="line">	<span class="built_in">Singleton</span>(<span class="type">const</span> Singleton&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">	Singleton&amp; <span class="keyword">operator</span>= (<span class="type">const</span> Single&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="type">static</span> Singleton instance;</span><br><span class="line">	<span class="built_in">Singleton</span>()&#123;&#125;</span><br><span class="line">	~<span class="built_in">Singleton</span>()&#123;&#125;</span><br><span class="line">&#125;;</span><br><span class="line">Singleton Singleton::instance;</span><br></pre></td></tr></table></figure>
+<p>注意：饿汉模式存在的隐藏问题，在于非静态对象（函数外的static对象）在不同编译单元中的初始化顺序是未定义的。如果在初始化完成之前调用getInstance()方法会返回一个未定义的实例。</p>
+<h3 id="懒汉模式"><a href="#懒汉模式" class="headerlink" title="懒汉模式"></a>懒汉模式</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">Singleton</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">	<span class="type">static</span> Singleton&amp; getInstance&#123;</span><br><span class="line">		<span class="type">static</span> Singleton instance;</span><br><span class="line">		<span class="keyword">return</span> instance;</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="built_in">Singleton</span>(<span class="type">const</span> Singleton&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">	Singleton&amp; <span class="keyword">operator</span>= (<span class="type">const</span> Singleton&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="built_in">Single</span>()&#123;&#125;</span><br><span class="line">	~<span class="built_in">Single</span>()&#123;&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h1 id="针对简历补充"><a href="#针对简历补充" class="headerlink" title="针对简历补充"></a>针对简历补充</h1><h2 id="TinyWebServer"><a href="#TinyWebServer" class="headerlink" title="TinyWebServer"></a>TinyWebServer</h2><h3 id="介绍一下这个项目"><a href="#介绍一下这个项目" class="headerlink" title="介绍一下这个项目"></a>介绍一下这个项目</h3><p>这个项目主要是自己用来学习Linux网络编程的，是一个在Linux中使用C++语言开发的轻量级多线程HTTP服务器，支持一定数量的客户端连接服务器并访问图片视频资源。<br>首先，客户端需要与服务器建立连接，服务端对连接socket进行监听，当有多个连接请求的时候，服务器需要分配多个逻辑单元来处理不同的客户请求，这时需要用到多线程技术实现并发<br>客户端与服务端建立连接后，服务端需要处理客户端发送来的HTTP请求报文，于是又需要通过socket监听用户的请求，加上之前需要对连接socket监听，所以服务端需要对多个socket同时监听，这里就用到<strong>epoll这种I&#x2F;O复用技术</strong>，I&#x2F;O复用技术虽然可以同时监听多个文件描述符，但是它本身是阻塞的，当有多个文件描述符同时就绪时，程序只能按顺序处理其中就绪的每一个文件描述符，为了提高效率，这里也通过多线程技术实现并发，为每个就绪的文件描述符分配一个线程来处理。<br>实现多线程并发用到了半同步半反应堆的并发模型以及同步I&#x2F;O模拟Proactor的事件处理模式。<br>在收到HTTP请求报文后，Web服务器就需要对报文进行处理，这里就用到了<strong>HTTP状态机解析HTTP报文</strong>，支持解析GET和POST请求。<br>最后，还涉及到对服务器的一些优化，包括定时器处理非活动连接和日志的实现，使用单例模式实现日志类，通过同步&#x2F;异步的方式写入日志。其中异步方式是使用阻塞队列实现，使用生产者&#x2F;消费者的模式对阻塞队列进行操作。</p>
+<h3 id="介绍一下两种事件处理模式"><a href="#介绍一下两种事件处理模式" class="headerlink" title="介绍一下两种事件处理模式"></a>介绍一下两种事件处理模式</h3><p>这里其实涉及了服务器的事件处理模式，服务器程序通常需要处理三类事件：I&#x2F;O事件，信号以及定时事件。有两种事件处理模式：Reactor和Proactor。</p>
+<ul>
+<li>Reactor模式：要求主线程（I&#x2F;O处理单元）只负责监听文件描述符上是否事件发生（可读、可写），若有，则立即通知工作线程（逻辑单元），将socket可读可写事件放入请求队列，交给工作线程处理。<ul>
+<li>主从Reactor模式：mainReactor负责监听server socket，用来处理网络IO连接操作，而subReactor主要做和建立起来的socket做数据交互和事件业务处理操作。</li>
+</ul>
+</li>
+<li>Proactor模式：将所有的I&#x2F;O操作都交给主线程和内核来处理（进行读写），工作线程仅负责处理逻辑，如主线程读写完成后，选择一个工作线程来处理客户请求</li>
+</ul>
+<p>通常使用同步I&#x2F;O模型（如epoll_wait）实现Reactor，使用异步I&#x2F;O（如aio_read和aio_write）实现Proactor。这里项目使用<strong>同步I&#x2F;O模拟的Proactor</strong>事件处理模式（主线程使用epoll监听socket，然后将读到的数据封装成对象放入工作队列，然后分配给其他线程）。</p>
+<ul>
+<li>同步（阻塞）I&#x2F;O：在一个线程中，CPU执行代码速度极快，然而，一旦遇到IO操作，如读写文件、发送网络数据时，就需要等待I&#x2F;O操作完成，才能继续进行下一步操作。这种情况称为同步I&#x2F;O。</li>
+<li>异步（非阻塞）I&#x2F;O：当代码需要执行一个耗时的I&#x2F;O操作时，它只发出I&#x2F;O指令，并不等待I&#x2F;O结果，然后就去执行其他代码了。一段时间后，当I&#x2F;O返回结果时，再通知CPU进行处理。</li>
+</ul>
+<h3 id="Linux有三种I-x2F-O复用方式，为什么用epoll？"><a href="#Linux有三种I-x2F-O复用方式，为什么用epoll？" class="headerlink" title="Linux有三种I&#x2F;O复用方式，为什么用epoll？"></a>Linux有三种I&#x2F;O复用方式，为什么用epoll？</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230319222248.png" alt="image.png"></p>
+<p>select实现多路复用的方式是，将已连接的Socket都放到一个文件描述符集合，然后调用select函数将文件描述符集合拷贝到内核里，让内核检查是否有网络事件产生，检查的方式很粗暴，就是通过遍历文件描述符集合的方式，当检查到有事件产生后，将此Socket标记为可读或可写，接着把整个文件描述符集合拷贝回用户态，然后用户态还需要再通过遍历的方法找到可读或可写的Socket,然后再对其处理。<br>所以select这种方式，需要进行2次遍历文件描述符集合，一次是在内核态，一次是在用户态，而且还会发生2次拷贝文件描述符集合，先从用户空间传入内核空间，由内核修改后，再传出到用户空间。<br>select使用固定长度的BitsMap,表示文件描述符集合，而且所支持的文件描述符的个数是有限制的，再Linux系统中，由内核中的FD_SETSIZE限制，默认最大值未1024，只能监听0-1023的文件描述符<br>poll不再用BitsMap来存储所关注的文件描述符，取而代之用动态数组，以链表的形式来组织，突破了select的文件描述符个数限制，当然还会收到系统文件描述符限制。<br>但是poll和select并没有太大本质区别，都是使用线性结构存储进程关注的Socket集合，因此都需要遍历用户描述符集合来找到可读或可写的Socket，时间复杂度为O(n)，而且也需要再用户态与内核态之间拷贝文件描述符集合，这种方式随着并发数上来，性能损耗也会呈指数级增长。<br>epoll通过两个方面解决了select&#x2F;poll的问题</p>
+<ul>
+<li>epoll在内核里使用【红黑树】来关注进程所有待检测的Socket，红黑树是个高效的数据结构，增删改一般的时间复杂度是O(n)，通过对红黑树的管理，不需要像select&#x2F;poll在每次操作时都传入整个Socket集合，减少了内核和用户空间大量的数据拷贝和内存分配</li>
+<li>epoll使用事件驱动机制，内核里维护了一个【链表】来记录就绪的事件，只将由事件发生的Socket集合传递给应用程序，不需要像select&#x2F;poll那样轮询扫描整个集合，大大提高了检测效率。</li>
+</ul>
+<h3 id="epoll具体工作流程"><a href="#epoll具体工作流程" class="headerlink" title="epoll具体工作流程"></a>epoll具体工作流程</h3><ol>
+<li>通过epoll_create创建epoll对象，此时epoll对象的内核结构包含就绪链表和红黑树，就绪队列用于保存所有读写事件到来的socket，红黑树用于保存所有待检测的socket。</li>
+<li>通过epoll_ctl将待检测的socket，加入到红黑树中，并注册一个事件回调函数，当由事件到来之后，回调用这个回调函数，进而通知到epoll对象。</li>
+<li>调用epoll_wait等待事件的发生，当内核检测到事件发生后，调用该socket注册的回调函数，执行回调函数就能找到socket对应的epoll对象，然后会将事件加入到epoll对象的就绪队列中，最后将就绪队列返回给应用层。</li>
+</ol>
+<h2 id="HTTP状态机解析HTTP报文？"><a href="#HTTP状态机解析HTTP报文？" class="headerlink" title="HTTP状态机解析HTTP报文？"></a>HTTP状态机解析HTTP报文？</h2><p>从状态机负责读取报文的一行，主状态机负责对改行数据进行解析，主状态机内部调用从状态机，从状态机驱动主状态机。<br>主状态机</p>
+<ul>
+<li>CHECK_STATE_REQUESTLINE, 解析请求行</li>
+<li>CHECK_STATE_HEADER，解析请求头</li>
+<li>CHECK_STATE_CONTENT，解析消息体，仅用于解析POST请求<br>从状态机</li>
+<li>LINE_OK，完整读取一行</li>
+<li>LINE_BAD，报文语法有误</li>
+<li>LINE_OPEN，读取的行不完整</li>
+</ul>
+<h2 id="项目如何处理非活动连接的？"><a href="#项目如何处理非活动连接的？" class="headerlink" title="项目如何处理非活动连接的？"></a>项目如何处理非活动连接的？</h2><p>本项目中，服务器主循环为每一个连接创建一个定时器，并对每个连接进行定时。另外，利用升序时间链表容器将所有定时器串联起来，若主循环接收到定时通知，则在链表中依次执行定时任务。</p>
+<p>本项目的定时方法使用SIGALRM信号，利用alarm函数周期性触发SIGALRM信号，信号处理函数利用管道通知主循环（这里的管道是为了统一事件源），主循环接收到该信号后对升序链表上所有定时器进行处理，若该段时间没有交换数据，则将该连接关闭，释放所占用的资源。</p>
+<blockquote>
+<p>统一事件源，是将信号事件与其他事件一样被处理。<br>具体的，信号处理函数使用管道将信号传递给主循环，信号处理函数往管道的写端写入信号值，主循环则从管道的读端读出信号值，使用I&#x2F;O复用系统调用来监听管道读端的可读事件，这样信号事件与其他文件描述符都可以通过epoll来监测，从而实现统一处理。</p>
+</blockquote>
+<h2 id="绞线生产工业一体机"><a href="#绞线生产工业一体机" class="headerlink" title="绞线生产工业一体机"></a>绞线生产工业一体机</h2><h3 id="介绍一下这个项目-1"><a href="#介绍一下这个项目-1" class="headerlink" title="介绍一下这个项目"></a>介绍一下这个项目</h3><p>这个项目是一个绞线工厂的工业一体机项目，每台绞线机配备一台一体机，用于生产流程控制和数据采集管理。<br>一方面，生产流程控制上，一体机主要是工人使用，需要实现打卡签到，查看生产任务以及任务需要的工艺卡信息，打印产品标签，并完成对生产任务的状态控制等功能，此外，为了便于故障排查，增加网络状态显示，以及网络ip修改的功能。另一方面，数据采集管理上，需要采集生产机器的信息，比如生产长度，便于后台统计生产信息，结算工人工资。<br>整个一体机主要包括Linux开发板，大彩屏幕以及打印机，RFID刷卡器等外设，程序方面分为两个部分，一个负责生产流程 控制，一个负责数据采集。<br>生产流程控制的程序，采用多线程技术，分别处理与屏幕等多个外设以及后台的通信，为每个通信设置一个收发工作队列，存储收发的数据，实现功能解耦。<br>数据采集程序，使用modbus协议定时采集生产机器上的数据，并发送给后台。 最终将程序部署到一百多台一体机上，完成到现在仍正常运行。</p>
+<h3 id="modbus协议"><a href="#modbus协议" class="headerlink" title="modbus协议"></a>modbus协议</h3><p>Modbus协议采用主从通信模式（即Master&#x2F;Slave通信模式），其具有多个变种，包括支持串口（RS-485、RS-232总线），以太网多个版本，最著名的是Modbus RTU, Modbus ASCII和Modbus TCP三种，其中Modbus RTU和Modbus ASCII均为支持RS-485总线的通信协议。<br>Modbus RTU由于采用二进制表现形式以及紧凑数据结构，通信效率较高，应用比较广泛。<br>Modbus ASCII由于采用ASCII码传输，并且利用特殊字符作为其字节的开始和结束标识，其传输效率远远低于Modbus RTU协议<br>Modbus TCP则是在RTU协议上加一个MBAP报头文，依靠TCP的可靠连接服务，在以太网中通信。</p>
+<h3 id="mqtt协议"><a href="#mqtt协议" class="headerlink" title="mqtt协议"></a>mqtt协议</h3><p>MQTT是一种基于发布&#x2F;订阅模式的轻量级消息传输协议。</p>
+<h4 id="MQTT与HTTP协议对比"><a href="#MQTT与HTTP协议对比" class="headerlink" title="MQTT与HTTP协议对比"></a>MQTT与HTTP协议对比</h4><ul>
+<li>MQTT的最小报文仅为2个字节，比HTTP占用更少的网络开销</li>
+<li>MQTT与HTTP都能使用TCP连接，并实现稳定、可靠的网络连接</li>
+<li>MQTT基于发布订阅模型，HTTP基于请求响应，因此MQTT支持双工通信。</li>
+<li>MQTT可实时推送消息，但HTTP需要通过轮询获取数据更新。</li>
+<li>MQTT是有状态的，但是HTTP是无状态的。</li>
+<li>MQTT可从连接异常断开中恢复，HTTP无法实现此目标</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/22/%E9%9D%A2%E8%AF%95/%E9%87%8D%E7%82%B9%E9%9D%A2%E8%AF%95%E6%95%B4%E7%90%86/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-算法/博弈论" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
