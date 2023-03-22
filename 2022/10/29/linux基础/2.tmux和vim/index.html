@@ -6,16 +6,19 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://example.com">
-  <title>crz&#39;s blog</title>
+  <title>tmux and vim | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="article">
-<meta property="og:title" content="crz&#39;s blog">
-<meta property="og:url" content="http://example.com/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/9.7%20%E9%AB%98%E7%BA%A7%E5%BA%94%E7%94%A8%E4%B8%89%EF%BC%9A%E5%90%8C%E6%97%B6%E5%A4%84%E7%90%86TCP%E5%92%8CUDP%E6%9C%8D%E5%8A%A1/index.html">
+  <meta name="description" content="tmux  使tmux配置文件生效在tmux窗口中，先按下 Ctrl+b 指令前缀，然后按下系统指令 : ，进入到命令模式后输入 source-file ~&#x2F;.tmux.conf ，回车后生效。  vim12#win和linux换行符转换:set ff&#x3D;unix  vim全局搜索并跳转 vimgrep，简写vim 1、只搜索当前文件 1:vim&#x2F;pattern&#x2F;% | copen  2、">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tmux and vim">
+<meta property="og:url" content="http://example.com/2022/10/29/linux%E5%9F%BA%E7%A1%80/2.tmux%E5%92%8Cvim/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
+<meta property="og:description" content="tmux  使tmux配置文件生效在tmux窗口中，先按下 Ctrl+b 指令前缀，然后按下系统指令 : ，进入到命令模式后输入 source-file ~&#x2F;.tmux.conf ，回车后生效。  vim12#win和linux换行符转换:set ff&#x3D;unix  vim全局搜索并跳转 vimgrep，简写vim 1、只搜索当前文件 1:vim&#x2F;pattern&#x2F;% | copen  2、">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2023-01-15T07:13:22.146Z">
-<meta property="article:modified_time" content="2023-01-15T07:13:22.146Z">
+<meta property="article:published_time" content="2022-10-29T14:53:26.443Z">
+<meta property="article:modified_time" content="2023-03-22T11:49:34.626Z">
 <meta property="article:author" content="crz">
+<meta property="article:tag" content="Linux">
 <meta name="twitter:card" content="summary">
   
     <link rel="alternative" href="/atom.xml" title="crz&#39;s blog" type="application/atom+xml">
@@ -138,12 +141,45 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-Linux高性能服务器编程/第9章 IO复用/9.7 高级应用三：同时处理TCP和UDP服务" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-linux基础/2.tmux和vim" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      tmux and vim
+    </h1>
+  
+
+        
+        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/2.tmux%E5%92%8Cvim/" class="archive-article-date">
+  	<time datetime="2022-10-29T14:53:26.443Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+</a>
+        
+      </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <h2 id="tmux"><a href="#tmux" class="headerlink" title="tmux"></a>tmux</h2><blockquote>
+<p> 使tmux配置文件生效<br>在<strong>tmux</strong>窗口中，先按下 Ctrl+b 指令前缀，然后按下系统指令 : ，进入到命令模式后输入 source-file ~&#x2F;.<strong>tmux</strong>.conf ，回车后<strong>生效</strong>。</p>
+</blockquote>
+<h2 id="vim"><a href="#vim" class="headerlink" title="vim"></a>vim</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#win和linux换行符转换</span><br><span class="line">:set ff=unix</span><br></pre></td></tr></table></figure>
+
+<h3 id="vim全局搜索并跳转"><a href="#vim全局搜索并跳转" class="headerlink" title="vim全局搜索并跳转"></a>vim全局搜索并跳转</h3><hr>
+<p>vimgrep，简写vim</p>
+<p>1、只搜索当前文件</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim/pattern/% | copen</span><br></pre></td></tr></table></figure>
+
+<p>2、只搜索当前目录</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim/pattern<span class="comment">/* | copen</span></span><br></pre></td></tr></table></figure>
+
+<p>3、搜索上级目录下，并递归</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim /pattern/ ..<span class="comment">/** | copen</span></span><br></pre></td></tr></table></figure>
+
+<p>4、多个路径搜索</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim /pattern/ path1<span class="comment">/** path1/** | copen</span></span><br></pre></td></tr></table></figure>
+
       
 
       
@@ -151,6 +187,17 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Linux</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
@@ -201,7 +248,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/9.7%20%E9%AB%98%E7%BA%A7%E5%BA%94%E7%94%A8%E4%B8%89%EF%BC%9A%E5%90%8C%E6%97%B6%E5%A4%84%E7%90%86TCP%E5%92%8CUDP%E6%9C%8D%E5%8A%A1/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/2022/10/29/linux%E5%9F%BA%E7%A1%80/2.tmux%E5%92%8Cvim/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -215,18 +262,18 @@
   
 <nav id="article-nav">
   
-    <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/9.8%20%E8%B6%85%E7%BA%A7%E6%9C%8D%E5%8A%A1xinetd/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/5.git/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          (no title)
+          git
         
       </div>
     </a>
   
   
-    <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/9.6%20%E9%AB%98%E7%BA%A7%E5%BA%94%E7%94%A8%E4%BA%8C%EF%BC%9A%E8%81%8A%E5%A4%A9%E5%AE%A4%E7%A8%8B%E5%BA%8F/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title"></div>
+    <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Linux基础常用命令</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -245,6 +292,19 @@
             </div>
         </div>
         
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#tmux"><span class="toc-number">1.</span> <span class="toc-text">tmux</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#vim"><span class="toc-number">2.</span> <span class="toc-text">vim</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#vim%E5%85%A8%E5%B1%80%E6%90%9C%E7%B4%A2%E5%B9%B6%E8%B7%B3%E8%BD%AC"><span class="toc-number">2.1.</span> <span class="toc-text">vim全局搜索并跳转</span></a></li></ol></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
         
     </div>
 </aside>
@@ -374,6 +434,26 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">algorithm</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
               </li>
             
             <div class="clearfix"></div>

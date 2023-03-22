@@ -6,17 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://example.com">
-  <title>crz&#39;s blog</title>
+  <title>Linux基础常用命令 | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="用户组管理1234adduser $usernamepasswd $usernamesudo usermod -aG sudo $username #添加sudo权限 #-a 代表 append， 也就是 将自己添加到 用户组groupA 中，而不必离开 其他用户组">
 <meta property="og:type" content="article">
-<meta property="og:title" content="crz&#39;s blog">
+<meta property="og:title" content="Linux基础常用命令">
 <meta property="og:url" content="http://example.com/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
 <meta property="og:description" content="用户组管理1234adduser $usernamepasswd $usernamesudo usermod -aG sudo $username #添加sudo权限 #-a 代表 append， 也就是 将自己添加到 用户组groupA 中，而不必离开 其他用户组">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-10-29T14:53:26.438Z">
-<meta property="article:modified_time" content="2022-11-10T07:30:08.506Z">
+<meta property="article:modified_time" content="2023-03-22T11:50:26.504Z">
 <meta property="article:author" content="crz">
 <meta name="twitter:card" content="summary">
   
@@ -143,6 +143,21 @@
             <article id="post-linux基础/1.基础常用命令" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Linux基础常用命令
+    </h1>
+  
+
+        
+        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="archive-article-date">
+  	<time datetime="2022-10-29T14:53:26.438Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+</a>
+        
+      </header>
+    
     <div class="article-entry" itemprop="articleBody">
       
         <h2 id="用户组管理"><a href="#用户组管理" class="headerlink" title="用户组管理"></a>用户组管理</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">adduser <span class="variable">$username</span></span><br><span class="line">passwd <span class="variable">$username</span></span><br><span class="line">sudo usermod -aG sudo <span class="variable">$username</span> <span class="comment">#添加sudo权限</span></span><br><span class="line"> <span class="comment">#-a 代表 append， 也就是 将自己添加到 用户组groupA 中，而不必离开 其他用户组</span></span><br></pre></td></tr></table></figure>
@@ -156,6 +171,17 @@
       
       
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
 
@@ -219,18 +245,18 @@
   
 <nav id="article-nav">
   
-    <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/5.git/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/2.tmux%E5%92%8Cvim/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          (no title)
+          tmux and vim
         
       </div>
     </a>
   
   
     <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title"></div>
+      <div class="article-nav-title">管道、环境变量与常用命令</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -249,6 +275,19 @@
             </div>
         </div>
         
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E7%BB%84%E7%AE%A1%E7%90%86"><span class="toc-number">1.</span> <span class="toc-text">用户组管理</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
         
     </div>
 </aside>
@@ -378,6 +417,26 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">algorithm</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
               </li>
             
             <div class="clearfix"></div>

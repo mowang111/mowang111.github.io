@@ -6,19 +6,22 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://example.com">
-  <title>crz&#39;s blog</title>
+  <title>IO复用 | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="poll系统调用和select类似，也是在指定时间内轮询一定数量的文件描述符，以测试其中是否有就绪者。 12#include &lt;poll.h&gt;int poll( struct pollfd* fds, nfds_t nfds, int timeout );  fds参数是一个pollfd结构类型的数组，它指定所有我们感兴趣的文件描述符上发生的可读、可写和异常等事件。 123456stu">
+  <meta name="description" content="客户端程序要同时处理多个socket 客户端程序要同时处理用户输入和网络连接 TCP服务器要同时处理监听socket和连接socket 服务器要同时监听多个端口，或处理多种服务  I&#x2F;O复用虽然能同时监听多个文件描述符，但是其本身是阻塞的。如果要实现并发，只能使用多进程或多线程。 Linux下实现I&#x2F;O复用的系统调用主要是select、poll和epoll。 select在一">
 <meta property="og:type" content="article">
-<meta property="og:title" content="crz&#39;s blog">
-<meta property="og:url" content="http://example.com/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/9.2%20poll%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/index.html">
+<meta property="og:title" content="IO复用">
+<meta property="og:url" content="http://example.com/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/IO%E5%A4%8D%E7%94%A8/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
-<meta property="og:description" content="poll系统调用和select类似，也是在指定时间内轮询一定数量的文件描述符，以测试其中是否有就绪者。 12#include &lt;poll.h&gt;int poll( struct pollfd* fds, nfds_t nfds, int timeout );  fds参数是一个pollfd结构类型的数组，它指定所有我们感兴趣的文件描述符上发生的可读、可写和异常等事件。 123456stu">
+<meta property="og:description" content="客户端程序要同时处理多个socket 客户端程序要同时处理用户输入和网络连接 TCP服务器要同时处理监听socket和连接socket 服务器要同时监听多个端口，或处理多种服务  I&#x2F;O复用虽然能同时监听多个文件描述符，但是其本身是阻塞的。如果要实现并发，只能使用多进程或多线程。 Linux下实现I&#x2F;O复用的系统调用主要是select、poll和epoll。 select在一">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2023-01-15T06:30:14.795Z">
-<meta property="article:modified_time" content="2023-01-15T06:37:07.085Z">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230115151114.png">
+<meta property="article:published_time" content="2023-01-11T02:34:33.541Z">
+<meta property="article:modified_time" content="2023-03-22T11:57:44.283Z">
 <meta property="article:author" content="crz">
+<meta property="article:tag" content="Linux高性能服务器编程">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230115151114.png">
   
     <link rel="alternative" href="/atom.xml" title="crz&#39;s blog" type="application/atom+xml">
   
@@ -140,12 +143,43 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-Linux高性能服务器编程/第9章 IO复用/9.2 poll系统调用" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-Linux高性能服务器编程/第9章 IO复用/IO复用" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      IO复用
+    </h1>
+  
+
+        
+        <a href="/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/IO%E5%A4%8D%E7%94%A8/" class="archive-article-date">
+  	<time datetime="2023-01-11T02:34:33.541Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-11</time>
+</a>
+        
+      </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>poll系统调用和select类似，也是在指定时间内轮询一定数量的文件描述符，以测试其中是否有就绪者。</p>
+        <ul>
+<li>客户端程序要同时处理多个socket</li>
+<li>客户端程序要同时处理用户输入和网络连接</li>
+<li>TCP服务器要同时处理监听socket和连接socket</li>
+<li>服务器要同时监听多个端口，或处理多种服务</li>
+</ul>
+<p>I&#x2F;O复用虽然能同时监听多个文件描述符，但是其本身是阻塞的。如果要实现并发，只能使用多进程或多线程。</p>
+<p>Linux下实现I&#x2F;O复用的系统调用主要是select、poll和epoll。</p>
+<h1 id="select"><a href="#select" class="headerlink" title="select"></a>select</h1><p>在一段指定时间内，监听用户感兴趣的文件描述符上的可读、可写和异常等事件。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">select</span><span class="params">( <span class="type">int</span> nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, <span class="keyword">struct</span> timeval* timeout )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>nfds通常被设置为select监听的所有文件描述符中的最大值+1，因为文件描述符是从0开始计数的。</p>
+<p>fd_set结构体中仅包含一个整型数组，该数组的每个元素的每一位（bit）标记一个文件描述符。fd_set能容纳的文件描述符数量由FD_SETSIZE指定，这就限制了select能同时处理的文件描述符的总量。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#incldue <span class="string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="built_in">FD_ZERO</span>( fd_set* fdset);</span><br><span class="line"><span class="built_in">FD_SET</span>( <span class="type">int</span> fd, fd_set* fdset ); <span class="comment">//添加描述符fd</span></span><br><span class="line"><span class="built_in">FD_CLR</span>( <span class="type">int</span> fd, fd_set* fdset );</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">FD_ISSET</span><span class="params">( <span class="type">int</span> fd, fd_set* fdset )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>timeout参数用来设置select函数超时时间</p>
+<h1 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h1><p>poll系统调用和select类似，也是在指定时间内轮询一定数量的文件描述符，以测试其中是否有就绪者。</p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;poll.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">poll</span><span class="params">( <span class="keyword">struct</span> pollfd* fds, <span class="type">nfds_t</span> nfds, <span class="type">int</span> timeout )</span></span>;</span><br></pre></td></tr></table></figure>
 
 <p>fds参数是一个pollfd结构类型的数组，它指定所有我们感兴趣的文件描述符上发生的可读、可写和异常等事件。</p>
@@ -155,6 +189,25 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> <span class="type">nfds_t</span>;</span><br></pre></td></tr></table></figure>
 
 <p>timeout参数指定poll的超时值，单位是毫秒，timeout为-1时，poll将永远阻塞，直到某个事件发生；timeout为0时，poll调用立即返回。</p>
+<h1 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h1><h2 id="内核事件表"><a href="#内核事件表" class="headerlink" title="内核事件表"></a>内核事件表</h2><p>epoll是Linux特有的I&#x2F;O复用函数，epoll用一组函数来完成任务，而不是单个函数。另外，epoll将用户关心的文件描述符上的事件放在内核里的一个事件表中，从而无需像select和poll那样每次调用都重复传入文件描述符集或事件集。但epoll需要一个额外的文件描述符，来标识内核中的这个事件表。这个文件描述符使用epoll_create函数来创建。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">epoll_create</span><span class="params">( <span class="type">int</span> size )</span></span><br></pre></td></tr></table></figure>
+
+<p>下面函数用来操作epoll内核事件表：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="type">int</span> epfd, <span class="type">int</span> op, <span class="type">int</span> fd,<span class="keyword">struct</span> epoll_event* event)</span></span></span><br></pre></td></tr></table></figure>
+<p>fd是要操作的文件描述符，op时指定操作类型：</p>
+<ul>
+<li>EPOLL_CTL_ADD</li>
+<li>EPOLL_CTL_MOD</li>
+<li>EPOLL_CTL_DEL<br>event指定事件<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">epoll_event</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">__unit32_t</span> events;</span><br><span class="line">	<span class="type">epoll_data_t</span> data;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="epoll-wait函数"><a href="#epoll-wait函数" class="headerlink" title="epoll_wait函数"></a>epoll_wait函数</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">epoll_wait</span><span class="params">( <span class="type">int</span> epfd, <span class="keyword">struct</span> epoll_event* events, <span class="type">int</span> maxevents, <span class="type">int</span> timeout )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="LT和ET模式"><a href="#LT和ET模式" class="headerlink" title="LT和ET模式"></a>LT和ET模式</h2><p>epoll对文件描述符的操作有两种模式：LT(Level Trigger,电平触发)模式和ET(Edge Triggger,边沿触发)模式。<br>对于采用LT工作模式的文件描述符，当epoll_wait监测到其上有事件发生并将事件通知到应用程序后，应用程序可以不立即处理该事件，当应用程序下次调用epoll_wait时，epoll_wait还会再次相应通告该事件，直到该事件被处理。<br>对于采用ET工作模式的文件描述符，应用程序则必须立即处理该事件，因为后续的epoll_wait调用将不再通知这一事件。</p>
+<h2 id="EPOLLONESHOT-事件"><a href="#EPOLLONESHOT-事件" class="headerlink" title="EPOLLONESHOT 事件"></a>EPOLLONESHOT 事件</h2><p>一个socket连接在任意时刻都只被一个线程处理</p>
+<blockquote>
+<p>注意：监听文件描述符不能注册为EPOLLONESHOT事件，否则应用程序只能处理一个客户连接</p>
+</blockquote>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230115151114.png" alt="image.png"></p>
 
       
 
@@ -163,6 +216,17 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
@@ -213,7 +277,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/9.2%20poll%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/IO%E5%A4%8D%E7%94%A8/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -227,18 +291,18 @@
   
 <nav id="article-nav">
   
-    <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/9.4%20%E4%B8%89%E7%A7%8DIO%E5%A4%8D%E7%94%A8%E5%87%BD%E6%95%B0%E7%9A%84%E6%AF%94%E8%BE%83/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.3%20IO%E6%A8%A1%E5%9E%8B/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          (no title)
+          IO模型
         
       </div>
     </a>
   
   
-    <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC3%E7%AB%A0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/3.2%20TCP%E5%A4%B4%E9%83%A8%E7%BB%93%E6%9E%84/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title"></div>
+    <a href="/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.4%20%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86%E6%A8%A1%E5%BC%8F/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">事件处理模式</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -257,6 +321,19 @@
             </div>
         </div>
         
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#select"><span class="toc-number">1.</span> <span class="toc-text">select</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#poll"><span class="toc-number">2.</span> <span class="toc-text">poll</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#epoll"><span class="toc-number">3.</span> <span class="toc-text">epoll</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E4%BA%8B%E4%BB%B6%E8%A1%A8"><span class="toc-number">3.1.</span> <span class="toc-text">内核事件表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#epoll-wait%E5%87%BD%E6%95%B0"><span class="toc-number">3.2.</span> <span class="toc-text">epoll_wait函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LT%E5%92%8CET%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.3.</span> <span class="toc-text">LT和ET模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EPOLLONESHOT-%E4%BA%8B%E4%BB%B6"><span class="toc-number">3.4.</span> <span class="toc-text">EPOLLONESHOT 事件</span></a></li></ol></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
         
     </div>
 </aside>
@@ -386,6 +463,26 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">algorithm</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
               </li>
             
             <div class="clearfix"></div>

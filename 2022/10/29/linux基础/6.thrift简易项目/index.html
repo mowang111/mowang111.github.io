@@ -6,17 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="http://example.com">
-  <title>crz&#39;s blog</title>
+  <title>thrift在线匹配系统 | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="thrift在线匹配系统代码结构有三个文件夹 1match_system game thrift match_system为服务端的代码game为客户端的代码thrift定义接口 thrift接口生成thrift接口通过thrift接口生成服务端和用户端代码 1thrift -r --gen &lt;language&gt; &lt;Thrift filename&gt; 编译thrift生成的代">
 <meta property="og:type" content="article">
-<meta property="og:title" content="crz&#39;s blog">
+<meta property="og:title" content="thrift在线匹配系统">
 <meta property="og:url" content="http://example.com/2022/10/29/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
 <meta property="og:description" content="thrift在线匹配系统代码结构有三个文件夹 1match_system game thrift match_system为服务端的代码game为客户端的代码thrift定义接口 thrift接口生成thrift接口通过thrift接口生成服务端和用户端代码 1thrift -r --gen &lt;language&gt; &lt;Thrift filename&gt; 编译thrift生成的代">
 <meta property="og:locale" content="en_US">
 <meta property="article:published_time" content="2022-10-29T14:52:12.995Z">
-<meta property="article:modified_time" content="2021-12-15T11:36:26.000Z">
+<meta property="article:modified_time" content="2023-03-22T11:50:57.405Z">
 <meta property="article:author" content="crz">
 <meta name="twitter:card" content="summary">
   
@@ -143,6 +143,21 @@
             <article id="post-linux基础/6.thrift简易项目" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      thrift在线匹配系统
+    </h1>
+  
+
+        
+        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/" class="archive-article-date">
+  	<time datetime="2022-10-29T14:52:12.995Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+</a>
+        
+      </header>
+    
     <div class="article-entry" itemprop="articleBody">
       
         <h1 id="thrift在线匹配系统"><a href="#thrift在线匹配系统" class="headerlink" title="thrift在线匹配系统"></a>thrift在线匹配系统</h1><h2 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h2><p>有三个文件夹</p>
@@ -173,6 +188,17 @@
       
       
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
 
@@ -240,7 +266,7 @@
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          (no title)
+          ssh
         
       </div>
     </a>
@@ -261,6 +287,19 @@
             </div>
         </div>
         
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#thrift%E5%9C%A8%E7%BA%BF%E5%8C%B9%E9%85%8D%E7%B3%BB%E7%BB%9F"><span class="toc-number">1.</span> <span class="toc-text">thrift在线匹配系统</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E7%BB%93%E6%9E%84"><span class="toc-number">1.1.</span> <span class="toc-text">代码结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#thrift%E6%8E%A5%E5%8F%A3%E7%94%9F%E6%88%90"><span class="toc-number">1.2.</span> <span class="toc-text">thrift接口生成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#python%E4%BB%A3%E7%A0%81"><span class="toc-number">1.3.</span> <span class="toc-text">python代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8c-%E4%BB%A3%E7%A0%81"><span class="toc-number">1.4.</span> <span class="toc-text">服务器c++代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%86%E5%8C%B9%E9%85%8D%E7%BB%93%E6%9E%9C%E5%AD%98%E5%82%A8%E5%9C%A8%E5%AD%98%E5%82%A8%E7%9A%84%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="toc-number">1.5.</span> <span class="toc-text">将匹配结果存储在存储的服务端</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#vim%E4%B8%AD%E7%B2%98%E8%B4%B4%E4%BB%A3%E7%A0%81"><span class="toc-number">1.5.1.</span> <span class="toc-text">vim中粘贴代码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#vim-%E5%85%A8%E5%B1%80%E6%9B%BF%E6%8D%A2"><span class="toc-number">1.5.2.</span> <span class="toc-text">vim 全局替换</span></a></li></ol></li></ol></li></ol>
+                    </div>
+                </span>
+            </div>
+        </div>
         
     </div>
 </aside>
@@ -390,6 +429,26 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">algorithm</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
               </li>
             
             <div class="clearfix"></div>
