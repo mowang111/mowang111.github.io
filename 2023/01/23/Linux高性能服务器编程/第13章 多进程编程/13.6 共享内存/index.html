@@ -5,13 +5,13 @@
   
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
-  <link rel="dns-prefetch" href="http://example.com">
+  <link rel="dns-prefetch" href="https://mowang111.github.io">
   <title>crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="共享内存是最高效的IPC机制，因为它不涉及进程之间的任何数据传输。这种高效率带来的问题是，我们必须用其他辅助手段来同步进程对共享内存的访问，否则会产生竞态条件。因此，共享内存通常和其他进程间通信方式一起使用。Linux共享内存段 API都定义在sys&#x2F;shm.h头文件中，包括4个系统调用：shmget、shmat、shmdt 和 shmctl。 shmget系统调用12#include">
 <meta property="og:type" content="article">
 <meta property="og:title" content="crz&#39;s blog">
-<meta property="og:url" content="http://example.com/2023/01/23/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.6%20%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98/index.html">
+<meta property="og:url" content="https://mowang111.github.io/2023/01/23/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.6%20%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
 <meta property="og:description" content="共享内存是最高效的IPC机制，因为它不涉及进程之间的任何数据传输。这种高效率带来的问题是，我们必须用其他辅助手段来同步进程对共享内存的访问，否则会产生竞态条件。因此，共享内存通常和其他进程间通信方式一起使用。Linux共享内存段 API都定义在sys&#x2F;shm.h头文件中，包括4个系统调用：shmget、shmat、shmdt 和 shmctl。 shmget系统调用12#include">
 <meta property="og:locale" content="en_US">
@@ -23,7 +23,7 @@
     <link rel="alternative" href="/atom.xml" title="crz&#39;s blog" type="application/atom+xml">
   
   
-    <link rel="icon" href="/favicon.png">
+    <link rel="icon" href="https://cdn.acwing.com/media/user/profile/photo/55242_lg_99e1edfd6a.jpeg">
   
   <link rel="stylesheet" type="text/css" href="/./main.0cf68a.css">
   <style type="text/css">
@@ -214,7 +214,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=http://example.com/2023/01/23/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.6%20%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2023/01/23/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.6%20%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98/" alt="微信分享二维码">
     </div>
 </div>
 
