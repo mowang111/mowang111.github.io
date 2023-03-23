@@ -138,238 +138,367 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-Linux高性能服务器编程/第14章 多线程编程/14.1 Linux线程概述" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h1><p>线程是程序中完成一个独立任务的完整执行序列，即一个可调度的实体。</p>
-<p>根据运行环境和调度者身份，线程可分为内核线程和用户线程。</p>
-<p>内核线程，在有的系统上也称为LWP( Light Weight Process,轻量级进程)，运行在内核空间，由内核来调度。<br>用户线程运行在用户空间，由线程库来调度。</p>
-<p>一个进程的所有执行线程共享该进程的时间片，它们对外表现出相同的优先级。</p>
-<h1 id="Linux线程库"><a href="#Linux线程库" class="headerlink" title="Linux线程库"></a>Linux线程库</h1>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/25/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/14.1%20Linux%E7%BA%BF%E7%A8%8B%E6%A6%82%E8%BF%B0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-Linux高性能服务器编程/第14章 多线程编程/14.0 多线程编程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>POSIX线程（pthread）标准</p>
-<ul>
-<li>创建线程和结束线程</li>
-<li>读取和设置线程属性</li>
-<li>POSIX线程同步方式：POSIX信号量、互斥锁和条件变量</li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/25/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/14.0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.8 IPC命令" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.8%20IPC%E5%91%BD%E4%BB%A4/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.7 消息队列" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>消息队列是在两个进程之间传递二进制块数据的一种简单有效的方式。每个数据块都有一个特定类型，接收方可以根据类型来有选择地接收数据，而不一定翔管道和命名管道那样必须以先进先出的方式接收数据。<br>linux消息队列的API都定义在sys&#x2F;msg.h头文件中，包括4个系统调用：msgget、msgsnd、msgrcv和msgctl。</p>
-<h1 id="msgget系统调用"><a href="#msgget系统调用" class="headerlink" title="msgget系统调用"></a>msgget系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgget</span><span class="params">( <span class="type">key_t</span> key, <span class="type">int</span> msgflg)</span></span>;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">msqid_ds</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">ipc_perm</span> msg_perm;</span><br><span class="line">	<span class="type">time_t</span> msg_stime;</span><br><span class="line">	<span class="type">time_t</span> msg_rtime;</span><br><span class="line">	<span class="type">time_t</span> msg_ctime;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> __msg_cbytes;</span><br><span class="line">	<span class="type">msgqnum_t</span> msg_qnum;</span><br><span class="line">	<span class="type">msglen_t</span> msg_qbytes;</span><br><span class="line">	<span class="type">pid_t</span> msg_lspid;</span><br><span class="line">	<span class="type">pit_t</span> msg_lpid;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h1 id="msgsnd系统调用"><a href="#msgsnd系统调用" class="headerlink" title="msgsnd系统调用"></a>msgsnd系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgsnd</span><span class="params">( <span class="type">int</span> msqid, <span class="type">const</span> <span class="type">void</span>* msg_ptr, <span class="type">size_t</span> msg_sz, <span class="type">int</span> msgflg )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">msgbuf</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">long</span> mtype;</span><br><span class="line">	<span class="type">char</span> mtext[<span class="number">512</span>];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<h1 id="msgrcv系统调用"><a href="#msgrcv系统调用" class="headerlink" title="msgrcv系统调用"></a>msgrcv系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgrcv</span><span class="params">( <span class="type">int</span> msqid, <span class="type">void</span>* msg_ptr, <span class="type">size_t</span> msg_sz, <span class="type">long</span> <span class="type">int</span> msgtype, <span class="type">int</span> msgflg )</span></span>; </span><br></pre></td></tr></table></figure>
-
-<h1 id="msgctl系统调用"><a href="#msgctl系统调用" class="headerlink" title="msgctl系统调用"></a>msgctl系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgctl</span><span class="params">( <span class="type">int</span> msqid, <span class="type">int</span> command, <span class="keyword">struct</span> msqid_ds* buf )</span></span>;</span><br></pre></td></tr></table></figure>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.7%20%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-Linux高性能服务器编程/第6章 高级IO函数/6.5 mmap函数和munmap函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-Linux高性能服务器编程/第11章 定时器/定时器" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/">mmap函数和munmap函数</a>
+      <a class="article-title" href="/2023/01/17/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC11%E7%AB%A0%20%E5%AE%9A%E6%97%B6%E5%99%A8/%E5%AE%9A%E6%97%B6%E5%99%A8/">定时器</a>
     </h1>
   
 
         
-        <a href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/" class="archive-article-date">
-  	<time datetime="2023-01-24T03:26:54.278Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-24</time>
+        <a href="/2023/01/17/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC11%E7%AB%A0%20%E5%AE%9A%E6%97%B6%E5%99%A8/%E5%AE%9A%E6%97%B6%E5%99%A8/" class="archive-article-date">
+  	<time datetime="2023-01-17T01:34:59.572Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-17</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>mmap函数用于申请一段内存空间。我们可以将这段内存作为进程间通信的共享内存，也可以将文件直接映射到其中。munmap函数则释放由mmap创建的这段内存空间。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">mmap</span><span class="params">( <span class="type">void</span>* start, <span class="type">size_t</span> length, <span class="type">int</span> prot, <span class="type">int</span> flags, <span class="type">int</span> fd, <span class="type">off_t</span> offset )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">munmap</span><span class="params">( <span class="type">void</span>* start, <span class="type">size_t</span> length )</span></span>;</span><br></pre></td></tr></table></figure>
-<p>start参数用于指定某个特定地址作为这段内存的起始地址，如果设置为NULL，则由系统自动分配。<br>prot用于设置内存段的访问权限<br>flags参数控制内存段内容被修改后程序的行为。</p>
+        <h1 id="定时器"><a href="#定时器" class="headerlink" title="定时器"></a>定时器</h1><p>网络程序需要处理的第三类事件是定时事件。</p>
+<p>两种高效的管理定时器的容器：时间轮和时间堆</p>
+<p>定时是指在一段时间后触发某段代码的机制，我们可以在这段代码中依次处理所有到期的定时器。换言之，定时机制是定时器得以被处理的原动力。</p>
+<p>Linux提供了三种定时方法：</p>
 <ul>
-<li>MAP_SHARED: 在进程间共享这段内存。对该内存段的修改将反映到被映射的文件中。它提供了进程间共享内存的POSIX方法。</li>
+<li>socket 选项SO_RCVTIMEO和SO_SNDTIMEO</li>
+<li>SIGALRM信号</li>
+<li>I&#x2F;O复用系统调用的超时参数</li>
+</ul>
+<h2 id="socket选项SO-RCVTIMEO和SO-SNDTIMEO"><a href="#socket选项SO-RCVTIMEO和SO-SNDTIMEO" class="headerlink" title="socket选项SO_RCVTIMEO和SO_SNDTIMEO"></a>socket选项SO_RCVTIMEO和SO_SNDTIMEO</h2><p>socket选项SO_RCVTIMEO和SO_SNDTIMEO分别用来设置socket接收数据超时时间和发送数据超时时间。因此，这两个选项仅对与数据接收和发送相关的socket专用系统调用有效，这些系统调用包括send、sendmsg、recv、recvmsg、accept和connect。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230117095524.png" alt="image.png"><br>可以根据系统调用（send、sendmsg、recv、recvmsg、accept和connect)的返回值以及errno来判断超时时间是否已到，进而决定是否开始处理定时任务。</p>
+<h2 id="SIGALRM信号"><a href="#SIGALRM信号" class="headerlink" title="SIGALRM信号"></a>SIGALRM信号</h2><p>由alarm和setitimer函数设置的实时闹钟一旦超时，将触发SIGALRM信号，可以利用该信号处理定时任务。</p>
+<h3 id="基于升序链表的定时器"><a href="#基于升序链表的定时器" class="headerlink" title="基于升序链表的定时器"></a>基于升序链表的定时器</h3><p>定时器通常至少包含两个成员：一个超时时间和一个任务回调函数</p>
+<h3 id="处理非活动连接"><a href="#处理非活动连接" class="headerlink" title="处理非活动连接"></a>处理非活动连接</h3><p>服务器程序通常要定期处理非活动连接：给客户端发一个重连请求，或者关闭该连接，或者其他。<br>Linux在内核中提供了对连接是否处于活动状态的定期检查机制，我们可以通过socket选项KEEPALIVE来激活它。不过使用这种方式将使得应用程序对连接的管理变得复杂。因此，我们可以考虑在应用层实现类似KEEPALIVE的机制，以管理所有长时间处于非活动状态的连接。</p>
+<h2 id="IO复用系统调用的超时参数"><a href="#IO复用系统调用的超时参数" class="headerlink" title="IO复用系统调用的超时参数"></a>IO复用系统调用的超时参数</h2><p>Linux下的3组I&#x2F;O复用系统调用都带有超时参数，因此它们不仅能统一处理信号和I&#x2F;O事件，也能统一处理定时事件。但是由于I&#x2F;O复用系统调用可能在超时时间到期之前就返回（有I&#x2F;O事件发生），所以如果我们要利用它们来定时，就需要不断更新定时参数以反映剩余的时间。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/01/17/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC11%E7%AB%A0%20%E5%AE%9A%E6%97%B6%E5%99%A8/%E5%AE%9A%E6%97%B6%E5%99%A8/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-Linux高性能服务器编程/第10章 信号/10.3 信号集" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/16/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.3%20%E4%BF%A1%E5%8F%B7%E9%9B%86/">信号集</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/16/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.3%20%E4%BF%A1%E5%8F%B7%E9%9B%86/" class="archive-article-date">
+  	<time datetime="2023-01-16T03:38:14.219Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-16</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="信号集函数"><a href="#信号集函数" class="headerlink" title="信号集函数"></a>信号集函数</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/sigset.h&gt;</span></span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> _SIGSET_NWORDS (1024 / (8 * sizeof (unsigned long int)))</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> __val[_SIGSET_NWORDS];</span><br><span class="line">&#125;<span class="type">__sigset_t</span>;</span><br></pre></td></tr></table></figure>
+<p>sigset_t实际上是一个长整型数组，数组的每个元素的每个位表示一个信号。这种定义方式和文件描述符fd_set类似。Linux提供以下函数来设置、修改、删除和查询信号集：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigemptyset</span> <span class="params">(<span class="type">sigset_t</span>* _set)</span> </span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigfillset</span> <span class="params">(<span class="type">sigset_t</span>* _set)</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigaddset</span> <span class="params">(<span class="type">sigset_t</span>* _set, <span class="type">int</span> _signo)</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigdelset</span> <span class="params">(<span class="type">sigset_t</span>* _set, <span class="type">int</span> _signo)</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigismember</span> <span class="params">(_const <span class="type">sigset_t</span>* _set, <span class="type">int</span> _signo)</span></span></span><br></pre></td></tr></table></figure>
+
+<h1 id="进程信号掩码"><a href="#进程信号掩码" class="headerlink" title="进程信号掩码"></a>进程信号掩码</h1><p>可以利用sigaction结构体的sa_mask成员来设置进程的信号掩码。也可以用如下函数设置或查看进程的信号掩码：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigprocmask</span><span class="params">( <span class="type">int</span> _how, _const <span class="type">sigset_t</span>* _set, <span class="type">sigset_t</span>* _oset )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h1 id="被挂起的信号"><a href="#被挂起的信号" class="headerlink" title="被挂起的信号"></a>被挂起的信号</h1><p>被进程信号掩码屏蔽的信号如果被发送给进程，会被操作系统设置为该进程的一个被挂起的信号。如下函数可以获得进程当前被挂起的信号集：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigpending</span><span class="params">( <span class="type">sigset_t</span>* set )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>要始终清楚地直到进程在每个运行时刻的信号掩码，以及如何适当地处理捕获到的信号。在多进程、多线程环境中，我们要以进程、线程为单位来处理信号和信号掩码。我们不能设想新创建的进程、线程具有和父进程、主线程完成相同的信号特征。比如，fork调用产生的子进程将继承父信号的信号掩码，但具有一个空的挂起信号集。</p>
+</blockquote>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/01/16/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.3%20%E4%BF%A1%E5%8F%B7%E9%9B%86/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-Linux高性能服务器编程/第10章 信号/10.2 信号函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.2%20%E4%BF%A1%E5%8F%B7%E5%87%BD%E6%95%B0/">信号函数</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.2%20%E4%BF%A1%E5%8F%B7%E5%87%BD%E6%95%B0/" class="archive-article-date">
+  	<time datetime="2023-01-15T08:27:13.726Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="signal系统调用"><a href="#signal系统调用" class="headerlink" title="signal系统调用"></a>signal系统调用</h1><p>要为一个信号设置处理函数，可以使用下面的signal系统调用：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">_sighandler_t</span> <span class="title">signal</span> <span class="params">( <span class="type">int</span> sig, <span class="type">_sighandler_t</span> _handler )</span></span></span><br></pre></td></tr></table></figure>
+
+<h1 id="sigaction-系统调用"><a href="#sigaction-系统调用" class="headerlink" title="sigaction 系统调用"></a>sigaction 系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigaction</span><span class="params">( <span class="type">int</span> sig, <span class="type">const</span> <span class="keyword">struct</span> sigaction* act, <span class="keyword">struct</span> sigaction* oact)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>sigaction结构体描述了信号处理的细节</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">sigaction</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __USE_POSIX199309</span></span><br><span class="line">	<span class="keyword">union</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">_sighander_t</span> sa_handler;</span><br><span class="line">		<span class="built_in">void</span> (*sa_sigaction) ( <span class="type">int</span>, <span class="type">siginfo_t</span>*, <span class="type">void</span>* ); </span><br><span class="line">	&#125;_sigaction_handler;</span><br><span class="line"><span class="meta"># <span class="keyword">define</span> sa_handler __sigaction_handler.sa_handler;</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> sa_sigaction __sigaction_handler.sa_sigaction;</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">	<span class="type">_sighandler_t</span> sa_handler</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">	<span class="type">_sigset_t</span> sa_mask;</span><br><span class="line">	<span class="type">int</span> sa_flags;</span><br><span class="line">	<span class="built_in">void</span> (*sa_restorer) (<span class="type">void</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>sa_mask成员设置进程的信号掩码（确切地说是在进程原有信号掩码的基础上增加信号掩码），以指定哪些信号不能发给本进程。<br>sa_flags成员用于设置程序收到信号值的行为。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230116113706.png" alt="image.png"></p>
+<p>sa_restorer成员以过时，最好不要使用。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.2%20%E4%BF%A1%E5%8F%B7%E5%87%BD%E6%95%B0/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-Linux高性能服务器编程/第10章 信号/10.1 Linux信号概述" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.1%20Linux%E4%BF%A1%E5%8F%B7%E6%A6%82%E8%BF%B0/">Linux信号概述</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.1%20Linux%E4%BF%A1%E5%8F%B7%E6%A6%82%E8%BF%B0/" class="archive-article-date">
+  	<time datetime="2023-01-15T08:09:28.232Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="发送信号"><a href="#发送信号" class="headerlink" title="发送信号"></a>发送信号</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">kill</span><span class="params">( <span class="type">pid_t</span> pid, <span class="type">int</span> sig )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h1 id="信号处理方式"><a href="#信号处理方式" class="headerlink" title="信号处理方式"></a>信号处理方式</h1><p>信号处理函数原型：</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">__sighandler_t</span>)</span> <span class="params">( <span class="type">int</span> )</span></span>;</span><br></pre></td></tr></table></figure>
+
+
+<h1 id="Linux信号"><a href="#Linux信号" class="headerlink" title="Linux信号"></a>Linux信号</h1><h1 id="中断系统调用"><a href="#中断系统调用" class="headerlink" title="中断系统调用"></a>中断系统调用</h1>
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.1%20Linux%E4%BF%A1%E5%8F%B7%E6%A6%82%E8%BF%B0/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-Linux高性能服务器编程/第10章 信号/10.0 信号" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.0%20%E4%BF%A1%E5%8F%B7/">信号</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.0%20%E4%BF%A1%E5%8F%B7/" class="archive-article-date">
+  	<time datetime="2023-01-15T07:51:26.853Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>信号是由用户、系统或者进程发送给目标进程的信息，以通知目标进程某个状态的改变或系统异常。Linux信号可由如下条件产生：</p>
+<ul>
+<li>对于前台进程，用户可以通过输入特殊的终端字符来给它发送信号。比如输入Ctrl+C通常会给进程发送一个中断信号。</li>
+<li>系统异常。比如浮点异常和非法内存段访问。</li>
+<li>系统状态变化。比如alarm定时器到期将引起SIGALRM信号</li>
+<li>运行kill命令或调用kill函数<br>服务器程序必须处理（或至少忽略）一些常见此你好，以免异常终止</li>
 </ul>
 
       
@@ -394,7 +523,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/">展开全文 >></a>
+          <a class="article-more-a" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.0%20%E4%BF%A1%E5%8F%B7/">展开全文 >></a>
         </p>
       
 
@@ -424,22 +553,12 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.6 共享内存" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-Linux高性能服务器编程/第3章 TCP协议详解/3.2 TCP头部结构" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>共享内存是最高效的IPC机制，因为它不涉及进程之间的任何数据传输。这种高效率带来的问题是，我们必须用其他辅助手段来同步进程对共享内存的访问，否则会产生竞态条件。因此，共享内存通常和其他进程间通信方式一起使用。<br>Linux共享内存段 API都定义在sys&#x2F;shm.h头文件中，包括4个系统调用：shmget、shmat、shmdt 和 shmctl。</p>
-<h1 id="shmget系统调用"><a href="#shmget系统调用" class="headerlink" title="shmget系统调用"></a>shmget系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shmget</span><span class="params">( <span class="type">key_t</span> key, <span class="type">size_t</span> size, <span class="type">int</span> shmflg )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h1 id="shmat和shmdt系统调用"><a href="#shmat和shmdt系统调用" class="headerlink" title="shmat和shmdt系统调用"></a>shmat和shmdt系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">shmat</span><span class="params">( <span class="type">int</span> shm_id, <span class="type">const</span> <span class="type">void</span>* shm_addr, <span class="type">int</span> shmflg )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shmdt</span><span class="params">( <span class="type">const</span> <span class="type">void</span>* shm_addr )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h1 id="shmctl系统调用"><a href="#shmctl系统调用" class="headerlink" title="shmctl系统调用"></a>shmctl系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#inclde <span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shmctl</span><span class="params">( <span class="type">int</span> shm_id, <span class="type">int</span> command, <span class="keyword">struct</span> shmid_ds* buf )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h1 id="共享内存的POSIX方法"><a href="#共享内存的POSIX方法" class="headerlink" title="共享内存的POSIX方法"></a>共享内存的POSIX方法</h1><p>Linuxt提供了一种利用mmap在无关进程之间共享内存的方式。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shm_open</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* name, <span class="type">int</span> oflag, <span class="type">mode_t</span> mode )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shm_unlink</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* name )</span></span>;</span><br></pre></td></tr></table></figure>
-
-
+        <h1 id="TCP固定头部结构"><a href="#TCP固定头部结构" class="headerlink" title="TCP固定头部结构"></a>TCP固定头部结构</h1><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230115101344.png" alt="image.png"></p>
 
       
 
@@ -452,7 +571,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/23/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.6%20%E5%85%B1%E4%BA%AB%E5%86%85%E5%AD%98/">展开全文 >></a>
+          <a class="article-more-a" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC3%E7%AB%A0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/3.2%20TCP%E5%A4%B4%E9%83%A8%E7%BB%93%E6%9E%84/">展开全文 >></a>
         </p>
       
 
@@ -482,44 +601,81 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.5 信号量" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-Linux高性能服务器编程/第3章 TCP协议详解/3.1 TCP服务" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="信号量原语"><a href="#信号量原语" class="headerlink" title="信号量原语"></a>信号量原语</h1><p>引发进程之间竞态条件的代码称为关键代码段或者临界区。</p>
-<p>Dijkstra提出信号量（Semaphore）<br>信号量是一种特殊的变量，它只能取自然数值并且只支持两种操作：等待（wait）和信号（signal）。不过在Linux&#x2F;UNIX中，“等待”和“信号”都已经有了特殊的含义，所以对信号量这两个操作更常用的称呼是P、V操作。</p>
-<ul>
-<li>P(SV)，如果SV的值大于0，就将它减一；如果SV的值为0，则挂起进程的执行</li>
-<li>V(SV)，如果有其他进程因为等待SV而挂起，则唤醒之；如果没用，则将SV加一</li>
+        <p>TCP相对于UDP的特点是：面向连接，字节流和可靠传输</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC3%E7%AB%A0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/3.1%20TCP%E6%9C%8D%E5%8A%A1/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-Linux高性能服务器编程/第3章 TCP协议详解/3.0 TCP协议详解" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC3%E7%AB%A0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/3.0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/">TCP协议详解</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC3%E7%AB%A0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/3.0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/" class="archive-article-date">
+  	<time datetime="2023-01-15T01:28:48.018Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <ul>
+<li>TCP头部信息。TCP头部信息出现在每个TCP报文段中，用于指定通信的源端端口号、目的端端口号，管理TCP连接，控制两个方向的数据流。</li>
+<li>TCP状态转移过程。TCP连接的任意一端都是一个状态机。在TCP连接从建立到断开的整个过程中，连接两端的状态机将经历不同的状态变迁。</li>
+<li>TCP数据流。通过分析TCP数据流，可以从网络应用程序外部来了解应用层协议和通信双方交换的应用程序数据。这部分讨论两种类型的TCP数据流：交互数据流和成块数据流。TCP数据流中有一种特殊的数据，称为紧急数据。</li>
+<li>TCP数据流控制。为例保证可靠传输和网络通信质量，内核需要堆TCP数据流进行控制。这一部分讨论TCP数据流控制的两个方面：超时重传和拥塞控制。</li>
 </ul>
-<p>Linux信号量的API都定义在sys&#x2F;sem.h头文件中，主要包含3个系统调用：semget、semop和semct。它们都被设计为操作一组信号量，即信号量集，而不是单个信号量。</p>
-<h2 id="semget系统调用"><a href="#semget系统调用" class="headerlink" title="semget系统调用"></a>semget系统调用</h2><p>semget系统调用创建一个新的信号量集，或者获取一个已经存在的信号量集。其定义如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">semget</span><span class="params">( <span class="type">key_t</span> key, <span class="type">int</span> num_sems, <span class="type">int</span> sem_flags )</span></span>;</span><br></pre></td></tr></table></figure>
 
-<p>如果semget用于创建信号量集，则与之关联的内核数据结构体semid_ds将被创建并初始化。semid_ds结构体的定义如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="comment">/*该结构体用于描述IPC对象（信号量、共享内存和消息队列）的权限*/</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ipc_perm</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">key_t</span> key;</span><br><span class="line">	<span class="type">uid_t</span> uid;</span><br><span class="line">	<span class="type">gid_t</span> gid;</span><br><span class="line">	<span class="type">uid_t</span> cuid;</span><br><span class="line">	<span class="type">gid_t</span> cgid;</span><br><span class="line">	<span class="type">mode_t</span> mode;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">semid_ds</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">ipc_perm</span> sem_perm;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> sem_nsems;</span><br><span class="line">	<span class="type">time_t</span> sem_otime;</span><br><span class="line">	<span class="type">time_t</span> sem_ctime;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>semget对semid_ds结构体的初始化包括：</p>
-<ul>
-<li>将sem_perm.cuid和sem_perm.uid设置为调用进程的有效用户ID</li>
-<li>将sem_perm.cgid和sem_perm.gid设置为调用进程的有效组ID</li>
-<li>将sem_perm.mode的最低9位设置为sem_flags参数的最低9位</li>
-<li>将sem_nsems设置为num_sems</li>
-<li>将sem_otime设置为0</li>
-<li>将sem_ctime设置为当前的系统时间</li>
-</ul>
-<h2 id="semop系统调用"><a href="#semop系统调用" class="headerlink" title="semop系统调用"></a>semop系统调用</h2><p>与每个信号量关联的一些重要的内核变量</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">short</span> semval; <span class="comment">//信号量的值</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">short</span> semzcnt; <span class="comment">//等待信号量值变为0的进程数量</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">short</span> semncnt; <span class="comment">//等待信号量值增加的进程数量</span></span><br><span class="line"><span class="type">pid_t</span> sempid;      <span class="comment">//最后异常执行semop操作的进程ID</span></span><br></pre></td></tr></table></figure>
-
-<p>semop对信号量的操作实际上就是对这些内核变量的操作。semop的定义如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">semop</span><span class="params">( <span class="type">int</span> sem_id, <span class="keyword">struct</span> sembuf* sem_ops, <span class="type">size_t</span> num_sem_ops )</span></span>;</span><br></pre></td></tr></table></figure>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">sembuf</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> sem_num;l</span><br><span class="line">	<span class="type">short</span> <span class="type">int</span> sem_op;</span><br><span class="line">	<span class="type">short</span> <span class="type">int</span> sem_flg;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="semctl系统调用"><a href="#semctl系统调用" class="headerlink" title="semctl系统调用"></a>semctl系统调用</h2><p>semctl系统调用允许调用者对信号量进行直接控制。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">semctl</span><span class="params">( <span class="type">int</span> sem_id, <span class="type">int</span> sem_num, <span class="type">int</span> command, ... )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h1 id="特殊键值IPC-PRIVATE"><a href="#特殊键值IPC-PRIVATE" class="headerlink" title="特殊键值IPC_PRIVATE"></a>特殊键值IPC_PRIVATE</h1>
       
 
       
@@ -528,10 +684,21 @@
       
       
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/18/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.5%20%E4%BF%A1%E5%8F%B7%E9%87%8F/">展开全文 >></a>
+          <a class="article-more-a" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC3%E7%AB%A0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/3.0%20TCP%E5%8D%8F%E8%AE%AE%E8%AF%A6%E8%A7%A3/">展开全文 >></a>
         </p>
       
 
@@ -561,12 +728,28 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.4 管道" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-Linux高性能服务器编程/第8章 高性能服务器框架/8.6 有限状态机" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/13/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/">有限状态机</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/13/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/" class="archive-article-date">
+  	<time datetime="2023-01-13T11:31:34.332Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-13</time>
+</a>
+        
+      </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>创建管道的系统调用pipe,可以用其实现进程内部的通信。<br>管道能再父、子进程间传力数据，利用的时fork调用之后两个管道文件描述符（fd[0]和fd[1]）都保持打开。一对这样的文件描述符只能保证父、子进程间的一个方向的数据传输，父进程和子进程必须有一个关闭fd[0],另一个关闭fd[1]。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230118162613.png" alt="image.png"></p>
+        <p>有限状态机（finite state machhine）是逻辑单元内部的高效编程方法</p>
+<h1 id="HTTP请求的读取与分析"><a href="#HTTP请求的读取与分析" class="headerlink" title="HTTP请求的读取与分析"></a>HTTP请求的读取与分析</h1><p>主从状态机，主状态机从内部调用从状态机<br>主状态机的状态是解析到了哪个部分，请求行？头部字段？<br>从状态机从buffer中读取行，其状态分为LINE_OK，LINE_OPEN, LINE_BAD，分别表示读取完一行，需要继续读取，以及语法有问题</p>
 
       
 
@@ -575,11 +758,22 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/18/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.4%20%E7%AE%A1%E9%81%93/">展开全文 >></a>
+          <a class="article-more-a" href="/2023/01/13/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/">展开全文 >></a>
         </p>
       
 
@@ -609,70 +803,38 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.3 处理僵尸进程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-Linux高性能服务器编程/第8章 高性能服务器框架/8.5 两种高效的并发模式" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>对于多进程程序而言，父进程一般需要跟踪子进程的退出状态。因此，当子进程结束运行时，内核不会立刻释放该进程的进程表表项，以满足父进程后续对该子进程退出信息的查询（如果父进程还在运行）。在子进程结束运行之后，父进程读取其退出状态之前，我们称该子进程处于僵尸态。<br>另外一种使子进程进入僵尸态的情况是：父进程结束或异常终止，而子进程继续运行。此时子进程的PPID将被操作系统设置为1，即init进程。init进程接管了该子进程，并等待它结束。在父进程退出之后，子进程退出之前，该子进程处于僵尸态。</p>
-<p>无论哪种情况，如果父进程没有正确地处理子进程的返回信息，子进程都将停留在僵尸态，并占据着内核资源。<br>下面这对函数在父进程中调用，以等待子进程的结束，并获取子进程的返回信息，从而避免了僵尸进程的产生，或者使子进程的僵尸态立即结束：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">wait</span><span class="params">( <span class="type">int</span>* stat_loc )</span></span>;</span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">waitpid</span><span class="params">( <span class="type">pid_t</span> pid, <span class="type">int</span>* stat_loc, <span class="type">int</span> options )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>wait函数将阻塞进程，直到该进程的某个子进程结束运行为止。它返回结束运行的子进程的PID,并将该子进程的退出状态信息存储于stat_loc参数指向的内存中。sys&#x2F;wait.h头文件中定义了几个宏来帮助解释子进程的退出状态信息<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230118161515.png" alt="image.png"></p>
-<p>waitpid 由pid参数指定子进程。option的参数为WNOHANG时，waitpid的调用时非阻塞的。</p>
-<p>要在事件已经发生了的情况下执行非阻塞调用才能提高程序的效率。对于waitpid函数而言，我们最好在某个子进程退出之后再调用它，父进程通过SIGCHLD信号得知子进程结束。当一个进程结束时，它将给其父进程发送一个SIGCHLD信号。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/18/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.3%20%E5%A4%84%E7%90%86%E5%83%B5%E5%B0%B8%E8%BF%9B%E7%A8%8B/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
+      <header class="article-header">
         
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
   
-    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.2 exec系列系统调用" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/12/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/">两种高效的并发模式</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/12/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/" class="archive-article-date">
+  	<time datetime="2023-01-12T13:01:27.189Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-12</time>
+</a>
+        
+      </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>有时我们需要在子进程中执行其他程序，即替换当前进程映像，这就需要使用如下exec系列函数之一：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">extern</span> <span class="type">char</span>** environ;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execl</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path, <span class="type">const</span> <span class="type">char</span>* arg, ... )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execlp</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* file, <span class="type">const</span> <span class="type">char</span>* arg, ... )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execle</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path , <span class="type">const</span> <span class="type">char</span>* arg, ..., <span class="type">char</span>* <span class="type">const</span> envp[] )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execv</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path, <span class="type">char</span>* <span class="type">const</span> argv[] )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execvp</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* file, <span class="type">char</span>* <span class="type">const</span> argv[] )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execve</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path, <span class="type">char</span>* <span class="type">const</span> argv[], <span class="type">char</span>* <span class="type">const</span> envp[] )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>path参数指定可执行文件的完整路径，fIle参数可以接受文件名，该文件的具体位置则在环境变量PATH中搜寻。arg接受可变参数，argv则接受参数数组，它们都会被传递给新的的程序（path或file指定的程序）的main函数。envp参数用于设置新程序的环境变量。如果为设置它，则新程序将使用全局变量environ指定的环境变量。</p>
-<p>一般情况下，exec是不返回的，除非出错。如果没出错，则原程序exec调用之后的代码都不会执行，因为此时原程序已经被exec的参数指定的程序完全替换。<br>exec函数不会关闭原程序打开的文件描述符，除非该文件描述符被设置了类似SOCK_CLOEXEC的属性。</p>
+        <p>并发编程主要是针对I&#x2F;O密集型的，让被I&#x2F;O操作所阻塞的指向线程可放弃CPU，将执行权交给其他线程，可提升CPU的利用率</p>
+<p>并发编程主要有多进程和多线程两种实现方式。</p>
+<p>这里先讨论并发模式，并发模式是指I&#x2F;O处理单元与多个逻辑单元之间协调完成任务的方法。服务器主要有两种并发编程模式：半同步&#x2F;半异步（half-sync&#x2F;half-async）模式和领导者&#x2F;追随者（Leader&#x2F;Followers）模式。</p>
+<h1 id="半同步-x2F-半异步模式"><a href="#半同步-x2F-半异步模式" class="headerlink" title="半同步&#x2F;半异步模式"></a>半同步&#x2F;半异步模式</h1><p>这里的半同步&#x2F;半异步中的“同步”和“异步”和之前I&#x2F;O模型中的“同步”和“异步”是完全不同的概念。在I&#x2F;O模型中，“同步”和“异步”区分的是内核向应用程序同时的是何种I&#x2F;O事件（就绪事件还是完成事件），以及该由谁来完成I&#x2F;O读写（是应用程序还是内核）。在并发模式中，<strong>“同步”指的是程序完全按照代码序列的顺序执行；“异步”指的是程序的执行需要由系统事件来驱动，常见的系统事件包括中断、信号等。</strong><br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112211542.png" alt="image.png"><br>按照同步方式运行的线程称为同步线程，按照异步方式运行的线程称为异步线程。<br>半同步&#x2F;半异步模式中，同步线程用于处理客户逻辑，相当于逻辑单元；异步线程用于处理I&#x2F;O事件，相当于I&#x2F;O处理单元。</p>
+<p>半同步&#x2F;半异步模式存在多种变体。<br>半同步&#x2F;半反应堆（half-sync&#x2F;half-reactive）模式。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212046.png" alt="image.png"></p>
+<p>相对高效的半同步&#x2F;半异步模式，每个工作线程都能同时处理多个客户连接<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212639.png" alt="image.png"></p>
+<h1 id="领导者-x2F-追随者模式"><a href="#领导者-x2F-追随者模式" class="headerlink" title="领导者&#x2F;追随者模式"></a>领导者&#x2F;追随者模式</h1><p>领导者&#x2F;追随者模式是多个工作线程轮流获得事件源集合，轮流监听、分发并处理事件的一种模式。<br>在任意时间点内，程序仅有一个领导者线程，它负责监听I&#x2F;O事件。而其他线程则都是追随者，它们休眠在线程池中等待成为新的领导者。当前的领导者如果检测到I&#x2F;O事件，首先要从线程池中推选出新的领导者线程，然后处理I&#x2F;O事件。此时，新的领导者等待新的I&#x2F;O事件，而原来的领导者则处理I&#x2F;O事件，二者实现了并发。<br>领导者&#x2F;追随者模式包含了如下几个组件：句柄集（HandleSet）、线程集（ThreadSet）、事件处理器（EventHandler）和具体的事件处理器（ConcreteEventHandler）。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112214253.png" alt="image.png"></p>
+<ol>
+<li>句柄集<br> 句柄（Handle，就是描述符）用于表示I&#x2F;O资源，在Linux下通常是一个文件描述符。句柄集管理众多句柄，它使用wait_for_event()方法来监听这些句柄上的I&#x2F;O事件，并将其中的就绪事件通知给领导者线程。领导者则调用绑定到Handle上的事件处理器。领导者将Handle和事件处理器绑定时通过调用句柄集中的register_handle方法实现的。</li>
+<li>线程集</li>
+<li>事件处理器和具体的事件处理器</li>
+</ol>
 
       
 
@@ -681,11 +843,22 @@
     <div class="article-info article-info-index">
       
       
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
       
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/18/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.2%20exec%E7%B3%BB%E5%88%97%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/">展开全文 >></a>
+          <a class="article-more-a" href="/2023/01/12/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/">展开全文 >></a>
         </p>
       
 
@@ -717,7 +890,7 @@
   
   
     <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/">&amp;laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/3/">Next &amp;raquo;</a>
+      <a class="extend prev" rel="prev" href="/">&amp;laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/">Next &amp;raquo;</a>
     </nav>
   
 
