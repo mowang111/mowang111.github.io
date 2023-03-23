@@ -138,6 +138,105 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-数据库/SQL语法/SQL联结" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/23/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E8%81%94%E7%BB%93/">SQL联结</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/23/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E8%81%94%E7%BB%93/" class="archive-article-date">
+  	<time datetime="2023-03-23T06:43:03.956Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-23</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="SQL联结"><a href="#SQL联结" class="headerlink" title="SQL联结"></a>SQL联结</h1><h2 id="创建联结"><a href="#创建联结" class="headerlink" title="创建联结"></a>创建联结</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> vend_name, prod_name, prod_price</span><br><span class="line"><span class="keyword">from</span> vendors, products</span><br><span class="line"><span class="keyword">where</span> vendors.vend_id <span class="operator">=</span> products.vend_id</span><br></pre></td></tr></table></figure>
+
+<p>注：如果没有where语句，返回的结果就是笛卡儿积</p>
+<h3 id="内联结"><a href="#内联结" class="headerlink" title="内联结"></a>内联结</h3><p>前面的联结称为等值联结（equijoin）,它是基于两个表之间的相等测试，这种联结也称为内联结（inner join）。</p>
+<p>上述的联结也可以使用稍微不同的语法，联结条件用特定的on子句而不是where子句给出。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> vend_name, prod_name, prod_price</span><br><span class="line"><span class="keyword">from</span> vendors</span><br><span class="line"><span class="keyword">inner</span> <span class="keyword">join</span> products <span class="keyword">on</span> vendors.vend_id <span class="operator">=</span> product.vend_id;</span><br></pre></td></tr></table></figure>
+
+<h3 id="自联结"><a href="#自联结" class="headerlink" title="自联结"></a>自联结</h3><p>假如要给与Jim Jones同一公司的所有顾客发送一封信件。这个查询要求首先找出Jim Jones工作的公司，然后找出该公司工作的顾客。</p>
+<p>使用子查询的解决方案：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> cust_id, cust_name, cust_contact</span><br><span class="line"><span class="keyword">from</span> customers</span><br><span class="line"><span class="keyword">where</span> cust_name <span class="operator">=</span> (</span><br><span class="line">	<span class="keyword">select</span> cust_name</span><br><span class="line">    <span class="keyword">from</span> customers</span><br><span class="line">    <span class="keyword">where</span> cust_contact <span class="operator">=</span> <span class="string">&#x27;Jim Jones&#x27;</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>使用自联结的解决方案：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> c1.cust_id, c1.cust_name, c1.cust_contact</span><br><span class="line"><span class="keyword">from</span> customers <span class="keyword">as</span> c1, customers <span class="keyword">as</span> c2</span><br><span class="line"><span class="keyword">where</span> c1.cust_name <span class="operator">=</span> c2.cust_name</span><br><span class="line"><span class="keyword">and</span> c1.cust_contact <span class="operator">=</span> <span class="string">&#x27;Jim Jones&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="自然联结"><a href="#自然联结" class="headerlink" title="自然联结"></a>自然联结</h3><p>标准联结（内联结）返回所有数据，相同的列甚至多次出现。自然联结排除多次出现，使每一列只返回一次。</p>
+<p>一般通过对一个表使用通配符（select *），而对其他表的列使用明确的子集来完成。</p>
+<h3 id="外联结"><a href="#外联结" class="headerlink" title="外联结"></a>外联结</h3><p>外联结与内联结不同的是，外联结包括没有关联行的行。在使用outer join语法时，必须使用right或left关键字指定包括所有行的表（right指出的是outer join 右边的表，left指出的是从from子句左边的表）</p>
+<p>下面检索包括没有订单顾客在内的顾客：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> customers.cust_id, orders.order_num</span><br><span class="line"><span class="keyword">from</span> custormers</span><br><span class="line"><span class="keyword">left</span> <span class="keyword">outer</span> <span class="keyword">join</span> orders <span class="keyword">on</span> customers.cust_id <span class="operator">=</span> orders.cust_id</span><br></pre></td></tr></table></figure>
+
+
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">SQL</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/23/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E8%81%94%E7%BB%93/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-操作系统/进程管理/进程间通信方式" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1446,19 +1545,19 @@
 
 
   
-    <article id="post-数据库/SQL语法" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-数据库/SQL语法/SQL窗口函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/">SQL语法</a>
+      <a class="article-title" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/">SQL窗口函数</a>
     </h1>
   
 
         
-        <a href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/" class="archive-article-date">
+        <a href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/" class="archive-article-date">
   	<time datetime="2023-03-21T11:01:51.383Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-21</time>
 </a>
         
@@ -1506,7 +1605,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/">展开全文 >></a>
+          <a class="article-more-a" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/">展开全文 >></a>
         </p>
       
 
@@ -1686,57 +1785,6 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第14章 多线程编程/14.1 Linux线程概述" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h1><p>线程是程序中完成一个独立任务的完整执行序列，即一个可调度的实体。</p>
-<p>根据运行环境和调度者身份，线程可分为内核线程和用户线程。</p>
-<p>内核线程，在有的系统上也称为LWP( Light Weight Process,轻量级进程)，运行在内核空间，由内核来调度。<br>用户线程运行在用户空间，由线程库来调度。</p>
-<p>一个进程的所有执行线程共享该进程的时间片，它们对外表现出相同的优先级。</p>
-<h1 id="Linux线程库"><a href="#Linux线程库" class="headerlink" title="Linux线程库"></a>Linux线程库</h1>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/25/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/14.1%20Linux%E7%BA%BF%E7%A8%8B%E6%A6%82%E8%BF%B0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/2/">Next &amp;raquo;</a>
@@ -1855,11 +1903,27 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">algorithm</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+                <a href="javascript:void(0)" class="js-tag color5">操作系统</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">内存管理</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">进程</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1871,23 +1935,7 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">面试</a>
-              </li>
-             
-              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">操作系统</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">进程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">内存管理</a>
               </li>
             
             <div class="clearfix"></div>

@@ -6,25 +6,21 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://mowang111.github.io">
-  <title>两种高效的并发模式 | crz&#39;s blog</title>
+  <title>SQL联结 | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="并发编程主要是针对I&#x2F;O密集型的，让被I&#x2F;O操作所阻塞的指向线程可放弃CPU，将执行权交给其他线程，可提升CPU的利用率 并发编程主要有多进程和多线程两种实现方式。 这里先讨论并发模式，并发模式是指I&#x2F;O处理单元与多个逻辑单元之间协调完成任务的方法。服务器主要有两种并发编程模式：半同步&#x2F;半异步（half-sync&#x2F;half-async）模式和领导者">
+  <meta name="description" content="SQL联结创建联结123select vend_name, prod_name, prod_pricefrom vendors, productswhere vendors.vend_id &#x3D; products.vend_id  注：如果没有where语句，返回的结果就是笛卡儿积 内联结前面的联结称为等值联结（equijoin）,它是基于两个表之间的相等测试，这种联结也称为内联结（inner jo">
 <meta property="og:type" content="article">
-<meta property="og:title" content="两种高效的并发模式">
-<meta property="og:url" content="https://mowang111.github.io/2023/01/12/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/index.html">
+<meta property="og:title" content="SQL联结">
+<meta property="og:url" content="https://mowang111.github.io/2023/03/23/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E8%81%94%E7%BB%93/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
-<meta property="og:description" content="并发编程主要是针对I&#x2F;O密集型的，让被I&#x2F;O操作所阻塞的指向线程可放弃CPU，将执行权交给其他线程，可提升CPU的利用率 并发编程主要有多进程和多线程两种实现方式。 这里先讨论并发模式，并发模式是指I&#x2F;O处理单元与多个逻辑单元之间协调完成任务的方法。服务器主要有两种并发编程模式：半同步&#x2F;半异步（half-sync&#x2F;half-async）模式和领导者">
+<meta property="og:description" content="SQL联结创建联结123select vend_name, prod_name, prod_pricefrom vendors, productswhere vendors.vend_id &#x3D; products.vend_id  注：如果没有where语句，返回的结果就是笛卡儿积 内联结前面的联结称为等值联结（equijoin）,它是基于两个表之间的相等测试，这种联结也称为内联结（inner jo">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112211542.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212046.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212639.png">
-<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112214253.png">
-<meta property="article:published_time" content="2023-01-12T13:01:27.189Z">
-<meta property="article:modified_time" content="2023-03-22T11:54:22.199Z">
+<meta property="article:published_time" content="2023-03-23T06:43:03.956Z">
+<meta property="article:modified_time" content="2023-03-23T07:18:57.479Z">
 <meta property="article:author" content="crz">
-<meta property="article:tag" content="Linux高性能服务器编程">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="SQL">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112211542.png">
   
     <link rel="alternative" href="/atom.xml" title="crz&#39;s blog" type="application/atom+xml">
   
@@ -146,38 +142,48 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-Linux高性能服务器编程/第8章 高性能服务器框架/8.5 两种高效的并发模式" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-数据库/SQL语法/SQL联结" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      两种高效的并发模式
+      SQL联结
     </h1>
   
 
         
-        <a href="/2023/01/12/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/" class="archive-article-date">
-  	<time datetime="2023-01-12T13:01:27.189Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-12</time>
+        <a href="/2023/03/23/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E8%81%94%E7%BB%93/" class="archive-article-date">
+  	<time datetime="2023-03-23T06:43:03.956Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-23</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>并发编程主要是针对I&#x2F;O密集型的，让被I&#x2F;O操作所阻塞的指向线程可放弃CPU，将执行权交给其他线程，可提升CPU的利用率</p>
-<p>并发编程主要有多进程和多线程两种实现方式。</p>
-<p>这里先讨论并发模式，并发模式是指I&#x2F;O处理单元与多个逻辑单元之间协调完成任务的方法。服务器主要有两种并发编程模式：半同步&#x2F;半异步（half-sync&#x2F;half-async）模式和领导者&#x2F;追随者（Leader&#x2F;Followers）模式。</p>
-<h1 id="半同步-x2F-半异步模式"><a href="#半同步-x2F-半异步模式" class="headerlink" title="半同步&#x2F;半异步模式"></a>半同步&#x2F;半异步模式</h1><p>这里的半同步&#x2F;半异步中的“同步”和“异步”和之前I&#x2F;O模型中的“同步”和“异步”是完全不同的概念。在I&#x2F;O模型中，“同步”和“异步”区分的是内核向应用程序同时的是何种I&#x2F;O事件（就绪事件还是完成事件），以及该由谁来完成I&#x2F;O读写（是应用程序还是内核）。在并发模式中，<strong>“同步”指的是程序完全按照代码序列的顺序执行；“异步”指的是程序的执行需要由系统事件来驱动，常见的系统事件包括中断、信号等。</strong><br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112211542.png" alt="image.png"><br>按照同步方式运行的线程称为同步线程，按照异步方式运行的线程称为异步线程。<br>半同步&#x2F;半异步模式中，同步线程用于处理客户逻辑，相当于逻辑单元；异步线程用于处理I&#x2F;O事件，相当于I&#x2F;O处理单元。</p>
-<p>半同步&#x2F;半异步模式存在多种变体。<br>半同步&#x2F;半反应堆（half-sync&#x2F;half-reactive）模式。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212046.png" alt="image.png"></p>
-<p>相对高效的半同步&#x2F;半异步模式，每个工作线程都能同时处理多个客户连接<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212639.png" alt="image.png"></p>
-<h1 id="领导者-x2F-追随者模式"><a href="#领导者-x2F-追随者模式" class="headerlink" title="领导者&#x2F;追随者模式"></a>领导者&#x2F;追随者模式</h1><p>领导者&#x2F;追随者模式是多个工作线程轮流获得事件源集合，轮流监听、分发并处理事件的一种模式。<br>在任意时间点内，程序仅有一个领导者线程，它负责监听I&#x2F;O事件。而其他线程则都是追随者，它们休眠在线程池中等待成为新的领导者。当前的领导者如果检测到I&#x2F;O事件，首先要从线程池中推选出新的领导者线程，然后处理I&#x2F;O事件。此时，新的领导者等待新的I&#x2F;O事件，而原来的领导者则处理I&#x2F;O事件，二者实现了并发。<br>领导者&#x2F;追随者模式包含了如下几个组件：句柄集（HandleSet）、线程集（ThreadSet）、事件处理器（EventHandler）和具体的事件处理器（ConcreteEventHandler）。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112214253.png" alt="image.png"></p>
-<ol>
-<li>句柄集<br> 句柄（Handle，就是描述符）用于表示I&#x2F;O资源，在Linux下通常是一个文件描述符。句柄集管理众多句柄，它使用wait_for_event()方法来监听这些句柄上的I&#x2F;O事件，并将其中的就绪事件通知给领导者线程。领导者则调用绑定到Handle上的事件处理器。领导者将Handle和事件处理器绑定时通过调用句柄集中的register_handle方法实现的。</li>
-<li>线程集</li>
-<li>事件处理器和具体的事件处理器</li>
-</ol>
+        <h1 id="SQL联结"><a href="#SQL联结" class="headerlink" title="SQL联结"></a>SQL联结</h1><h2 id="创建联结"><a href="#创建联结" class="headerlink" title="创建联结"></a>创建联结</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> vend_name, prod_name, prod_price</span><br><span class="line"><span class="keyword">from</span> vendors, products</span><br><span class="line"><span class="keyword">where</span> vendors.vend_id <span class="operator">=</span> products.vend_id</span><br></pre></td></tr></table></figure>
+
+<p>注：如果没有where语句，返回的结果就是笛卡儿积</p>
+<h3 id="内联结"><a href="#内联结" class="headerlink" title="内联结"></a>内联结</h3><p>前面的联结称为等值联结（equijoin）,它是基于两个表之间的相等测试，这种联结也称为内联结（inner join）。</p>
+<p>上述的联结也可以使用稍微不同的语法，联结条件用特定的on子句而不是where子句给出。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> vend_name, prod_name, prod_price</span><br><span class="line"><span class="keyword">from</span> vendors</span><br><span class="line"><span class="keyword">inner</span> <span class="keyword">join</span> products <span class="keyword">on</span> vendors.vend_id <span class="operator">=</span> product.vend_id;</span><br></pre></td></tr></table></figure>
+
+<h3 id="自联结"><a href="#自联结" class="headerlink" title="自联结"></a>自联结</h3><p>假如要给与Jim Jones同一公司的所有顾客发送一封信件。这个查询要求首先找出Jim Jones工作的公司，然后找出该公司工作的顾客。</p>
+<p>使用子查询的解决方案：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> cust_id, cust_name, cust_contact</span><br><span class="line"><span class="keyword">from</span> customers</span><br><span class="line"><span class="keyword">where</span> cust_name <span class="operator">=</span> (</span><br><span class="line">	<span class="keyword">select</span> cust_name</span><br><span class="line">    <span class="keyword">from</span> customers</span><br><span class="line">    <span class="keyword">where</span> cust_contact <span class="operator">=</span> <span class="string">&#x27;Jim Jones&#x27;</span></span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>使用自联结的解决方案：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> c1.cust_id, c1.cust_name, c1.cust_contact</span><br><span class="line"><span class="keyword">from</span> customers <span class="keyword">as</span> c1, customers <span class="keyword">as</span> c2</span><br><span class="line"><span class="keyword">where</span> c1.cust_name <span class="operator">=</span> c2.cust_name</span><br><span class="line"><span class="keyword">and</span> c1.cust_contact <span class="operator">=</span> <span class="string">&#x27;Jim Jones&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<h3 id="自然联结"><a href="#自然联结" class="headerlink" title="自然联结"></a>自然联结</h3><p>标准联结（内联结）返回所有数据，相同的列甚至多次出现。自然联结排除多次出现，使每一列只返回一次。</p>
+<p>一般通过对一个表使用通配符（select *），而对其他表的列使用明确的子集来完成。</p>
+<h3 id="外联结"><a href="#外联结" class="headerlink" title="外联结"></a>外联结</h3><p>外联结与内联结不同的是，外联结包括没有关联行的行。在使用outer join语法时，必须使用right或left关键字指定包括所有行的表（right指出的是outer join 右边的表，left指出的是从from子句左边的表）</p>
+<p>下面检索包括没有订单顾客在内的顾客：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> customers.cust_id, orders.order_num</span><br><span class="line"><span class="keyword">from</span> custormers</span><br><span class="line"><span class="keyword">left</span> <span class="keyword">outer</span> <span class="keyword">join</span> orders <span class="keyword">on</span> customers.cust_id <span class="operator">=</span> orders.cust_id</span><br></pre></td></tr></table></figure>
+
+
+
 
       
 
@@ -191,7 +197,11 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">SQL</a>
         		</li>
       		
 		</ul>
@@ -247,7 +257,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2023/01/12/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2023/03/23/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E8%81%94%E7%BB%93/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -261,18 +271,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2023/01/13/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          有限状态机
-        
-      </div>
-    </a>
   
-  
-    <a href="/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.3%20IO%E6%A8%A1%E5%9E%8B/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">IO模型</div>
+    <a href="/2023/03/23/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%BF%9B%E7%A8%8B%E7%AE%A1%E7%90%86/%E8%BF%9B%E7%A8%8B%E9%97%B4%E9%80%9A%E4%BF%A1%E6%96%B9%E5%BC%8F/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">进程间通信方式</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -299,7 +300,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8D%8A%E5%90%8C%E6%AD%A5-x2F-%E5%8D%8A%E5%BC%82%E6%AD%A5%E6%A8%A1%E5%BC%8F"><span class="toc-number">1.</span> <span class="toc-text">半同步&#x2F;半异步模式</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%A2%86%E5%AF%BC%E8%80%85-x2F-%E8%BF%BD%E9%9A%8F%E8%80%85%E6%A8%A1%E5%BC%8F"><span class="toc-number">2.</span> <span class="toc-text">领导者&#x2F;追随者模式</span></a></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#SQL%E8%81%94%E7%BB%93"><span class="toc-number">1.</span> <span class="toc-text">SQL联结</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E8%81%94%E7%BB%93"><span class="toc-number">1.1.</span> <span class="toc-text">创建联结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E8%81%94%E7%BB%93"><span class="toc-number">1.1.1.</span> <span class="toc-text">内联结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E8%81%94%E7%BB%93"><span class="toc-number">1.1.2.</span> <span class="toc-text">自联结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E7%84%B6%E8%81%94%E7%BB%93"><span class="toc-number">1.1.3.</span> <span class="toc-text">自然联结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%96%E8%81%94%E7%BB%93"><span class="toc-number">1.1.4.</span> <span class="toc-text">外联结</span></a></li></ol></li></ol></li></ol>
                     </div>
                 </span>
             </div>
