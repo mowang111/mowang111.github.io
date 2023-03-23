@@ -138,6 +138,60 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Linux高性能服务器编程/第13章 多进程编程/13.0 多进程编程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <ul>
+<li>复制进程映像的fork系列系统调用和替换进程映像的exec系统调用</li>
+<li>僵尸进程以及如何避免僵尸进程</li>
+<li>进程间通信（Inter-Process Communication, IPC）最简单的方式：管道。</li>
+<li>3种System V进程间的通信方式：信号量、消息队列和共享内存。它们都是由AT&amp;T System V2版本的UNIX引入的，所以统称为System V IPC</li>
+<li>在进程间传递文件描述符的通用方法：通过UNIX本地域socket传递特殊的辅助数据。</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/01/18/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/13.0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-Linux高性能服务器编程/第11章 定时器/11.4 高性能定时器" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -598,59 +652,6 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第10章 信号/10.1 Linux信号概述" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="发送信号"><a href="#发送信号" class="headerlink" title="发送信号"></a>发送信号</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">kill</span><span class="params">( <span class="type">pid_t</span> pid, <span class="type">int</span> sig )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h1 id="信号处理方式"><a href="#信号处理方式" class="headerlink" title="信号处理方式"></a>信号处理方式</h1><p>信号处理函数原型：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">__sighandler_t</span>)</span> <span class="params">( <span class="type">int</span> )</span></span>;</span><br></pre></td></tr></table></figure>
-
-
-<h1 id="Linux信号"><a href="#Linux信号" class="headerlink" title="Linux信号"></a>Linux信号</h1><h1 id="中断系统调用"><a href="#中断系统调用" class="headerlink" title="中断系统调用"></a>中断系统调用</h1>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/15/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.1%20Linux%E4%BF%A1%E5%8F%B7%E6%A6%82%E8%BF%B0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <a class="extend prev" rel="prev" href="/page/2/">&amp;laquo; Prev</a><a class="page-number" href="/">1</a><a class="page-number" href="/page/2/">2</a><span class="page-number current">3</span><a class="page-number" href="/page/4/">4</a><a class="page-number" href="/page/5/">5</a><a class="extend next" rel="next" href="/page/4/">Next &amp;raquo;</a>
@@ -793,7 +794,15 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">操作系统，内存管理</a>
+                <a href="javascript:void(0)" class="js-tag color5">操作系统</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">进程</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">内存管理</a>
               </li>
             
             <div class="clearfix"></div>
