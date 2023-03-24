@@ -6,22 +6,25 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://mowang111.github.io">
-  <title>IO复用 | crz&#39;s blog</title>
+  <title>链接 | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="description" content="客户端程序要同时处理多个socket 客户端程序要同时处理用户输入和网络连接 TCP服务器要同时处理监听socket和连接socket 服务器要同时监听多个端口，或处理多种服务  I&#x2F;O复用虽然能同时监听多个文件描述符，但是其本身是阻塞的。如果要实现并发，只能使用多进程或多线程。 Linux下实现I&#x2F;O复用的系统调用主要是select、poll和epoll。 select在一">
+  <meta name="description" content="链接编译器驱动程序大多数编译系统提供编译器驱动程序（compiler driver），它代表用户在需要时调用语言处理器、编译器、汇编器和链接器。 驱动程序首先将C的源程序main.c翻译成一个ASCII码的中间文件main.i，接着，驱动程序运行C编译器（ccl），将main.i翻译成一个ASCII码的汇编语言文件main.s，然后驱动程序运行汇编器（as）,将main.s翻译成可重定位目标文件m">
 <meta property="og:type" content="article">
-<meta property="og:title" content="IO复用">
-<meta property="og:url" content="https://mowang111.github.io/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/IO%E5%A4%8D%E7%94%A8/index.html">
+<meta property="og:title" content="链接">
+<meta property="og:url" content="https://mowang111.github.io/2023/03/24/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E9%93%BE%E6%8E%A5/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
-<meta property="og:description" content="客户端程序要同时处理多个socket 客户端程序要同时处理用户输入和网络连接 TCP服务器要同时处理监听socket和连接socket 服务器要同时监听多个端口，或处理多种服务  I&#x2F;O复用虽然能同时监听多个文件描述符，但是其本身是阻塞的。如果要实现并发，只能使用多进程或多线程。 Linux下实现I&#x2F;O复用的系统调用主要是select、poll和epoll。 select在一">
+<meta property="og:description" content="链接编译器驱动程序大多数编译系统提供编译器驱动程序（compiler driver），它代表用户在需要时调用语言处理器、编译器、汇编器和链接器。 驱动程序首先将C的源程序main.c翻译成一个ASCII码的中间文件main.i，接着，驱动程序运行C编译器（ccl），将main.i翻译成一个ASCII码的汇编语言文件main.s，然后驱动程序运行汇编器（as）,将main.s翻译成可重定位目标文件m">
 <meta property="og:locale" content="en_US">
-<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230115151114.png">
-<meta property="article:published_time" content="2023-01-11T02:34:33.541Z">
-<meta property="article:modified_time" content="2023-03-22T11:57:44.283Z">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324100228307.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324101251483.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324102630533.png">
+<meta property="article:published_time" content="2023-03-24T01:50:40.236Z">
+<meta property="article:modified_time" content="2023-03-24T03:07:09.964Z">
 <meta property="article:author" content="crz">
-<meta property="article:tag" content="Linux高性能服务器编程">
+<meta property="article:tag" content="链接">
+<meta property="article:tag" content="深入理解计算机系统">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230115151114.png">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324100228307.png">
   
     <link rel="alternative" href="/atom.xml" title="crz&#39;s blog" type="application/atom+xml">
   
@@ -143,72 +146,53 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-Linux高性能服务器编程/第9章 IO复用/IO复用" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-深入理解计算机系统/链接" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      IO复用
+      链接
     </h1>
   
 
         
-        <a href="/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/IO%E5%A4%8D%E7%94%A8/" class="archive-article-date">
-  	<time datetime="2023-01-11T02:34:33.541Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-11</time>
+        <a href="/2023/03/24/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E9%93%BE%E6%8E%A5/" class="archive-article-date">
+  	<time datetime="2023-03-24T01:50:40.236Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-24</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <ul>
-<li>客户端程序要同时处理多个socket</li>
-<li>客户端程序要同时处理用户输入和网络连接</li>
-<li>TCP服务器要同时处理监听socket和连接socket</li>
-<li>服务器要同时监听多个端口，或处理多种服务</li>
-</ul>
-<p>I&#x2F;O复用虽然能同时监听多个文件描述符，但是其本身是阻塞的。如果要实现并发，只能使用多进程或多线程。</p>
-<p>Linux下实现I&#x2F;O复用的系统调用主要是select、poll和epoll。</p>
-<h1 id="select"><a href="#select" class="headerlink" title="select"></a>select</h1><p>在一段指定时间内，监听用户感兴趣的文件描述符上的可读、可写和异常等事件。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">select</span><span class="params">( <span class="type">int</span> nfds, fd_set* readfds, fd_set* writefds, fd_set* exceptfds, <span class="keyword">struct</span> timeval* timeout )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>nfds通常被设置为select监听的所有文件描述符中的最大值+1，因为文件描述符是从0开始计数的。</p>
-<p>fd_set结构体中仅包含一个整型数组，该数组的每个元素的每一位（bit）标记一个文件描述符。fd_set能容纳的文件描述符数量由FD_SETSIZE指定，这就限制了select能同时处理的文件描述符的总量。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#incldue <span class="string">&lt;sys/select.h&gt;</span></span></span><br><span class="line"><span class="built_in">FD_ZERO</span>( fd_set* fdset);</span><br><span class="line"><span class="built_in">FD_SET</span>( <span class="type">int</span> fd, fd_set* fdset ); <span class="comment">//添加描述符fd</span></span><br><span class="line"><span class="built_in">FD_CLR</span>( <span class="type">int</span> fd, fd_set* fdset );</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">FD_ISSET</span><span class="params">( <span class="type">int</span> fd, fd_set* fdset )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>timeout参数用来设置select函数超时时间</p>
-<h1 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h1><p>poll系统调用和select类似，也是在指定时间内轮询一定数量的文件描述符，以测试其中是否有就绪者。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;poll.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">poll</span><span class="params">( <span class="keyword">struct</span> pollfd* fds, <span class="type">nfds_t</span> nfds, <span class="type">int</span> timeout )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>fds参数是一个pollfd结构类型的数组，它指定所有我们感兴趣的文件描述符上发生的可读、可写和异常等事件。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">sturct pollfd</span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">int</span> fd; <span class="comment">//文件描述符</span></span><br><span class="line">	<span class="type">short</span> evens; <span class="comment">//注册的事件，一系列事件按位或</span></span><br><span class="line">	<span class="type">short</span> revents;<span class="comment">//实际发生的事件，由内核填充</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>nfds参数指定被监听事件集合fds的大小</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> <span class="type">nfds_t</span>;</span><br></pre></td></tr></table></figure>
-
-<p>timeout参数指定poll的超时值，单位是毫秒，timeout为-1时，poll将永远阻塞，直到某个事件发生；timeout为0时，poll调用立即返回。</p>
-<h1 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h1><h2 id="内核事件表"><a href="#内核事件表" class="headerlink" title="内核事件表"></a>内核事件表</h2><p>epoll是Linux特有的I&#x2F;O复用函数，epoll用一组函数来完成任务，而不是单个函数。另外，epoll将用户关心的文件描述符上的事件放在内核里的一个事件表中，从而无需像select和poll那样每次调用都重复传入文件描述符集或事件集。但epoll需要一个额外的文件描述符，来标识内核中的这个事件表。这个文件描述符使用epoll_create函数来创建。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">epoll_create</span><span class="params">( <span class="type">int</span> size )</span></span><br></pre></td></tr></table></figure>
-
-<p>下面函数用来操作epoll内核事件表：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="type">int</span> epfd, <span class="type">int</span> op, <span class="type">int</span> fd,<span class="keyword">struct</span> epoll_event* event)</span></span></span><br></pre></td></tr></table></figure>
-<p>fd是要操作的文件描述符，op时指定操作类型：</p>
+        <h1 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h1><h2 id="编译器驱动程序"><a href="#编译器驱动程序" class="headerlink" title="编译器驱动程序"></a>编译器驱动程序</h2><p>大多数编译系统提供编译器驱动程序（compiler driver），它代表用户在需要时调用语言处理器、编译器、汇编器和链接器。</p>
+<p>驱动程序首先将C的源程序main.c翻译成一个ASCII码的中间文件main.i，接着，驱动程序运行C编译器（ccl），将main.i翻译成一个ASCII码的汇编语言文件main.s，然后驱动程序运行汇编器（as）,将main.s翻译成可重定位目标文件main.o，驱动程序经过相同的过程生成sum.o。最后运行链接器程序ld，将main.o和sum.o以及一些必要的系统目标文件组合起来，创建一个可执行目标文件prog。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324100228307.png" alt="image-20230324100228307"></p>
+<h2 id="静态链接"><a href="#静态链接" class="headerlink" title="静态链接"></a>静态链接</h2><p>像Linux程序这样的静态链接器（static linker）以一组可重定位目标文件和命令行参数作为输入，生成一个完全链接的、可以加载和运行的可执行目标文件作为输出。</p>
+<p>输入的可重定位目标文件由各种不同的代码和数据节（section）组成，每一节都是一个连续的字节序列。指令在一节中，初始化了的全局变量在另一节中，而未初始化的变量又在另外一节中。</p>
+<p>为了构造可执行文件，链接器必须完成两个主要任务</p>
 <ul>
-<li>EPOLL_CTL_ADD</li>
-<li>EPOLL_CTL_MOD</li>
-<li>EPOLL_CTL_DEL<br>event指定事件<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">epoll_event</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">__unit32_t</span> events;</span><br><span class="line">	<span class="type">epoll_data_t</span> data;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li>符号解析（symbol resolution）。</li>
+<li>重定位（relocation）。</li>
 </ul>
-<h2 id="epoll-wait函数"><a href="#epoll-wait函数" class="headerlink" title="epoll_wait函数"></a>epoll_wait函数</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/epoll.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">epoll_wait</span><span class="params">( <span class="type">int</span> epfd, <span class="keyword">struct</span> epoll_event* events, <span class="type">int</span> maxevents, <span class="type">int</span> timeout )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h2 id="LT和ET模式"><a href="#LT和ET模式" class="headerlink" title="LT和ET模式"></a>LT和ET模式</h2><p>epoll对文件描述符的操作有两种模式：LT(Level Trigger,电平触发)模式和ET(Edge Triggger,边沿触发)模式。<br>对于采用LT工作模式的文件描述符，当epoll_wait监测到其上有事件发生并将事件通知到应用程序后，应用程序可以不立即处理该事件，当应用程序下次调用epoll_wait时，epoll_wait还会再次相应通告该事件，直到该事件被处理。<br>对于采用ET工作模式的文件描述符，应用程序则必须立即处理该事件，因为后续的epoll_wait调用将不再通知这一事件。</p>
-<h2 id="EPOLLONESHOT-事件"><a href="#EPOLLONESHOT-事件" class="headerlink" title="EPOLLONESHOT 事件"></a>EPOLLONESHOT 事件</h2><p>一个socket连接在任意时刻都只被一个线程处理</p>
-<blockquote>
-<p>注意：监听文件描述符不能注册为EPOLLONESHOT事件，否则应用程序只能处理一个客户连接</p>
-</blockquote>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230115151114.png" alt="image.png"></p>
-
+<h2 id="目标文件"><a href="#目标文件" class="headerlink" title="目标文件"></a>目标文件</h2><p>目标文件有三种形式：</p>
+<ul>
+<li>可重定位目标文件</li>
+<li>可执行目标文件</li>
+<li>共享目标文件</li>
+</ul>
+<h2 id="可重定位目标文件"><a href="#可重定位目标文件" class="headerlink" title="可重定位目标文件"></a>可重定位目标文件</h2><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324101251483.png" alt="image-20230324101251483"></p>
+<h2 id="符号和符号表"><a href="#符号和符号表" class="headerlink" title="符号和符号表"></a>符号和符号表</h2><p>每个可重定位的目标模块m都有一个符号表，它包含m定义和引用的符号的信息。在链接器的上下文中，有三种不同符号：</p>
+<ul>
+<li><strong>由模块m定义并能被其他模块引用的全局符号。</strong>全局链接器符号对应于<strong>非静态的C函数和全局变量</strong></li>
+<li><strong>由其他模块定义并被模块m引用的全局符号。</strong>这些符号称为外部符号，对应于在<strong>其他模块中定义的非静态C函数和全局变量</strong>。</li>
+<li><strong>只被模块m定义和引用的局部符号。</strong>它们对应于<strong>带static属性的C函数和全局变量</strong>。这些符号在模块m中任何位置都可见，但是不能被其他模块引用</li>
+</ul>
+<p>符号表是由汇编器构造的，使用编译器输出到汇编语言.s中的符号。</p>
+<p>.symtab节中包含了ELF符号表。这张符号表包含了一个条目的数组。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324102630533.png" alt="image-20230324102630533"></p>
+<h2 id="符号解析"><a href="#符号解析" class="headerlink" title="符号解析"></a>符号解析</h2><h2 id="重定位"><a href="#重定位" class="headerlink" title="重定位"></a>重定位</h2><h2 id="可执行目标文件"><a href="#可执行目标文件" class="headerlink" title="可执行目标文件"></a>可执行目标文件</h2><h2 id="加载可执行目标文件"><a href="#加载可执行目标文件" class="headerlink" title="加载可执行目标文件"></a>加载可执行目标文件</h2><h2 id="动态链接共享库"><a href="#动态链接共享库" class="headerlink" title="动态链接共享库"></a>动态链接共享库</h2><h2 id="从应用程序中加载和链接共享库"><a href="#从应用程序中加载和链接共享库" class="headerlink" title="从应用程序中加载和链接共享库"></a>从应用程序中加载和链接共享库</h2><h2 id="位置无关代码"><a href="#位置无关代码" class="headerlink" title="位置无关代码"></a>位置无关代码</h2><h2 id="库打桩机制"><a href="#库打桩机制" class="headerlink" title="库打桩机制"></a>库打桩机制</h2><h2 id="处理目标文件的工具"><a href="#处理目标文件的工具" class="headerlink" title="处理目标文件的工具"></a>处理目标文件的工具</h2>
       
 
       
@@ -221,13 +205,28 @@
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">链接</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">深入理解计算机系统</a>
         		</li>
       		
 		</ul>
 	</div>
 
       
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/深入理解计算机系统//" class="article-tag-list-link color5">深入理解计算机系统</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
 
       
 
@@ -277,7 +276,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC9%E7%AB%A0%20IO%E5%A4%8D%E7%94%A8/IO%E5%A4%8D%E7%94%A8/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2023/03/24/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E9%93%BE%E6%8E%A5/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -291,18 +290,9 @@
   
 <nav id="article-nav">
   
-    <a href="/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.3%20IO%E6%A8%A1%E5%9E%8B/" id="article-nav-newer" class="article-nav-link-wrap">
-      <i class="icon-circle-left"></i>
-      <div class="article-nav-title">
-        
-          IO模型
-        
-      </div>
-    </a>
   
-  
-    <a href="/2023/01/11/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.4%20%E4%BA%8B%E4%BB%B6%E5%A4%84%E7%90%86%E6%A8%A1%E5%BC%8F/" id="article-nav-older" class="article-nav-link-wrap">
-      <div class="article-nav-title">事件处理模式</div>
+    <a href="/2023/03/23/%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">索引</div>
       <i class="icon-circle-right"></i>
     </a>
   
@@ -329,7 +319,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#select"><span class="toc-number">1.</span> <span class="toc-text">select</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#poll"><span class="toc-number">2.</span> <span class="toc-text">poll</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#epoll"><span class="toc-number">3.</span> <span class="toc-text">epoll</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E4%BA%8B%E4%BB%B6%E8%A1%A8"><span class="toc-number">3.1.</span> <span class="toc-text">内核事件表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#epoll-wait%E5%87%BD%E6%95%B0"><span class="toc-number">3.2.</span> <span class="toc-text">epoll_wait函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#LT%E5%92%8CET%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.3.</span> <span class="toc-text">LT和ET模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EPOLLONESHOT-%E4%BA%8B%E4%BB%B6"><span class="toc-number">3.4.</span> <span class="toc-text">EPOLLONESHOT 事件</span></a></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%93%BE%E6%8E%A5"><span class="toc-number">1.</span> <span class="toc-text">链接</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%96%E8%AF%91%E5%99%A8%E9%A9%B1%E5%8A%A8%E7%A8%8B%E5%BA%8F"><span class="toc-number">1.1.</span> <span class="toc-text">编译器驱动程序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%99%E6%80%81%E9%93%BE%E6%8E%A5"><span class="toc-number">1.2.</span> <span class="toc-text">静态链接</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%AE%E6%A0%87%E6%96%87%E4%BB%B6"><span class="toc-number">1.3.</span> <span class="toc-text">目标文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E9%87%8D%E5%AE%9A%E4%BD%8D%E7%9B%AE%E6%A0%87%E6%96%87%E4%BB%B6"><span class="toc-number">1.4.</span> <span class="toc-text">可重定位目标文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%A6%E5%8F%B7%E5%92%8C%E7%AC%A6%E5%8F%B7%E8%A1%A8"><span class="toc-number">1.5.</span> <span class="toc-text">符号和符号表</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90"><span class="toc-number">1.6.</span> <span class="toc-text">符号解析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="toc-number">1.7.</span> <span class="toc-text">重定位</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%9B%AE%E6%A0%87%E6%96%87%E4%BB%B6"><span class="toc-number">1.8.</span> <span class="toc-text">可执行目标文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A0%E8%BD%BD%E5%8F%AF%E6%89%A7%E8%A1%8C%E7%9B%AE%E6%A0%87%E6%96%87%E4%BB%B6"><span class="toc-number">1.9.</span> <span class="toc-text">加载可执行目标文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E5%85%B1%E4%BA%AB%E5%BA%93"><span class="toc-number">1.10.</span> <span class="toc-text">动态链接共享库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8E%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F%E4%B8%AD%E5%8A%A0%E8%BD%BD%E5%92%8C%E9%93%BE%E6%8E%A5%E5%85%B1%E4%BA%AB%E5%BA%93"><span class="toc-number">1.11.</span> <span class="toc-text">从应用程序中加载和链接共享库</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%8D%E7%BD%AE%E6%97%A0%E5%85%B3%E4%BB%A3%E7%A0%81"><span class="toc-number">1.12.</span> <span class="toc-text">位置无关代码</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BA%93%E6%89%93%E6%A1%A9%E6%9C%BA%E5%88%B6"><span class="toc-number">1.13.</span> <span class="toc-text">库打桩机制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E7%9B%AE%E6%A0%87%E6%96%87%E4%BB%B6%E7%9A%84%E5%B7%A5%E5%85%B7"><span class="toc-number">1.14.</span> <span class="toc-text">处理目标文件的工具</span></a></li></ol></li></ol>
                     </div>
                 </span>
             </div>

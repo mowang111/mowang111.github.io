@@ -138,6 +138,120 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-深入理解计算机系统/链接" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/24/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E9%93%BE%E6%8E%A5/">链接</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/24/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E9%93%BE%E6%8E%A5/" class="archive-article-date">
+  	<time datetime="2023-03-24T01:50:40.236Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-24</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h1><h2 id="编译器驱动程序"><a href="#编译器驱动程序" class="headerlink" title="编译器驱动程序"></a>编译器驱动程序</h2><p>大多数编译系统提供编译器驱动程序（compiler driver），它代表用户在需要时调用语言处理器、编译器、汇编器和链接器。</p>
+<p>驱动程序首先将C的源程序main.c翻译成一个ASCII码的中间文件main.i，接着，驱动程序运行C编译器（ccl），将main.i翻译成一个ASCII码的汇编语言文件main.s，然后驱动程序运行汇编器（as）,将main.s翻译成可重定位目标文件main.o，驱动程序经过相同的过程生成sum.o。最后运行链接器程序ld，将main.o和sum.o以及一些必要的系统目标文件组合起来，创建一个可执行目标文件prog。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324100228307.png" alt="image-20230324100228307"></p>
+<h2 id="静态链接"><a href="#静态链接" class="headerlink" title="静态链接"></a>静态链接</h2><p>像Linux程序这样的静态链接器（static linker）以一组可重定位目标文件和命令行参数作为输入，生成一个完全链接的、可以加载和运行的可执行目标文件作为输出。</p>
+<p>输入的可重定位目标文件由各种不同的代码和数据节（section）组成，每一节都是一个连续的字节序列。指令在一节中，初始化了的全局变量在另一节中，而未初始化的变量又在另外一节中。</p>
+<p>为了构造可执行文件，链接器必须完成两个主要任务</p>
+<ul>
+<li>符号解析（symbol resolution）。</li>
+<li>重定位（relocation）。</li>
+</ul>
+<h2 id="目标文件"><a href="#目标文件" class="headerlink" title="目标文件"></a>目标文件</h2><p>目标文件有三种形式：</p>
+<ul>
+<li>可重定位目标文件</li>
+<li>可执行目标文件</li>
+<li>共享目标文件</li>
+</ul>
+<h2 id="可重定位目标文件"><a href="#可重定位目标文件" class="headerlink" title="可重定位目标文件"></a>可重定位目标文件</h2><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324101251483.png" alt="image-20230324101251483"></p>
+<h2 id="符号和符号表"><a href="#符号和符号表" class="headerlink" title="符号和符号表"></a>符号和符号表</h2><p>每个可重定位的目标模块m都有一个符号表，它包含m定义和引用的符号的信息。在链接器的上下文中，有三种不同符号：</p>
+<ul>
+<li><strong>由模块m定义并能被其他模块引用的全局符号。</strong>全局链接器符号对应于<strong>非静态的C函数和全局变量</strong></li>
+<li><strong>由其他模块定义并被模块m引用的全局符号。</strong>这些符号称为外部符号，对应于在<strong>其他模块中定义的非静态C函数和全局变量</strong>。</li>
+<li><strong>只被模块m定义和引用的局部符号。</strong>它们对应于<strong>带static属性的C函数和全局变量</strong>。这些符号在模块m中任何位置都可见，但是不能被其他模块引用</li>
+</ul>
+<p>符号表是由汇编器构造的，使用编译器输出到汇编语言.s中的符号。</p>
+<p>.symtab节中包含了ELF符号表。这张符号表包含了一个条目的数组。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230324102630533.png" alt="image-20230324102630533"></p>
+<h2 id="符号解析"><a href="#符号解析" class="headerlink" title="符号解析"></a>符号解析</h2><h2 id="重定位"><a href="#重定位" class="headerlink" title="重定位"></a>重定位</h2><h2 id="可执行目标文件"><a href="#可执行目标文件" class="headerlink" title="可执行目标文件"></a>可执行目标文件</h2><h2 id="加载可执行目标文件"><a href="#加载可执行目标文件" class="headerlink" title="加载可执行目标文件"></a>加载可执行目标文件</h2><h2 id="动态链接共享库"><a href="#动态链接共享库" class="headerlink" title="动态链接共享库"></a>动态链接共享库</h2><h2 id="从应用程序中加载和链接共享库"><a href="#从应用程序中加载和链接共享库" class="headerlink" title="从应用程序中加载和链接共享库"></a>从应用程序中加载和链接共享库</h2><h2 id="位置无关代码"><a href="#位置无关代码" class="headerlink" title="位置无关代码"></a>位置无关代码</h2><h2 id="库打桩机制"><a href="#库打桩机制" class="headerlink" title="库打桩机制"></a>库打桩机制</h2><h2 id="处理目标文件的工具"><a href="#处理目标文件的工具" class="headerlink" title="处理目标文件的工具"></a>处理目标文件的工具</h2>
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">链接</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">深入理解计算机系统</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/深入理解计算机系统//" class="article-tag-list-link color5">深入理解计算机系统</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/24/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%B3%BB%E7%BB%9F/%E9%93%BE%E6%8E%A5/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-数据库/索引/索引" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -896,7 +1010,48 @@
 <li>常量区：存放常量字符串等，其值不可变</li>
 <li>代码区：存放函数体的二进制代码。</li>
 </ul>
-<h2 id="基础语言特性"><a href="#基础语言特性" class="headerlink" title="基础语言特性"></a>基础语言特性</h2><h3 id="指针和引用的区别"><a href="#指针和引用的区别" class="headerlink" title="指针和引用的区别"></a>指针和引用的区别</h3><ol>
+<h2 id="基础语言特性"><a href="#基础语言特性" class="headerlink" title="基础语言特性"></a>基础语言特性</h2><h3 id="c-x2F-cpp-const关键字的作用"><a href="#c-x2F-cpp-const关键字的作用" class="headerlink" title="c&#x2F;cpp const关键字的作用"></a>c&#x2F;cpp const关键字的作用</h3><p>const单词字面意思为常数，不变的。它是c&#x2F;c++中的一个关键字，是一个限定符，它用来限定一个变量不允许改变，它将一个对象转换成一个常量。</p>
+<ol>
+<li>c语言全局const会被存储到只读数据段。c++中全局const当声明extern或者对变量取地址时，编译期会分配存储地址，变量存储在只读数据段。两个都受到了只读数据段的保护，不可修改</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> constA = <span class="number">10</span>;</span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span>&#123;</span><br><span class="line">   <span class="type">int</span>* p = (<span class="type">int</span>*)&amp;constA;</span><br><span class="line">   *p = <span class="number">200</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以上代码在c&#x2F;c++中编译通过，在运行期间，修改constA的值，发生写入错误。原因是修改只读数据段的数据。</p>
+<ol start="2">
+<li>c语言中局部const存储在堆栈区，只是不能通过变量直接修改const只读变量的值，但是可以跳过编译期的检查，通过指针间接修改const值</li>
+</ol>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> constA = <span class="number">10</span>;</span><br><span class="line"><span class="type">int</span>* p = (<span class="type">int</span>*)&amp;constA;</span><br><span class="line">*p = <span class="number">300</span>;</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;constA:%d\n&quot;</span>,constA);</span><br><span class="line"><span class="built_in">printf</span>(<span class="string">&quot;*p:%d\n&quot;</span>, *p);</span><br></pre></td></tr></table></figure>
+
+<ol start="3">
+<li>c++中的局部const变量：</li>
+</ol>
+<ul>
+<li><p>对于基础数据类型，也就是<code>const int a = 10</code>这种，编译器会把它放到符号表中，不分配内存，当对其取地址时，会分配内存。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="type">int</span> constA = <span class="number">10</span>;</span><br><span class="line"><span class="type">int</span>* p = (<span class="type">int</span>*)&amp;constA;</span><br><span class="line">*p = <span class="number">300</span>;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;constA:&quot;</span> &lt;&lt; constA &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;*p:&quot;</span> &lt;&lt; *p &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">constA:<span class="number">10</span></span><br><span class="line">*p:<span class="number">300</span></span><br></pre></td></tr></table></figure>
+
+<p>constA在符号表中，当我们对constA取地址，这时候为constA分配了新的空间，*p操作的时分配的空间，而constA是从符号表获得的值</p>
+</li>
+<li><p>对于基础数据类型，如果用一个变量初始化const变量，如果const int a &#x3D; b,那么也是会给a分配内存。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> b = <span class="number">10</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> constA = b;<span class="comment">//会分配空间</span></span><br><span class="line"><span class="type">int</span>* p = (<span class="type">int</span>*)&amp;constA;</span><br><span class="line">*p = <span class="number">300</span>;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;constA:&quot;</span> &lt;&lt; constA &lt;&lt; endl;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;*p:&quot;</span> &lt;&lt; *p &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">constA:<span class="number">300</span></span><br><span class="line">*p:<span class="number">300</span></span><br></pre></td></tr></table></figure>
+
+<p>constA分配了内存，所以我们可以修改constA内存中的值</p>
+</li>
+<li><p>对于自定义数据类型，比如类对象，那么也会分配内存</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> Person person; <span class="comment">//未初始化age</span></span><br><span class="line"><span class="comment">//person.age = 50; //不可修改</span></span><br><span class="line">Person* pPerson = (Person*)&amp;person;</span><br><span class="line"><span class="comment">//指针间接修改</span></span><br><span class="line">pPerson-&gt;age = <span class="number">100</span>;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;pPerson-&gt;age:&quot;</span> &lt;&lt; pPerson-&gt;age &lt;&lt; endl;</span><br><span class="line">pPerson-&gt;age = <span class="number">200</span>;</span><br><span class="line">cout &lt;&lt; <span class="string">&quot;pPerson-&gt;age:&quot;</span> &lt;&lt; pPerson-&gt;age &lt;&lt; endl;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">pPerson-&gt;age:<span class="number">100</span></span><br><span class="line">pPerson-&gt;age:<span class="number">200</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="c-x2F-cpp-static关键字"><a href="#c-x2F-cpp-static关键字" class="headerlink" title="c&#x2F;cpp static关键字"></a>c&#x2F;cpp static关键字</h3><p>控制变量的存储方式和可见性</p>
+<ol>
+<li>修饰局部变量：存放在静态存储区，生命周期会一直延续到整个程序执行结束，作用域还是限制在局部。</li>
+<li>修饰全局变量&#x2F;函数：static改变了原来全局变量的作用域范围，由原来整个工程可见变为了本文件可见</li>
+<li>修饰类函数：表示该函数属于一个类而非示例；若对类中某变量修饰，则表示该变量被所有该类实例所共有，static修改的类变量下怒对象存在，所以其要在类外初始化。</li>
+</ol>
+<h3 id="指针和引用的区别"><a href="#指针和引用的区别" class="headerlink" title="指针和引用的区别"></a>指针和引用的区别</h3><ol>
 <li>指针是一个变量，这个变量存储的是一个地址，指向内存的一个存储单元；而引用相当于原来变量的一个别名</li>
 <li>指针定义时不必初始化，引用定义是必须初始化</li>
 <li>指针定义是可以初始化为NULL，引用不能初始化为NULL</li>
@@ -925,13 +1080,6 @@
 </ul>
 </li>
 </ul>
-<h3 id="c中const能定义真正意义上的常量吗？c-中的const呢？"><a href="#c中const能定义真正意义上的常量吗？c-中的const呢？" class="headerlink" title="c中const能定义真正意义上的常量吗？c++中的const呢？"></a>c中const能定义真正意义上的常量吗？c++中的const呢？</h3><p>c中的const不能定义真正意义上的常量。c中的const仅仅是从编译层来限定，不允许对const变量进行赋值操作，在运行期是无效的，所以并非是真正的常量，比如可以通过指针修改const变量，但是c++中是有区别的，c++在编译时会把const常量加入符号表中，以后（仍然在编译器）遇到这个变量会从符号表中查找，所以在c++中是不可能修改到const变量的。</p>
-<p>补充：</p>
-<ol>
-<li>c中的局部const常量存储在栈空间，全局const常量存在只读存储区，所以全局const常量也是无法修改的，它是一个只读变量</li>
-<li>c++中只有用字面量初始化的const常量会被加入符号表，而变量初始化的const常量依然只是只读变量</li>
-<li>c++中const成员为只读变量，可以通过指针修改const成员的值，另外const成员变量只能在初始化列表中进行初始化。</li>
-</ol>
 <h2 id="智能指针"><a href="#智能指针" class="headerlink" title="智能指针"></a>智能指针</h2><ul>
 <li>unique_pointer</li>
 <li>shared_pointer</li>
@@ -2042,88 +2190,9 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第6章 高级IO函数/6.5 mmap函数和munmap函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/">mmap函数和munmap函数</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/" class="archive-article-date">
-  	<time datetime="2023-01-24T03:26:54.278Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-24</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>mmap函数用于申请一段内存空间。我们可以将这段内存作为进程间通信的共享内存，也可以将文件直接映射到其中。munmap函数则释放由mmap创建的这段内存空间。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">mmap</span><span class="params">( <span class="type">void</span>* start, <span class="type">size_t</span> length, <span class="type">int</span> prot, <span class="type">int</span> flags, <span class="type">int</span> fd, <span class="type">off_t</span> offset )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">munmap</span><span class="params">( <span class="type">void</span>* start, <span class="type">size_t</span> length )</span></span>;</span><br></pre></td></tr></table></figure>
-<p>start参数用于指定某个特定地址作为这段内存的起始地址，如果设置为NULL，则由系统自动分配。<br>prot用于设置内存段的访问权限<br>flags参数控制内存段内容被修改后程序的行为。</p>
-<ul>
-<li>MAP_SHARED: 在进程间共享这段内存。对该内存段的修改将反映到被映射的文件中。它提供了进程间共享内存的POSIX方法。</li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/24/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="extend next" rel="next" href="/page/2/">Next &amp;raquo;</a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/2/">Next &amp;raquo;</a>
     </nav>
   
 
@@ -2276,6 +2345,14 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color3">索引</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">链接</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">深入理解计算机系统</a>
               </li>
             
             <div class="clearfix"></div>
