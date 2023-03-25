@@ -138,6 +138,96 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-数据库/SQL语法/SQL窗口函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/">SQL窗口函数</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/" class="archive-article-date">
+  	<time datetime="2023-03-21T11:01:51.383Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-21</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="SQL窗口函数"><a href="#SQL窗口函数" class="headerlink" title="SQL窗口函数"></a>SQL窗口函数</h1><p>SQL窗口函数（Window Functions）是一种高级SQL技术，它可以对结果集中的行进行聚合计算，同时保留原始结果集中的行。窗口函数可以在SELECT语句中使用，使用OVER子句定义窗口（Window），并使用PARTITION BY子句对结果集进行分许，以便在每个分组内进行聚合计算。</p>
+<p>窗口函数可以用于执行许多复杂的查询和分析操作，如计算移动平均值、累计总和、排名和百分位数等。窗口函数与GROUP BY子句不同，它不会对结果进行聚合，而是对每个行进行计算，并将计算结果添加到结果集的每个行中。</p>
+<p>常见的SQL窗口函数包括：</p>
+<ul>
+<li>ROW_NUMBER()：为每一行返回一个唯一的整数值</li>
+<li>RANK()：计算每一行在分组中的排名</li>
+<li>DENSE_RANK()：与RANK()类似，但是不会跳过相同的排名。</li>
+<li>SUM()、AVG()、MAX()、MIN()：计算指定列在每个窗口中的聚合值。</li>
+</ul>
+<p>示例：使用窗口函数计算每个城市的平均工资和排名：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> </span><br><span class="line">	city, <span class="built_in">AVG</span>(salary) <span class="keyword">OVER</span> (<span class="keyword">PARTITION</span> <span class="keyword">BY</span> city) <span class="keyword">AS</span> avg_salary,</span><br><span class="line">	<span class="built_in">RANK</span>() <span class="keyword">OVER</span> (<span class="keyword">PARTITION</span> <span class="keyword">BY</span> city <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="built_in">AVG</span>(salary) <span class="keyword">DESC</span>) <span class="keyword">AS</span> rank</span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">	employee;</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/game-play-analysis-ii/description/">https://leetcode.cn/problems/game-play-analysis-ii/description/</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">SQL</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-Linux高性能服务器编程/第14章 多线程编程/多线程编程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -961,81 +1051,6 @@
 
 
   
-    <article id="post-Linux高性能服务器编程/第8章 高性能服务器框架/8.6 有限状态机" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/13/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/">有限状态机</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/13/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/" class="archive-article-date">
-  	<time datetime="2023-01-13T11:31:34.332Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-13</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>有限状态机（finite state machhine）是逻辑单元内部的高效编程方法</p>
-<h1 id="HTTP请求的读取与分析"><a href="#HTTP请求的读取与分析" class="headerlink" title="HTTP请求的读取与分析"></a>HTTP请求的读取与分析</h1><p>主从状态机，主状态机从内部调用从状态机<br>主状态机的状态是解析到了哪个部分，请求行？头部字段？<br>从状态机从buffer中读取行，其状态分为LINE_OK，LINE_OPEN, LINE_BAD，分别表示读取完一行，需要继续读取，以及语法有问题</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/13/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
       <a class="extend prev" rel="prev" href="/">&amp;laquo; Prev</a><a class="page-number" href="/">1</a><span class="page-number current">2</span><a class="page-number" href="/page/3/">3</a><a class="page-number" href="/page/4/">4</a><a class="extend next" rel="next" href="/page/3/">Next &amp;raquo;</a>
@@ -1203,6 +1218,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">mysql</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">c++</a>
               </li>
             
             <div class="clearfix"></div>
