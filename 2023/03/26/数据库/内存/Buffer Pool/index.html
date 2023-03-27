@@ -6,15 +6,29 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://mowang111.github.io">
-  <title>Tag: mysql | crz&#39;s blog</title>
+  <title>Buffer pool | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="crz&#39;s blog">
-<meta property="og:url" content="https://mowang111.github.io/tags/mysql/index.html">
+  <meta name="description" content="引用自(小林揭开 Buffer Pool 的面纱)[https:&#x2F;&#x2F;xiaolincoding.com&#x2F;mysql&#x2F;buffer_pool&#x2F;buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool] Buffer pool虽然说 MySQL 的数据是存储在磁盘里的，但是也不能每次都从磁盘里面读取数据，这样性">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Buffer pool">
+<meta property="og:url" content="https://mowang111.github.io/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
+<meta property="og:description" content="引用自(小林揭开 Buffer Pool 的面纱)[https:&#x2F;&#x2F;xiaolincoding.com&#x2F;mysql&#x2F;buffer_pool&#x2F;buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool] Buffer pool虽然说 MySQL 的数据是存储在磁盘里的，但是也不能每次都从磁盘里面读取数据，这样性">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230326224319547.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142306681.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142550106.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327143446027.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144101488.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144430307.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327145437308.png">
+<meta property="article:published_time" content="2023-03-26T14:36:09.065Z">
+<meta property="article:modified_time" content="2023-03-27T07:34:14.778Z">
 <meta property="article:author" content="crz">
+<meta property="article:tag" content="数据库">
+<meta property="article:tag" content="mysql">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230326224319547.png">
   
     <link rel="alternative" href="/atom.xml" title="crz&#39;s blog" type="application/atom+xml">
   
@@ -136,36 +150,166 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
+            <article id="post-数据库/内存/Buffer Pool" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
   
+    <h1 class="article-title" itemprop="name">
+      Buffer pool
+    </h1>
   
-    
-    
-      
-      
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2023" class="archive-year">2023</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/" class="archive-article-date">
+
+        
+        <a href="/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/" class="archive-article-date">
   	<time datetime="2023-03-26T14:36:09.065Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-26</time>
 </a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/">Buffer pool</a>
-    </h1>
-  
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>引用自(小林揭开 Buffer Pool 的面纱)[<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/buffer_pool/buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool]">https://xiaolincoding.com/mysql/buffer_pool/buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool]</a></p>
+<h2 id="Buffer-pool"><a href="#Buffer-pool" class="headerlink" title="Buffer pool"></a>Buffer pool</h2><p>虽然说 MySQL 的数据是存储在磁盘里的，但是也不能每次都从磁盘里面读取数据，这样性能是极差的。</p>
+<p>要想提升查询性能，加个缓存就行了嘛。所以，当数据从磁盘中取出后，缓存内存中，下次查询同样的数据的时候，直接从内存中读取。</p>
+<p>为此，Innodb 存储引擎设计了一个<strong>缓冲池（*Buffer Pool*）</strong>，来提高数据库的读写性能。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230326224319547.png" alt="image-20230326224319547"></p>
+<p>有了缓冲池后：</p>
+<ul>
+<li>当读取数据时，如果数据存在于Buffer Pool中，客户端就会直接读取Buffer Pool 中的数据，否则再去磁盘中读取。</li>
+<li>当修改数据时，首先是修改Buffer Pool 中数据所在的页，然后将其页设置为脏页，最后由后台线程将脏页写入到磁盘。</li>
+</ul>
+<h2 id="Buffer-Pool有多大"><a href="#Buffer-Pool有多大" class="headerlink" title="Buffer Pool有多大?"></a>Buffer Pool有多大?</h2><p>Buffer Pool是在MySQL启动的时候，向操作系统申请的一片连续的内存空间，默认配置下Buffer Pool只有128MB。</p>
+<p>可以通过调整<code>innodb_buffer_pool_size</code>参数来设置Buffer Pool的大小，一般建议设置成可用物理内存的60%~80%</p>
+<h2 id="Buffer-Pool-缓存什么？"><a href="#Buffer-Pool-缓存什么？" class="headerlink" title="Buffer Pool 缓存什么？"></a>Buffer Pool 缓存什么？</h2><p>InnoDB会把存储的数据划分为若干个【页】，以页作为磁盘和内存交互的基本单位，一个页的默认大小为16KB。因此，Buffer Pool同样需要按【页】来划分。</p>
+<p>在MySQL启动的时候，<strong>InnoDB会为Buffer Pool申请一篇连续的内存空间，然后按照默认的16KB大小划分成一个个页，Buffer Pool 中的页就叫做缓存页。</strong>此时，这些缓存也都是空闲的，之后随着程序的运行，才会有磁盘上的页被缓存到Buffer Pool中。</p>
+<p>Buffer Pool 中除了缓存【索引页】和【数据页】，还包括了undo页，插入缓存、自适应哈希索引、锁信息等。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142306681.png" alt="image-20230327142306681"></p>
+<p>为了更好的管理这些在Buffer Pool中的缓存页，InnoDB为每一个缓存页都创建了一个<strong>控制块</strong>，控制块信息包括【缓存页的表空间、页号、缓存地址、链表节点】等等。</p>
+<p>控制块也是占用内存空间的，它是放在Buffer Pool的最前面，接着才是缓存页：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142550106.png" alt="image-20230327142550106"></p>
+<p>上图中，控制块和缓存页中的中间部分称为碎片空间。</p>
+<h3 id="为什么会有碎片空间？"><a href="#为什么会有碎片空间？" class="headerlink" title="为什么会有碎片空间？"></a>为什么会有碎片空间？</h3><p>你想想啊，每一个控制块都对应一个缓存页，那在分配足够多的控制块和缓存页后，可能剩余的那点儿空间不够一对控制块和缓存页的大小，自然就用不到喽，这个用不到的那点儿内存空间就被称为碎片了。</p>
+<p>当然，如果你把 Buffer Pool 的大小设置的刚刚好的话，也可能不会产生碎片。</p>
+<h3 id="查询一条记录，就只需要缓冲一条记录吗？"><a href="#查询一条记录，就只需要缓冲一条记录吗？" class="headerlink" title="查询一条记录，就只需要缓冲一条记录吗？"></a>查询一条记录，就只需要缓冲一条记录吗？</h3><p>不是。当我们查询一条记录的时候，InnoDB是会把整个页的数据加载到Buffer Pool 中，因为通过索引只能定位到磁盘中的页，而不能定位到页中的一条记录，将页加载到Buffer Pool中后，再通过页里的页目录去定位到某条具体的记录。</p>
+<h2 id="如何管理Buffer-Pool"><a href="#如何管理Buffer-Pool" class="headerlink" title="如何管理Buffer Pool?"></a>如何管理Buffer Pool?</h2><h3 id="如何管理空闲页？"><a href="#如何管理空闲页？" class="headerlink" title="如何管理空闲页？"></a>如何管理空闲页？</h3><p>Buffer Pool是一片连续的内存空间，当MySQL运行一段时间后，这片连续的内存空间中的缓存页既有空闲的，也有被使用的。</p>
+<p>当我们从磁盘读取数据的时候，为了快速找到空闲的缓存页，可以使用链表结构，将空闲缓存页的【控制块】作为链表的节点，这个链表称为<strong>Free链表（空闲链表）</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327143446027.png" alt="image-20230327143446027"></p>
+<p>Free链表上除了控制块，还有一个头节点，该头节点中包含了链表的头节点地址，尾节点地址，以及当前链表中节点的数量等信息。</p>
+<p>Free链表节点是一个一个控制块，而每个控制块包含着对应缓存页的地址，所以相当于Free链表节点都对应一个空闲的缓存页。</p>
+<p>有了Free链表之后，每当需要从磁盘中加载一个页到Buffer Pool中时，就从Free链表中取一个空闲的缓存页，并且把该缓存页对应的控制块的信息填上，然后把该缓存页对应的控制块从Free链表上移除。</p>
+<h3 id="如何管理脏页？"><a href="#如何管理脏页？" class="headerlink" title="如何管理脏页？"></a>如何管理脏页？</h3><p>设计Buffer Pool除了能提高读性能，还能提高写性能，也就是更新数据的时候，不需要每次都要写入磁盘，而是将Buffer Pool对应的缓存页标记为【脏页】,然后再由后台线程将脏页写入到磁盘。</p>
+<p>为了快速知道哪些缓存页是脏的，于是设计出【Flush链表】，和Free链表类似，链表的节点也是控制块，区别在于Flush链表的元素都是脏页。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144101488.png" alt="image-20230327144101488"></p>
+<h3 id="如何提高缓存命中率？"><a href="#如何提高缓存命中率？" class="headerlink" title="如何提高缓存命中率？"></a>如何提高缓存命中率？</h3><p>最容易想到的就是 LRU（Least recently used）算法。</p>
+<p>该算法的思路是，链表头部的节点是最近使用的，而链表末尾的节点是最久没被使用的。那么，当空间不够了，就淘汰最久没被使用的节点，从而腾出空间。</p>
+<p>简单的 LRU 算法的实现思路是这样的：</p>
+<ul>
+<li>当访问的页在 Buffer Pool 里，就直接把该页对应的 LRU 链表节点移动到链表的头部。</li>
+<li>当访问的页不在 Buffer Pool 里，除了要把页放入到 LRU 链表的头部，还要淘汰 LRU 链表末尾的节点。</li>
+</ul>
+<p>到这里我们可以知道，Buffer Pool 里有三种页和链表来管理数据。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144430307.png" alt="image-20230327144430307"></p>
+<p>图中：</p>
+<ul>
+<li>Free Page（空闲页），表示此页未被使用，位于 Free 链表；</li>
+<li>Clean Page（干净页），表示此页已被使用，但是页面未发生修改，位于LRU 链表。</li>
+<li>Dirty Page（脏页），表示此页「已被使用」且「已经被修改」，其数据和磁盘上的数据已经不一致。当脏页上的数据写入磁盘后，内存数据和磁盘数据一致，那么该页就变成了干净页。脏页同时存在于 LRU 链表和 Flush 链表。</li>
+</ul>
+<p>简单的LRU算法并没有被MySQL使用，因为简单的LRU算法无法避免下面两个问题：</p>
+<ul>
+<li><p>预读失效</p>
+<ul>
+<li><p>MySQL的预读机制。程序是由空间局部性的，靠近当前被访问数据的数据，在未来很大概率会被访问到。所以MySQL在加载数据页时，会提前把它相邻的数据页一并加载进来，目的是为了减少磁盘IO。但<strong>可能这些被提前加载进来的数据页并没有被访问到，相当于这个预读是白做了，这就是预读失效。</strong>如果使用简单的LRU算法，就会把预读页放到LRU链表头部，而当Buffer Pool空间不够的时候，还需要把末尾的页淘汰掉。如果这些预读页一直不被访问到，不会访问的预读页却占用了LRU链表前排的位置，而末尾淘汰的页，可能是频繁访问的页，这样就大大降低了缓存命中率。</p>
+</li>
+<li><p>如何解决预读失效而导致的缓存命中率降低的问题？</p>
+<ul>
+<li><p>最好就是让预读的页停留在Buffer Pool里的时间要尽可能短，让真正被访问的页才能移动到LRU链表的头部，从而保证真正被读取的热数据留在Buffer Pool里的时间尽可能长。</p>
+</li>
+<li><p><strong>MySQL改进了LRU算法，将LRU划分了2个区域：old区域和young区域。</strong>young区域在LRU链表的前半部分，old区域则是在链表的后半部分。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327145437308.png" alt="image-20230327145437308"></p>
+<p>old 区域占整个 LRU 链表长度的比例可以通过 <code>innodb_old_blocks_pct</code> 参数来设置，默认是 37，代表整个 LRU 链表中 young 区域与 old 区域比例是 63:37。</p>
+<p><strong>划分为两个区域后，预读的页就只需要加入old区域的头部，当页被真正访问的时候，才将页插入young区域的头部。</strong>如果预读的页一直没有被访问，就会从old区域移除，这样就不会影响young区域中的热点数据。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Buffer Pool污染</p>
+<ul>
+<li><p>当<strong>某个SQL语句扫描了大量的数据</strong>时，在Buffer Pool空间比较有限的情况下，可能会将<strong>Buffer Pool里的所有页都替换出去，导致大量的热数据被淘汰</strong>，等这些热数据又被再次访问的时候，由于缓存未命中，就会产生大量的磁盘IO，MySQL性能就会急剧下降，这个过程被称为<strong>Buffer Pool污染</strong>。</p>
+</li>
+<li><p>注意，Buffer Pool污染并不是查询语句查询出了大量的数据才出现的问题，即使查询出来的结果集很小，也会造成Buffer Pool污染。</p>
+<ul>
+<li><p>比如在一个数据量非常大的表，执行了以下语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> name <span class="keyword">like</span> &quot;%xiaolin%&quot;;</span><br></pre></td></tr></table></figure>
 
-        <div class="article-info info-on-right">
-          
+<p>可能这个查询出来的结果就几条记录，但是由于这条语句会发生索引失效，所以这个查询过程是全表扫描的，接着会发生如下过程：</p>
+<ul>
+<li>从磁盘读到的页加入到LRU链表的old区域头部；</li>
+<li>当从页里读取行记录的时候，也就是页被访问的时候，就要将该页放到young区域头部；</li>
+<li>接下来拿行记录的name字段和字符串xiaolin进行模糊匹配，如果符合条件，就加入到结果集里。</li>
+<li>如此往复，直到扫描完表中的所有记录</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>如何解决Buffer Pool污染而导致的缓存命中率下降的问题？</p>
+<ul>
+<li>LRU链表中young区域就是热点数据，只要我们提高进入young区域的门槛，就能有效保证young区域里的热点数据不会被替换掉</li>
+<li>MySQL是这样做的，进入到young区域条件增加了一个停留在old区域的时间判断。<ul>
+<li>具体是这样的，在对某个处在old区域的缓存页进行第一次访问时，就在它对应的控制块中记录下来这个访问的时间<ul>
+<li>如果后续的访问时间与第一次访问的时间在某个时间间隔内，那么该缓存页就不会被从old区域移动到young区域的头部</li>
+<li>如果后续的访问时间与第一次访问的时间不在某个时间间隔内，那么该缓存页移动到young区域的头部。</li>
+<li>这个时间间隔是由<code>innodb_old_blocks_time</code>控制的，默认是1000ms</li>
+</ul>
+</li>
+<li><strong>只有同时满足【被访问】与【在old区域停留时间超过1秒】两个条件，才会被插入到young区域头部。</strong></li>
+</ul>
+</li>
+<li>另外，MySQL对young区域做了一个优化，为了防止young区域节点频繁移动到头部。young区域前面1&#x2F;4被访问不会移动到链表头部，只有后面的3&#x2F;4被访问才会</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="脏页什么时候会被输入磁盘？"><a href="#脏页什么时候会被输入磁盘？" class="headerlink" title="脏页什么时候会被输入磁盘？"></a>脏页什么时候会被输入磁盘？</h3><p>引入了Buffer Pool后，当修改数据时，首先是修改Buffer Pool中数据所在页，然后将其页设置为脏页，但是磁盘中还是原数据。</p>
+<p>因此，脏页需要被刷入到磁盘，保证缓存和磁盘的数据一致，但是若每次修改数都刷入磁盘，则性能会很差，所以一般都会在一定时机进行批量刷盘。</p>
+<p>如果在脏页还没有来得及刷入磁盘时，MySQL宕机了，不就丢失数据了？</p>
+<p>InnoDB的更新操作采用的是Write Ahead Log策略，即先写入日志，再写入磁盘，通过redo log日志让MySQL拥有了崩溃恢复能力。</p>
+<p>下面几种情况会触发脏页的刷新：</p>
+<ul>
+<li>当redo log日志满了的情况下，会主动触发脏页刷新到磁盘；</li>
+<li>Buffer Pool空间不足时，需要将一部分数据页淘汰掉，如果淘汰的是脏页，需要先将脏页同步到磁盘；</li>
+<li>MySQL认为空闲时，后台线程会定期将适量的脏页刷入到磁盘</li>
+<li>MySQL正常关闭之前，会把所有的脏页刷入到磁盘</li>
+</ul>
+<p>在我们开启了慢 SQL 监控后，如果你发现<strong>「偶尔」会出现一些用时稍长的 SQL</strong>，这可能是因为脏页在刷新到磁盘时可能会给数据库带来性能开销，导致数据库操作抖动。</p>
+<p>如果间断出现这种现象，就需要调大 Buffer Pool 空间或 redo log 日志的大小。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>InnoDB存储引擎设置了一个缓冲池（Buffer Pool），来提高数据库的读写性能。</p>
+<p>Buffer Pool以页为单位缓冲数据，可以通过<code>innodb_buffer_pool_size</code>参数调整缓冲池的大小，默认是128M。</p>
+<p>InnoDB通过三种链表来管理缓存页：</p>
+<ul>
+<li>Free List（空闲页链表），管理空闲页</li>
+<li>Flush List（脏页链表），管理脏页</li>
+<li>LRU List，管理脏页+干净页，将最近且经常查询的数据缓存在其中，而不常查询的数据就淘汰出去。</li>
+</ul>
+<p>InnoDB对LRU做了一些优化，我们熟悉的LRU算法通常将最近查询的数据放到LRU链表的头部，而InnoDB做了2点优化：</p>
+<ul>
+<li>将LRU链表分为young和old区域，加入缓冲池的页，优先插入old区域；页被访问时，才会进入young区域，目的是解决预读失效的问题。</li>
+<li>当【页被访问】且【 old 区域停留时间超过 <code>innodb_old_blocks_time</code> 阈值（默认为1秒）】时，才会将页插入到young区域，否则还是插入到old区域，目的是为了解决批量数据访问，大量热数据淘汰的问题。</li>
+</ul>
+<p>可以通过调整 <code>innodb_old_blocks_pct</code> 参数，设置 young 区域和 old 区域比例。</p>
+<p>在开启了慢 SQL 监控后，如果你发现「偶尔」会出现一些用时稍长的 SQL，这可因为脏页在刷新到磁盘时导致数据库性能抖动。如果在很短的时间出现这种现象，就需要调大 Buffer Pool 空间或 redo log 日志的大小。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
 	<div class="article-tag tagcloud">
 		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
@@ -181,61 +325,119 @@
 		</ul>
 	</div>
 
-          
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2023/03/25/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/" class="archive-article-date">
-  	<time datetime="2023-03-25T12:36:14.139Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-25</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2023/03/25/cpp/effectivecpp/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Effective C++</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2023/03/25/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/">mysql一行记录是如何存储的？</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">mysql</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-          
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Buffer-pool"><span class="toc-number">1.</span> <span class="toc-text">Buffer pool</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Buffer-Pool%E6%9C%89%E5%A4%9A%E5%A4%A7"><span class="toc-number">2.</span> <span class="toc-text">Buffer Pool有多大?</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Buffer-Pool-%E7%BC%93%E5%AD%98%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">3.</span> <span class="toc-text">Buffer Pool 缓存什么？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E6%9C%89%E7%A2%8E%E7%89%87%E7%A9%BA%E9%97%B4%EF%BC%9F"><span class="toc-number">3.1.</span> <span class="toc-text">为什么会有碎片空间？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9F%A5%E8%AF%A2%E4%B8%80%E6%9D%A1%E8%AE%B0%E5%BD%95%EF%BC%8C%E5%B0%B1%E5%8F%AA%E9%9C%80%E8%A6%81%E7%BC%93%E5%86%B2%E4%B8%80%E6%9D%A1%E8%AE%B0%E5%BD%95%E5%90%97%EF%BC%9F"><span class="toc-number">3.2.</span> <span class="toc-text">查询一条记录，就只需要缓冲一条记录吗？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%AE%A1%E7%90%86Buffer-Pool"><span class="toc-number">4.</span> <span class="toc-text">如何管理Buffer Pool?</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%AE%A1%E7%90%86%E7%A9%BA%E9%97%B2%E9%A1%B5%EF%BC%9F"><span class="toc-number">4.1.</span> <span class="toc-text">如何管理空闲页？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%AE%A1%E7%90%86%E8%84%8F%E9%A1%B5%EF%BC%9F"><span class="toc-number">4.2.</span> <span class="toc-text">如何管理脏页？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%8F%90%E9%AB%98%E7%BC%93%E5%AD%98%E5%91%BD%E4%B8%AD%E7%8E%87%EF%BC%9F"><span class="toc-number">4.3.</span> <span class="toc-text">如何提高缓存命中率？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%84%8F%E9%A1%B5%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E4%BC%9A%E8%A2%AB%E8%BE%93%E5%85%A5%E7%A3%81%E7%9B%98%EF%BC%9F"><span class="toc-number">4.4.</span> <span class="toc-text">脏页什么时候会被输入磁盘？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+        
+    </div>
+</aside>
+
+
+
   
   
-    </div></section>
   
 
-    
+  
+
+  
+
+  
 
 
           </div>
@@ -258,9 +460,9 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
+		isPost: true,
 		isArchive: false,
-		isTag: true,
+		isTag: false,
 		isCategory: false,
 		open_in_new: false,
 		toc_hide_index: true,
