@@ -29,8 +29,26 @@
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230328230209359.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230328230340131.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329104412269.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329120151586.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329121644995.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329144846947.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329145210097.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329145819396.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329150151627.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329150343934.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329150456125.png">
+<meta property="og:image" content="c:/Users/11547/AppData/Roaming/Typora/typora-user-images/image-20230329150612762.png">
+<meta property="og:image" content="c:/Users/11547/AppData/Roaming/Typora/typora-user-images/image-20230329151011003.png">
+<meta property="og:image" content="c:/Users/11547/AppData/Roaming/Typora/typora-user-images/image-20230329151414936.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329151440021.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329151818818.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329151909363.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152001613.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152016354.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152042266.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152140690.png">
 <meta property="article:published_time" content="2023-03-28T03:24:14.447Z">
-<meta property="article:modified_time" content="2023-03-29T02:49:24.288Z">
+<meta property="article:modified_time" content="2023-03-29T07:23:42.730Z">
 <meta property="article:author" content="crz">
 <meta property="article:tag" content="操作系统">
 <meta property="article:tag" content="内存管理">
@@ -357,8 +375,192 @@
 <h3 id="关联内存映射中的映射关系"><a href="#关联内存映射中的映射关系" class="headerlink" title="关联内存映射中的映射关系"></a>关联内存映射中的映射关系</h3><p>vm_area_struct接下来的三个属性<strong>anon_vma，vm_file，vm_pgoff</strong>分别和虚拟内存映射相关，<strong>虚拟内存区域可以映射到物理内存上，也可以映射到文件中，映射到物理内存上我们称之为匿名映射，映射到文件上称之为文件映射</strong>。</p>
 <p>那么这个映射关系在内核中该如何表示呢？这就用到了 vm_area_struct 结构体中的上述三个属性。</p>
 <p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329104412269.png" alt="image-20230329104412269"></p>
-<p>当我们调用malloc申请内存的适合，如果申请的是小块</p>
+<p>当我们调用malloc申请内存的适合，如果申请的是小块内存（低于128K）则会使用do_brk()系统调用通过调整堆中的brk指针大小来增加或者回收堆内存。</p>
+<p>如果申请的是比较大块的内存（超过128K）,则会调用mmap在上图虚拟内存空间中的文件映射与匿名映射区创建出一块VMA内存区域（这里是匿名映射）。这块匿名映射区域就用struct anon_vma结构表示</p>
+<p>当调用mmap进行文件映射时，vm_file属性就用来关联被映射的文件。这样一来虚拟内存区域就与映射文件关联了起来。vm_pgoff则表示映射进虚拟内存中的文件内容，在文件中的偏移。</p>
+<blockquote>
+<p>当然在匿名映射中，vm_area_struct 结构中的 vm_file 就为 null，vm_pgoff 也就没有了意义。</p>
+</blockquote>
+<p>vmf_private_data则用于存储VMA中的私有数据。具体的存储内容和内存映射的类型有关，暂不展开讨论。</p>
+<h3 id="针对虚拟内存区域的相关操作"><a href="#针对虚拟内存区域的相关操作" class="headerlink" title="针对虚拟内存区域的相关操作"></a>针对虚拟内存区域的相关操作</h3><p>struct vm_area_struct 结构中还有一个vm_ops用来指向针对虚拟内存区域VMA的相关操作的函数指针。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vm_operatirons_struct</span> &#123;</span></span><br><span class="line">    <span class="type">void</span> (*open)(<span class="keyword">struct</span> vm_area_struct *area);</span><br><span class="line">    <span class="type">void</span> (*close)(<span class="keyword">struct</span> vm_area_struct *area);</span><br><span class="line">    <span class="type">vm_fault_t</span> (*fault)(<span class="keyword">struct</span> vm_fault *vmf);</span><br><span class="line">    <span class="type">vm_fault_t</span> (*page_mkwrite)(<span class="keyword">struct</span> vm_fault *vmf);</span><br><span class="line">    ....... 省略 .......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
+<ul>
+<li>当指定的虚拟内存区域被加入到进程虚拟内存空间中时，open函数会被调用</li>
+<li>当虚拟内存区域VMA从进程虚拟内存空间中被删除时，close函数会被调用</li>
+<li>当进程访问虚拟内存时，访问的页面不在物理内存中，可能时未分配物理内存也可能时被置换到磁盘中，这时就会产生缺页异常，fault函数就会被调用。</li>
+<li>当一个只读页面将要变成可写时，page_mkwrite函数会被调用</li>
+</ul>
+<p>struct vm_operations_struct 结构中定义的都是对虚拟内存区域 VMA 的相关操作函数指针。</p>
+<h3 id="虚拟内存区域在内核中是如何被组织的"><a href="#虚拟内存区域在内核中是如何被组织的" class="headerlink" title="虚拟内存区域在内核中是如何被组织的"></a>虚拟内存区域在内核中是如何被组织的</h3><p>我们继续来到 struct vm_area_struct 结构中，来看一下与组织结构相关的一些属性：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> &#123;</span></span><br><span class="line">    </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> *<span class="title">vm_next</span>, *<span class="title">vm_prev</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">rb_node</span> <span class="title">vm_rb</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">anon_vma_chain</span>;</span> </span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">vm_mm</span>;</span>	<span class="comment">/* The address space we belong to. */</span></span><br><span class="line"></span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> vm_start;		<span class="comment">/* Our start address within vm_mm. */</span></span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> vm_end;		<span class="comment">/* The first byte after our end address</span></span><br><span class="line"><span class="comment">					   within vm_mm. */</span></span><br><span class="line">	<span class="comment">/*</span></span><br><span class="line"><span class="comment">	 * Access permissions of this VMA.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">	<span class="type">pgprot_t</span> vm_page_prot;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> vm_flags;	</span><br><span class="line"></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">anon_vma</span> *<span class="title">anon_vma</span>;</span>	<span class="comment">/* Serialized by page_table_lock */</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">file</span> * <span class="title">vm_file</span>;</span>		<span class="comment">/* File we map to (can be NULL). */</span></span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> vm_pgoff;		<span class="comment">/* Offset (within vm_file) in PAGE_SIZE</span></span><br><span class="line"><span class="comment">					   units */</span>	</span><br><span class="line">	<span class="type">void</span> * vm_private_data;		<span class="comment">/* was vm_pte (shared mem) */</span></span><br><span class="line">	<span class="comment">/* Function pointers to deal with this struct. */</span></span><br><span class="line">	<span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">vm_operations_struct</span> *<span class="title">vm_ops</span>;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在内核中其实是通过一个struct vm_area_struct结构的双向链表将虚拟内存空间中的这些虚拟内存区域VMA串联起来的。</p>
+<p>vm_area_struct 结构中的 vm_next ，vm_prev 指针分别指向 VMA 节点所在双向链表中的后继节点和前驱节点，内核中的这个 VMA 双向链表是有顺序的，所有 VMA 节点按照低地址到高地址的增长方向排序。</p>
+<p>双向链表中的最后一个 VMA 节点的 vm_next 指针指向 NULL，双向链表的头指针存储在内存描述符 struct mm_struct 结构中的 mmap 中，正是这个 mmap 串联起了整个虚拟内存空间中的虚拟内存区域。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vm_area_struct</span> *<span class="title">mmap</span>;</span>		<span class="comment">/* list of VMAs */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329120151586.png" alt="image-20230329120151586"></p>
+<p>我们可以通过 <code>cat /proc/pid/maps</code> 或者<code>pmap pid</code>查看进程的虚拟内存空间布局以及其中包含的所有内存区域。这两个命令背后的实现原理就是通过变量内核中这个vm_area_struct双向链表获取的。</p>
+<p>内核中关于这些虚拟内存区域的操作除了遍历之外还有许多需要根据特定虚拟内存地址在虚拟内存空间中查找特定的虚拟内存区域。</p>
+<p>尤其在进程虚拟内存空间中包含的内存区域 VMA 比较多的情况下，使用红黑树查找特定虚拟内存区域的时间复杂度是 O( logN ) ，可以显著减少查找所需的时间。</p>
+<p>所以在内核中，同样的内存区域 vm_area_struct 会有两种组织形式，一种是双向链表用于高效的遍历，另一种就是红黑树用于高效的查找。</p>
+<p>每个 VMA 区域都是红黑树中的一个节点，通过 struct vm_area_struct 结构中的 vm_rb 将自己连接到红黑树中。</p>
+<p>而红黑树中的根节点存储在内存描述符 struct mm_struct 中的 mm_rb 中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> &#123;</span></span><br><span class="line">     <span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">mm_rb</span>;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329121644995.png" alt="image-20230329121644995"></p>
+<h2 id="程序编译后的二进制文件如何映射到虚拟内存空间中"><a href="#程序编译后的二进制文件如何映射到虚拟内存空间中" class="headerlink" title="程序编译后的二进制文件如何映射到虚拟内存空间中"></a>程序编译后的二进制文件如何映射到虚拟内存空间中</h2><p>进程的虚拟内存空间mm_struct以及这些虚拟内存区域vm_area_struct是如何被创建并初始化的？</p>
+<p>程序代码编译之后会生成一个ELF格式的二进制文件，这个二进制文件中包含了程序运行时所需要的元信息，比如程序的机器码，程序中的全局变量以及静态变量等。</p>
+<p>这个ELF格式的二进制文件中的布局和我们前面讲的虚拟内存空间中的布局类似，也是一段一段的，每一段包含了不同的元数据。</p>
+<blockquote>
+<p>磁盘文件中的段叫做Section，内存中的段叫做Segment，也就是内存区域</p>
+</blockquote>
+<p>磁盘文件中的这些Section会在进程运行之前加载到内存中并映射到内存中的Segment。通常是多个Section映射到一个Segment。</p>
+<p>比如磁盘文件中的.text，.rodata等一些只读的Section，会被映射到内存的一个只读可执行的Segment里（代码段）。而.data，.bss等一些可读写的Section，则会被映射到内存中的一个具有读写权限的Segment（数据段，BSS段）。</p>
+<p>那么这些 ELF 格式的二进制文件中的 Section 是如何加载并映射进虚拟内存空间的呢？</p>
+<p>内核中完成这个映射过程的函数是load_elf_binary，这个函数的作用很大，加载内核的是它，启动第一个用户态进程init的是它，fork完了之后，调用exec运行一个二进制程序的也是它。当exec运行一个二进制程序的时候，除了解析ELF的格式之外，另一个重要的事情就是建立上述提到的内存映射。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">int</span> <span class="title function_">load_elf_binary</span><span class="params">(<span class="keyword">struct</span> linux_binprm *bprm)</span>&#123;</span><br><span class="line">    ...........省略..........</span><br><span class="line">    <span class="comment">//设置虚拟内存空间中的内存映射区域起始地址mmap_base</span></span><br><span class="line">    setup_new_exec(bprm);</span><br><span class="line">    </span><br><span class="line">    ...........省略..........</span><br><span class="line">    <span class="comment">//创建并初始化栈对应的vm_area_struct结构</span></span><br><span class="line">    <span class="comment">//设置mm-&gt;start_stack就是栈的起始地址也就是栈底，并将mm-&gt;arg_start是指向栈底的</span></span><br><span class="line">    retval = setup_arg_pages(bprm, randomize_stack_top(STACK_TOP),</span><br><span class="line">                            executable_stack);</span><br><span class="line">    ...........省略..........</span><br><span class="line">    <span class="comment">//将二进制文件中的代码部分映射到虚拟空间中</span></span><br><span class="line">    error = elf_map(bprm-&gt;file, load_bias + vaddr, elf_ppnt, </span><br><span class="line">                   elf_prot, elf_flags, total_size);</span><br><span class="line">    ...........省略..........</span><br><span class="line">    <span class="comment">//创建并初始化堆对应的vm_area_struct结构</span></span><br><span class="line">    <span class="comment">//设置current-&gt;mm-&gt;start_brk = current-&gt;mm-&gt;brk, 设置堆的起始地址 start_brk, 结束地址brk,起初两者相等表示堆是空的</span></span><br><span class="line">    retval = set_brk(elf_bss, elf_brk, bss_prot);</span><br><span class="line">     ...........省略..........</span><br><span class="line">   	<span class="comment">// 将进程依赖的动态链接库 .so 文件映射到虚拟内存空间中的内存映射区域</span></span><br><span class="line">    elf_entry = load_elf_interp(&amp;loc-&gt;interp_elf_ex,</span><br><span class="line">                               interpreter,</span><br><span class="line">                               &amp;interp_map_addr,</span><br><span class="line">                               load_bias, interp_elf_phdata);</span><br><span class="line">    <span class="comment">//初始化内存描述符mm_struct</span></span><br><span class="line">    current-&gt;mm-&gt;end_code = end_code;</span><br><span class="line">    current-&gt;mm-&gt;start_code = start_code;</span><br><span class="line">    current-&gt;mm-&gt;start_data = start_data;</span><br><span class="line">    current-&gt;mm-&gt;end_data = end_data;</span><br><span class="line">    current-&gt;mm-&gt;start_stack = bprm-&gt;p;</span><br><span class="line">    ...........省略..........</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>setup_new_exec 设置虚拟内存空间中的内存映射区域起始地址mmap_base</li>
+<li>setup_arg_pages创建并初始化栈对应的vm_area_struct结构。置mm-&gt;start_stack 就是栈的起始地址也就是栈底，并将 mm-&gt;arg_start 是指向栈底的。</li>
+<li>elf_map 将 ELF 格式的二进制文件中.text ，.data，.bss 部分映射到虚拟内存空间中的代码段，数据段，BSS 段中。</li>
+<li>set_brk 创建并初始化堆对应的的 vm_area_struct 结构，设置 current-&gt;mm-&gt;start_brk &#x3D; current-&gt;mm-&gt;brk，设置堆的起始地址 start_brk，结束地址 brk。 起初两者相等表示堆是空的。</li>
+<li>load_elf_interp 将进程依赖的动态链接库 .so 文件映射到虚拟内存空间中的内存映射区域</li>
+<li>初始化内存描述符 mm_struct</li>
+</ul>
+<h2 id="内核虚拟内存空间"><a href="#内核虚拟内存空间" class="headerlink" title="内核虚拟内存空间"></a>内核虚拟内存空间</h2><p>在我们已经知道了进程虚拟内存空间在内核中的布局以及管理，那么内核态的虚拟内存空间又是什么样子的呢？</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329144846947.png" alt="image-20230329144846947"></p>
+<p>不同进程之间的虚拟内存空间是相互隔离的，彼此之间相互独立，相互感知不到其他进程的存在。使得进程以为自己拥有所有的内存资源。</p>
+<p>而内核态虚拟内存空间是所有进程共享的，不同进程进入内核态之后看到的虚拟内存空间全部是一样的。</p>
+<blockquote>
+<p>这里我和大家澄清一个经常被误解的概念：由于内核会涉及到物理内存的管理，所以很多人会想当然地认为只要进入了内核态就开始使用物理地址了，这就大错特错了，千万不要这样理解，进程进入内核态之后使用的仍然是虚拟内存地址，只不过在内核中使用的虚拟内存地址被限制在了内核态虚拟内存空间范围中</p>
+</blockquote>
+<h3 id="32位体系内核虚拟内存空间布局"><a href="#32位体系内核虚拟内存空间布局" class="headerlink" title="32位体系内核虚拟内存空间布局"></a>32位体系内核虚拟内存空间布局</h3><p>在 32 位体系结构下进程用户态虚拟内存空间为 3 GB，虚拟内存地址范围为：0x0000 0000 - 0xC000 000 。内核态虚拟内存空间为 1 GB，虚拟内存地址范围为：0xC000 000 - 0xFFFF FFFF。</p>
+<p>本小节我们主要关注 0xC000 000 - 0xFFFF FFFF 这段虚拟内存地址区域也就是内核虚拟内存空间的布局情况。</p>
+<h4 id="直接映射区"><a href="#直接映射区" class="headerlink" title="直接映射区"></a>直接映射区</h4><p>在总共大小 1G 的内核虚拟内存空间中，位于最前边有一块 896M 大小的区域，我们称之为直接映射区或者线性映射区，地址范围为 3G – 3G + 896m 。</p>
+<p>之所以这块 896M 大小的区域称为直接映射区或者线性映射区，是因为 3G – 3G + 896m 这块 896M 大小的虚拟内存会直接映射到 0 - 896M 这块 896M 大小的物理内存上，<strong>这块区域中的虚拟内存地址直接减去 0xC000 0000 (3G) 就得到了物理内存地址</strong>。所以我们称这块区域为直接映射区。</p>
+<blockquote>
+<p>我们假设现在机器上的物理内存为 4G 大小</p>
+</blockquote>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329145210097.png" alt="image-20230329145210097"></p>
+<blockquote>
+<p>虽然这块区域中的虚拟地址是直接映射到物理地址上，但是内核在访问这段区域的时候还是走的虚拟内存地址，内核也会为这块空间建立映射页表。</p>
+</blockquote>
+<p><strong>在这段 896M 大小的物理内存中，前 1M 已经在系统启动的时候被系统占用，1M 之后的物理内存存放的是内核代码段，数据段，BSS 段（这些信息起初存放在 ELF格式的二进制文件中，在系统启动的时候被加载进内存）。</strong></p>
+<blockquote>
+<p>我们可以通过 <code>cat /proc/iomem</code> 命令查看具体物理内存布局情况。</p>
+</blockquote>
+<p>当我们使用 fork 系统调用创建进程的时候，内核会创建一系列进程相关的描述符，比如之前提到的进程的核心数据结构 task_struct，进程的内存空间描述符 mm_struct，以及虚拟内存区域描述符 vm_area_struct 等。</p>
+<p>这些进程相关的数据结构也会存放在物理内存前 896M 的这段区域中，当然也会被直接映射至内核态虚拟内存空间中的 3G – 3G + 896m 这段直接映射区域中。</p>
+<p><strong>内核栈</strong></p>
+<p>当进程被创建完毕之后，在内核运行的过程中，会涉及内核栈的分配，内核会为每个进程分配一个固定大小的内核栈（一般是两个页大小，依赖具体的体系结构），每个进程的整个调用链必须放在自己的内核栈中，内核栈也是分配在直接映射区。</p>
+<p>与进程用户空间中的栈不同的是，内核栈容量小而且是固定的，用户空间中的栈容量大而且可以动态扩展。内核栈的溢出危害非常巨大，它会直接悄无声息的覆盖相邻内存区域中的数据，破坏数据。</p>
+<p><strong>直接映射区域功能划分</strong></p>
+<p>我们都知道内核对物理内存的管理都是以页为最小单位来管理的，每页默认 4K 大小，理想状况下任何种类的数据页都可以存放在任何页框中，没有什么限制。比如：存放内核数据，用户数据，缓冲磁盘数据等。</p>
+<p>但是实际的计算机体系结构受到硬件方面的限制制约，间接导致限制了页框的使用方式。</p>
+<p>比如在 X86 体系结构下，ISA 总线的 DMA （直接内存存取）控制器，只能对内存的前16M 进行寻址，这就导致了 ISA 设备不能在整个 32 位地址空间中执行 DMA，只能使用物理内存的前 16M 进行 DMA 操作。</p>
+<p><strong>因此直接映射区的前 16M 专门让内核用来为 DMA 分配内存，这块 16M 大小的内存区域我们称之为 ZONE_DMA。</strong></p>
+<p><strong>而直接映射区中剩下的部分也就是从 16M 到 896M（不包含 896M）这段区域，我们称之为 ZONE_NORMAL。</strong>从字面意义上我们可以了解到，这块区域包含的就是正常的页框（使用没有任何限制）。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329145819396.png" alt="image-20230329145819396"></p>
+<blockquote>
+<p>注意这里的 ZONE_DMA 和 ZONE_NORMAL 是内核针对物理内存区域的划分。</p>
+</blockquote>
+<h4 id="ZONE-HIGHMEM-高端内存"><a href="#ZONE-HIGHMEM-高端内存" class="headerlink" title="ZONE_HIGHMEM 高端内存"></a>ZONE_HIGHMEM 高端内存</h4><p>而物理内存 896M 以上的区域被内核划分为 ZONE_HIGHMEM 区域，我们称之为高端内存。</p>
+<p>本例中我们的物理内存假设为 4G，高端内存区域为 4G - 896M &#x3D; 3200M，那么这块 3200M 大小的 ZONE_HIGHMEM 区域该如何映射到内核虚拟内存空间中呢？</p>
+<p>由于内核虚拟内存空间中的前 896M 虚拟内存已经被直接映射区所占用，而在 32 体系结构下内核虚拟内存空间总共也就 1G 的大小，这样一来内核剩余可用的虚拟内存空间就变为了 1G - 896M &#x3D; 128M。</p>
+<p><strong>显然物理内存中 3200M 大小的 ZONE_HIGHMEM 区域无法继续通过直接映射的方式映射到这 128M 大小的虚拟内存空间中。</strong></p>
+<p>这样一来物理内存中的 ZONE_HIGHMEM 区域就只能采用动态映射的方式映射到 128M 大小的内核虚拟内存空间中，也就是说只能动态的一部分一部分的分批映射，先映射正在使用的这部分，使用完毕解除映射，接着映射其他部分。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329150151627.png" alt="image-20230329150151627"></p>
+<p>内核虚拟内存空间中的 3G + 896M 这块地址在内核中定义为 high_memory，high_memory 往上有一段 8M 大小的内存空洞。空洞范围为：high_memory 到 VMALLOC_START 。</p>
+<p>VMALLOC_START 定义在内核源码 <code>/arch/x86/include/asm/pgtable_32_areas.h</code> 文件中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> VMALLOC_OFFSET	(8 * 1024 * 1024)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> VMALLOC_START	((unsigned long)high_memory + VMALLOC_OFFSET)</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="vmalloc动态映射区"><a href="#vmalloc动态映射区" class="headerlink" title="vmalloc动态映射区"></a>vmalloc动态映射区</h4><p>接下来 VMALLOC_START 到 VMALLOC_END 之间的这块区域成为动态映射区。采用动态映射的方式映射物理内存中的高端内存。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifdef</span> CONFIG_HIGHMEM</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> VMALLOC_END	(PKMAP_BASE - 2 * PAGE_SIZE)</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> VMALLOC_END	(LDT_BASE_ADDR - 2 * PAGE_SIZE)</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329150343934.png" alt="image-20230329150343934"></p>
+<p>和用户态进程使用 malloc 申请内存一样，在这块动态映射区内核是使用 vmalloc 进行内存分配。由于之前介绍的动态映射的原因，vmalloc 分配的内存在虚拟内存上是连续的，但是物理内存是不连续的。通过页表来建立物理内存与虚拟内存之间的映射关系，从而可以将不连续的物理内存映射到连续的虚拟内存上。</p>
+<blockquote>
+<p>由于 vmalloc 获得的物理内存页是不连续的，因此它只能将这些物理内存页一个一个地进行映射，在性能开销上会比直接映射大得多。</p>
+</blockquote>
+<h4 id="永久映射区"><a href="#永久映射区" class="headerlink" title="永久映射区"></a>永久映射区</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329150456125.png" alt="image-20230329150456125"></p>
+<p>而在 PKMAP_BASE 到 FIXADDR_START 之间的这段空间称为永久映射区。在内核的这段虚拟地址空间中允许建立与物理高端内存的长期映射关系。比如内核通过 alloc_pages() 函数在物理内存的高端内存中申请获取到的物理内存页，这些物理内存页可以通过调用 kmap 映射到永久映射区中。</p>
+<blockquote>
+<p>LAST_PKMAP 表示永久映射区可以映射的页数限制。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> PKMAP_BASE		\</span></span><br><span class="line"><span class="meta">	((LDT_BASE_ADDR - PAGE_SIZE) &amp; PMD_MASK)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> LAST_PKMAP 1024</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="固定映射区"><a href="#固定映射区" class="headerlink" title="固定映射区"></a>固定映射区</h4><p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230329150612762.png" alt="image-20230329150612762"></p>
+<p>内核虚拟内存空间中的下一个区域为固定映射区，区域范围为：FIXADDR_START 到 FIXADDR_TOP。</p>
+<p>FIXADDR_START 和 FIXADDR_TOP 定义在内核源码 &#x2F;arch&#x2F;x86&#x2F;include&#x2F;asm&#x2F;fixmap.h 文件中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> FIXADDR_START		(FIXADDR_TOP - FIXADDR_SIZE)</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="type">unsigned</span> <span class="type">long</span> __FIXADDR_TOP; <span class="comment">// 0xFFFF F000</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> FIXADDR_TOP	((unsigned long)__FIXADDR_TOP)</span></span><br></pre></td></tr></table></figure>
+
+<p>在内核虚拟内存空间的直接映射区中，直接映射区中的虚拟内存地址与物理内存前 896M 的空间的映射关系都是预设好的，一比一映射。</p>
+<p>在固定映射区中的虚拟内存地址可以自由映射到物理内存的高端地址上，但是与动态映射区以及永久映射区不同的是，在固定映射区中虚拟地址是固定的，而被映射的物理地址是可以改变的。也就是说，有些虚拟地址在编译的时候就固定下来了，是在内核启动过程中被确定的，而这些虚拟地址对应的物理地址不是固定的。<strong>采用固定虚拟地址的好处是它相当于一个指针常量（常量的值在编译时确定），指向物理地址，如果虚拟地址不固定，则相当于一个指针变量。</strong></p>
+<p>那为什么会有固定映射这个概念呢 ? 比如：在内核的启动过程中，有些模块需要使用虚拟内存并映射到指定的物理地址上，而且这些模块也没有办法等待完整的内存管理模块初始化之后再进行地址映射。因此，内核固定分配了一些虚拟地址，这些地址有固定的用途，使用该地址的模块在初始化的时候，将这些固定分配的虚拟地址映射到指定的物理地址上去。</p>
+<h4 id="临时映射区"><a href="#临时映射区" class="headerlink" title="临时映射区"></a>临时映射区</h4><p>在内核虚拟内存空间中的最后一块区域为临时映射区，那么这块临时映射区是用来干什么的呢？</p>
+<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230329151011003.png" alt="image-20230329151011003"></p>
+<blockquote>
+<p>先跳过，还看不懂。。。</p>
+</blockquote>
+<h3 id="64位体系内核虚拟内存空间布局"><a href="#64位体系内核虚拟内存空间布局" class="headerlink" title="64位体系内核虚拟内存空间布局"></a>64位体系内核虚拟内存空间布局</h3><p>内核虚拟内存空间在 32 位体系下只有 1G 大小，实在太小了，因此需要精细化的管理，于是按照功能分类划分除了很多内核虚拟内存区域，这样就显得非常复杂。</p>
+<p>到了 64 位体系下，内核虚拟内存空间的布局和管理就变得容易多了，因为进程虚拟内存空间和内核虚拟内存空间各自占用 128T 的虚拟内存，实在是太大了，我们可以在这里边随意翱翔，随意挥霍。</p>
+<p>因此在 64 位体系下的内核虚拟内存空间与物理内存的映射就变得非常简单，由于虚拟内存空间足够的大，即便是内核要访问全部的物理内存，直接映射就可以了，不在需要用到《7.1.2 ZONE_HIGHMEM 高端内存》小节中介绍的高端内存那种动态映射方式。</p>
+<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230329151414936.png" alt="image-20230329151414936"></p>
+<p>在 64 位系统中，只使用了其中的低 48 位来表示虚拟内存地址。其中用户态虚拟内存空间为低 128 T，虚拟内存地址范围为：0x0000 0000 0000 0000 - 0x0000 7FFF FFFF F000 。</p>
+<p>内核态虚拟内存空间为高 128 T，虚拟内存地址范围为：0xFFFF 8000 0000 0000 - 0xFFFF FFFF FFFF FFFF 。</p>
+<p>本小节我们主要关注 0xFFFF 8000 0000 0000 - 0xFFFF FFFF FFFF FFFF 这段内核虚拟内存空间的布局情况。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329151440021.png" alt="image-20230329151440021"></p>
+<p>64 位内核虚拟内存空间从 0xFFFF 8000 0000 0000 开始到 0xFFFF 8800 0000 0000 这段地址空间是一个 8T 大小的内存空洞区域。</p>
+<p>紧着着 8T 大小的内存空洞下一个区域就是 64T 大小的直接映射区。这个区域中的虚拟内存地址减去 PAGE_OFFSET 就直接得到了物理内存地址。</p>
+<p>PAGE_OFFSET 变量定义在 &#x2F;arch&#x2F;x86&#x2F;include&#x2F;asm&#x2F;page_64_types.h 文件中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __PAGE_OFFSET_BASE      _AC(0xffff880000000000, UL)</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> __PAGE_OFFSET           __PAGE_OFFSET_BASE</span></span><br></pre></td></tr></table></figure>
+
+<p>从图中 VMALLOC_START 到 VMALLOC_END 的这段区域是 32T 大小的 vmalloc 映射区，这里类似用户空间中的堆，内核在这里使用 vmalloc 系统调用申请内存。</p>
+<p>VMALLOC_START 和 VMALLOC_END 变量定义在 <code>/arch/x86/include/asm/pgtable_64_types.h</code> 文件中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __VMALLOC_BASE_L4	0xffffc90000000000UL</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> VMEMMAP_START		__VMEMMAP_BASE_L4</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> VMALLOC_END		(VMALLOC_START + (VMALLOC_SIZE_TB &lt;&lt; 40) - 1)</span></span><br></pre></td></tr></table></figure>
+
+<p>从 VMEMMAP_START 开始是 1T 大小的虚拟内存映射区，用于存放物理页面的描述符 struct page 结构用来表示物理内存页。</p>
+<p>VMEMMAP_START 变量定义在 <code>/arch/x86/include/asm/pgtable_64_types.h</code> 文件中：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">#define __VMEMMAP_BASE_L4	0xffffea0000000000UL</span><br><span class="line"></span><br><span class="line"># define VMEMMAP_START		__VMEMMAP_BASE_L4</span><br></pre></td></tr></table></figure>
+
+<p>从 __START_KERNEL_map 开始是大小为 512M 的区域用于存放内核代码段、全局变量、BSS 等。这里对应到物理内存开始的位置，减去 __START_KERNEL_map 就能得到物理内存的地址。这里和直接映射区有点像，但是不矛盾，因为直接映射区之前有 8T 的空洞区域，早就过了内核代码在物理内存中加载的位置。</p>
+<p>__START_KERNEL_map 变量定义在 <code>/arch/x86/include/asm/page_64_types.h</code> 文件中：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> __START_KERNEL_map  _AC(0xffffffff80000000, UL)</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329151818818.png" alt="image-20230329151818818"></p>
+<h2 id="到底什么是物理内存地址？"><a href="#到底什么是物理内存地址？" class="headerlink" title="到底什么是物理内存地址？"></a>到底什么是物理内存地址？</h2><p>聊完了虚拟内存，我们接着聊一下物理内存，我们平时所称的内存也叫随机访问存储器（ random-access memory ）也叫 RAM 。而 RAM 分为两类：</p>
+<ul>
+<li>一类是静态 RAM（ <code>SRAM</code> ），这类 SRAM 用于 CPU 高速缓存 L1Cache，L2Cache，L3Cache。其特点是访问速度快，访问速度为 1 - 30 个时钟周期，但是容量小，造价高。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329151909363.png" alt="image-20230329151909363"></p>
+<ul>
+<li>另一类则是动态 RAM ( <code>DRAM</code> )，这类 DRAM 用于我们常说的主存上，其特点的是访问速度慢（相对高速缓存），访问速度为 50 - 200 个时钟周期，但是容量大，造价便宜些（相对高速缓存）</li>
+</ul>
+<p>内存由一个一个的存储器模块（memory module）组成，它们插在主板的扩展槽上。常见的存储器模块通常以 64 位为单位（ 8 个字节）传输数据到存储控制器上或者从存储控制器传出数据。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152001613.png" alt="image-20230329152001613"></p>
+<p>如图所示内存条上黑色的元器件就是存储器模块（memory module）。多个存储器模块连接到存储控制器上，就聚合成了主存。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152016354.png" alt="image-20230329152016354"></p>
+<p>而 DRAM 芯片就包装在存储器模块中，每个存储器模块中包含 8 个 DRAM 芯片，依次编号为 0 - 7 。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152042266.png" alt="image-20230329152042266"></p>
+<p>而每一个 DRAM 芯片的存储结构是一个二维矩阵，二维矩阵中存储的元素我们称为超单元（supercell），每个 supercell 大小为一个字节（8 bit）。每个 supercell 都由一个坐标地址（i，j）。</p>
+<blockquote>
+<p>i 表示二维矩阵中的行地址，在计算机中行地址称为 RAS (row access strobe，行访问选通脉冲)。 j 表示二维矩阵中的列地址，在计算机中列地址称为 CAS (column access strobe,列访问选通脉冲)。</p>
+</blockquote>
+<p>下图中的 supercell 的 RAS &#x3D; 2，CAS &#x3D; 2。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329152140690.png" alt="image-20230329152140690"></p>
+<p>DRAM 芯片中的信息通过引脚流入流出 DRAM 芯片。每个引脚携带 1 bit的信号。</p>
+<p>图中 DRAM 芯片包含了两个地址引脚( addr )，因为我们要通过 RAS，CAS 来定位要获取的 supercell 。还有 8 个数据引脚（data），因为 DRAM 芯片的 IO 单位为一个字节（8 bit），所以需要 8 个 data 引脚从 DRAM 芯片传入传出数据。</p>
+<blockquote>
+<p>注意这里只是为了解释地址引脚和数据引脚的概念，实际硬件中的引脚数量是不一定的。</p>
+</blockquote>
+<h3 id="DRAM芯片的访问"><a href="#DRAM芯片的访问" class="headerlink" title="DRAM芯片的访问"></a>DRAM芯片的访问</h3><h3 id="CPU如何读写主存"><a href="#CPU如何读写主存" class="headerlink" title="CPU如何读写主存"></a>CPU如何读写主存</h3><h3 id="CPU从主存读取数据过程"><a href="#CPU从主存读取数据过程" class="headerlink" title="CPU从主存读取数据过程"></a>CPU从主存读取数据过程</h3><h3 id="如何根据物理内存地址从主存中读取数据"><a href="#如何根据物理内存地址从主存中读取数据" class="headerlink" title="如何根据物理内存地址从主存中读取数据"></a>如何根据物理内存地址从主存中读取数据</h3><h3 id="CPU-向内存写入数据过程"><a href="#CPU-向内存写入数据过程" class="headerlink" title="CPU 向内存写入数据过程"></a>CPU 向内存写入数据过程</h3>
       
 
       
@@ -494,7 +696,7 @@
                 </span>
                 <span class="tooltip-content">
                     <div class="toc-article">
-                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Linux%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toc-number">1.</span> <span class="toc-text">深入理解Linux虚拟内存管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%EF%BC%9F"><span class="toc-number">1.1.</span> <span class="toc-text">什么是虚拟内存地址？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%EF%BC%9F"><span class="toc-number">1.2.</span> <span class="toc-text">为什么要用虚拟内存地址？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.3.</span> <span class="toc-text">进程虚拟内存空间</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Linux%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.4.</span> <span class="toc-text">Linux进程虚拟内存空间</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#32%E4%BD%8D%E6%9C%BA%E5%99%A8%E4%B8%8A%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83"><span class="toc-number">1.4.1.</span> <span class="toc-text">32位机器上进程虚拟内存空间分布</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#64%E4%BD%8D%E6%9C%BA%E5%99%A8%E4%B8%8A%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83"><span class="toc-number">1.4.2.</span> <span class="toc-text">64位机器上进程虚拟内存空间分布</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E7%9A%84%E7%AE%A1%E7%90%86"><span class="toc-number">1.5.</span> <span class="toc-text">进程虚拟内存空间的管理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%A6%82%E4%BD%95%E5%88%92%E5%88%86%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.5.1.</span> <span class="toc-text">内核如何划分用户态和内核态虚拟内存空间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%A6%82%E4%BD%95%E5%B8%83%E5%B1%80%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.5.2.</span> <span class="toc-text">内核如何布局进程虚拟内存空间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%A6%82%E4%BD%95%E7%AE%A1%E7%90%86%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F"><span class="toc-number">1.5.3.</span> <span class="toc-text">内核如何管理虚拟内存区域</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E7%9A%84%E8%AE%BF%E9%97%AE%E6%9D%83%E9%99%90%E5%92%8C%E8%A1%8C%E4%B8%BA%E8%A7%84%E8%8C%83"><span class="toc-number">1.5.4.</span> <span class="toc-text">定义虚拟内存区域的访问权限和行为规范</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E8%81%94%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84%E4%B8%AD%E7%9A%84%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB"><span class="toc-number">1.5.5.</span> <span class="toc-text">关联内存映射中的映射关系</span></a></li></ol></li></ol></li></ol>
+                    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3Linux%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="toc-number">1.</span> <span class="toc-text">深入理解Linux虚拟内存管理</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%EF%BC%9F"><span class="toc-number">1.1.</span> <span class="toc-text">什么是虚拟内存地址？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E7%94%A8%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%EF%BC%9F"><span class="toc-number">1.2.</span> <span class="toc-text">为什么要用虚拟内存地址？</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.3.</span> <span class="toc-text">进程虚拟内存空间</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Linux%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.4.</span> <span class="toc-text">Linux进程虚拟内存空间</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#32%E4%BD%8D%E6%9C%BA%E5%99%A8%E4%B8%8A%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83"><span class="toc-number">1.4.1.</span> <span class="toc-text">32位机器上进程虚拟内存空间分布</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#64%E4%BD%8D%E6%9C%BA%E5%99%A8%E4%B8%8A%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E5%88%86%E5%B8%83"><span class="toc-number">1.4.2.</span> <span class="toc-text">64位机器上进程虚拟内存空间分布</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E7%9A%84%E7%AE%A1%E7%90%86"><span class="toc-number">1.5.</span> <span class="toc-text">进程虚拟内存空间的管理</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%A6%82%E4%BD%95%E5%88%92%E5%88%86%E7%94%A8%E6%88%B7%E6%80%81%E5%92%8C%E5%86%85%E6%A0%B8%E6%80%81%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.5.1.</span> <span class="toc-text">内核如何划分用户态和内核态虚拟内存空间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%A6%82%E4%BD%95%E5%B8%83%E5%B1%80%E8%BF%9B%E7%A8%8B%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.5.2.</span> <span class="toc-text">内核如何布局进程虚拟内存空间</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E5%A6%82%E4%BD%95%E7%AE%A1%E7%90%86%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F"><span class="toc-number">1.5.3.</span> <span class="toc-text">内核如何管理虚拟内存区域</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E4%B9%89%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E7%9A%84%E8%AE%BF%E9%97%AE%E6%9D%83%E9%99%90%E5%92%8C%E8%A1%8C%E4%B8%BA%E8%A7%84%E8%8C%83"><span class="toc-number">1.5.4.</span> <span class="toc-text">定义虚拟内存区域的访问权限和行为规范</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B3%E8%81%94%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84%E4%B8%AD%E7%9A%84%E6%98%A0%E5%B0%84%E5%85%B3%E7%B3%BB"><span class="toc-number">1.5.5.</span> <span class="toc-text">关联内存映射中的映射关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%92%88%E5%AF%B9%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E7%9A%84%E7%9B%B8%E5%85%B3%E6%93%8D%E4%BD%9C"><span class="toc-number">1.5.6.</span> <span class="toc-text">针对虚拟内存区域的相关操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E5%8C%BA%E5%9F%9F%E5%9C%A8%E5%86%85%E6%A0%B8%E4%B8%AD%E6%98%AF%E5%A6%82%E4%BD%95%E8%A2%AB%E7%BB%84%E7%BB%87%E7%9A%84"><span class="toc-number">1.5.7.</span> <span class="toc-text">虚拟内存区域在内核中是如何被组织的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A8%8B%E5%BA%8F%E7%BC%96%E8%AF%91%E5%90%8E%E7%9A%84%E4%BA%8C%E8%BF%9B%E5%88%B6%E6%96%87%E4%BB%B6%E5%A6%82%E4%BD%95%E6%98%A0%E5%B0%84%E5%88%B0%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E4%B8%AD"><span class="toc-number">1.6.</span> <span class="toc-text">程序编译后的二进制文件如何映射到虚拟内存空间中</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%85%E6%A0%B8%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4"><span class="toc-number">1.7.</span> <span class="toc-text">内核虚拟内存空间</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#32%E4%BD%8D%E4%BD%93%E7%B3%BB%E5%86%85%E6%A0%B8%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E5%B8%83%E5%B1%80"><span class="toc-number">1.7.1.</span> <span class="toc-text">32位体系内核虚拟内存空间布局</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%9B%B4%E6%8E%A5%E6%98%A0%E5%B0%84%E5%8C%BA"><span class="toc-number">1.7.1.1.</span> <span class="toc-text">直接映射区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ZONE-HIGHMEM-%E9%AB%98%E7%AB%AF%E5%86%85%E5%AD%98"><span class="toc-number">1.7.1.2.</span> <span class="toc-text">ZONE_HIGHMEM 高端内存</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#vmalloc%E5%8A%A8%E6%80%81%E6%98%A0%E5%B0%84%E5%8C%BA"><span class="toc-number">1.7.1.3.</span> <span class="toc-text">vmalloc动态映射区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B0%B8%E4%B9%85%E6%98%A0%E5%B0%84%E5%8C%BA"><span class="toc-number">1.7.1.4.</span> <span class="toc-text">永久映射区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9B%BA%E5%AE%9A%E6%98%A0%E5%B0%84%E5%8C%BA"><span class="toc-number">1.7.1.5.</span> <span class="toc-text">固定映射区</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%B4%E6%97%B6%E6%98%A0%E5%B0%84%E5%8C%BA"><span class="toc-number">1.7.1.6.</span> <span class="toc-text">临时映射区</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#64%E4%BD%8D%E4%BD%93%E7%B3%BB%E5%86%85%E6%A0%B8%E8%99%9A%E6%8B%9F%E5%86%85%E5%AD%98%E7%A9%BA%E9%97%B4%E5%B8%83%E5%B1%80"><span class="toc-number">1.7.2.</span> <span class="toc-text">64位体系内核虚拟内存空间布局</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%B0%E5%BA%95%E4%BB%80%E4%B9%88%E6%98%AF%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%EF%BC%9F"><span class="toc-number">1.8.</span> <span class="toc-text">到底什么是物理内存地址？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DRAM%E8%8A%AF%E7%89%87%E7%9A%84%E8%AE%BF%E9%97%AE"><span class="toc-number">1.8.1.</span> <span class="toc-text">DRAM芯片的访问</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU%E5%A6%82%E4%BD%95%E8%AF%BB%E5%86%99%E4%B8%BB%E5%AD%98"><span class="toc-number">1.8.2.</span> <span class="toc-text">CPU如何读写主存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU%E4%BB%8E%E4%B8%BB%E5%AD%98%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE%E8%BF%87%E7%A8%8B"><span class="toc-number">1.8.3.</span> <span class="toc-text">CPU从主存读取数据过程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E6%A0%B9%E6%8D%AE%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E5%9C%B0%E5%9D%80%E4%BB%8E%E4%B8%BB%E5%AD%98%E4%B8%AD%E8%AF%BB%E5%8F%96%E6%95%B0%E6%8D%AE"><span class="toc-number">1.8.4.</span> <span class="toc-text">如何根据物理内存地址从主存中读取数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CPU-%E5%90%91%E5%86%85%E5%AD%98%E5%86%99%E5%85%A5%E6%95%B0%E6%8D%AE%E8%BF%87%E7%A8%8B"><span class="toc-number">1.8.5.</span> <span class="toc-text">CPU 向内存写入数据过程</span></a></li></ol></li></ol></li></ol>
                     </div>
                 </span>
             </div>
