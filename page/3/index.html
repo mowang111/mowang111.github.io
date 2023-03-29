@@ -138,6 +138,101 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-网络编程/Linux高性能服务器编程/第14章 多线程编程/多线程编程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/01/25/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/">多线程编程</a>
+    </h1>
+  
+
+        
+        <a href="/2023/01/25/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/" class="archive-article-date">
+  	<time datetime="2023-01-25T01:18:28.062Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-25</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="多线程编程"><a href="#多线程编程" class="headerlink" title="多线程编程"></a>多线程编程</h1><p>POSIX线程（pthread）标准</p>
+<ul>
+<li>创建线程和结束线程</li>
+<li>读取和设置线程属性</li>
+<li>POSIX线程同步方式：POSIX信号量、互斥锁和条件变量</li>
+</ul>
+<h2 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h2><p>线程是程序中完成一个独立任务的完整执行序列，即一个可调度的实体。</p>
+<p>根据运行环境和调度者身份，线程可分为内核线程和用户线程。</p>
+<p>内核线程，在有的系统上也称为LWP( Light Weight Process,轻量级进程)，运行在内核空间，由内核来调度。<br>用户线程运行在用户空间，由线程库来调度。</p>
+<p>一个进程的所有执行线程共享该进程的时间片，它们对外表现出相同的优先级。</p>
+<h2 id="Linux线程库"><a href="#Linux线程库" class="headerlink" title="Linux线程库"></a>Linux线程库</h2><p>Linux中定义在pthread.h头文件中</p>
+<h2 id="创建线程和结束线程"><a href="#创建线程和结束线程" class="headerlink" title="创建线程和结束线程"></a>创建线程和结束线程</h2><h3 id="pthread-create"><a href="#pthread-create" class="headerlink" title="pthread_create"></a>pthread_create</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_create</span><span class="params">( <span class="type">pthread_t</span>* thread, <span class="type">const</span> <span class="type">pthread_attr_t</span>* attr, <span class="type">void</span>* ( *start_routine )( <span class="type">void</span>* ), <span class="type">void</span>* arg )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/pthreadtypes.h&gt;</span></span></span><br><span class="line"><span class="keyword">typedef</span> <span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> <span class="type">pthread_t</span>;</span><br></pre></td></tr></table></figure>
+
+<p>一个用户可以打开的线程数量不能超过RLIMIT_NPROC软资源限制，此外，系统上所有用户能创建的线程总数也不得超过&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;threads-max内核参数所定义的值</p>
+<h3 id="pthread-exit"><a href="#pthread-exit" class="headerlink" title="pthread_exit"></a>pthread_exit</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">pthread_exit</span><span class="params">( <span class="type">void</span>* retval )</span></span>;</span><br></pre></td></tr></table></figure>
+
+
+<h3 id="pthread-join"><a href="#pthread-join" class="headerlink" title="pthread_join"></a>pthread_join</h3><h3 id="pthread-cancel"><a href="#pthread-cancel" class="headerlink" title="pthread_cancel"></a>pthread_cancel</h3><h2 id="条件变量"><a href="#条件变量" class="headerlink" title="条件变量"></a>条件变量</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_init</span><span class="params">( <span class="type">pthread_cond_t</span>* cond, <span class="type">const</span> <span class="type">pthread_condattr_t</span>* cond_attr )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_destroy</span><span class="params">( <span class="type">pthread_cond_t</span>* cond )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_broadcast</span><span class="params">( <span class="type">pthread_cond_t</span>* cond )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_signal</span><span class="params">( <span class="type">pthread_cond_t</span>* cond )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_wait</span><span class="params">( <span class="type">pthread_cond_t</span>* cond, <span class="type">pthread_mutex_t</span>* mutex )</span></span>;</span><br></pre></td></tr></table></figure>
+
+<h2 id="多线程环境"><a href="#多线程环境" class="headerlink" title="多线程环境"></a>多线程环境</h2><h3 id="可重入函数"><a href="#可重入函数" class="headerlink" title="可重入函数"></a>可重入函数</h3><p>如果一个函数能被多个线程同时调用且不发生竞态条件，则我们称它是线程安全的（thread safe）, 或者说它是可重入函数。</p>
+<h3 id="线程和进程"><a href="#线程和进程" class="headerlink" title="线程和进程"></a>线程和进程</h3><h3 id="线程和信号"><a href="#线程和信号" class="headerlink" title="线程和信号"></a>线程和信号</h3>
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/01/25/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-网络编程/Linux高性能服务器编程/第6章 高级IO函数/6.5 mmap函数和munmap函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -912,91 +1007,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2023/01/13/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.6%20%E6%9C%89%E9%99%90%E7%8A%B6%E6%80%81%E6%9C%BA/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第8章 高性能服务器框架/8.5 两种高效的并发模式" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/12/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/">两种高效的并发模式</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/12/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/" class="archive-article-date">
-  	<time datetime="2023-01-12T13:01:27.189Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-12</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>并发编程主要是针对I&#x2F;O密集型的，让被I&#x2F;O操作所阻塞的指向线程可放弃CPU，将执行权交给其他线程，可提升CPU的利用率</p>
-<p>并发编程主要有多进程和多线程两种实现方式。</p>
-<p>这里先讨论并发模式，并发模式是指I&#x2F;O处理单元与多个逻辑单元之间协调完成任务的方法。服务器主要有两种并发编程模式：半同步&#x2F;半异步（half-sync&#x2F;half-async）模式和领导者&#x2F;追随者（Leader&#x2F;Followers）模式。</p>
-<h1 id="半同步-x2F-半异步模式"><a href="#半同步-x2F-半异步模式" class="headerlink" title="半同步&#x2F;半异步模式"></a>半同步&#x2F;半异步模式</h1><p>这里的半同步&#x2F;半异步中的“同步”和“异步”和之前I&#x2F;O模型中的“同步”和“异步”是完全不同的概念。在I&#x2F;O模型中，“同步”和“异步”区分的是内核向应用程序同时的是何种I&#x2F;O事件（就绪事件还是完成事件），以及该由谁来完成I&#x2F;O读写（是应用程序还是内核）。在并发模式中，<strong>“同步”指的是程序完全按照代码序列的顺序执行；“异步”指的是程序的执行需要由系统事件来驱动，常见的系统事件包括中断、信号等。</strong><br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112211542.png" alt="image.png"><br>按照同步方式运行的线程称为同步线程，按照异步方式运行的线程称为异步线程。<br>半同步&#x2F;半异步模式中，同步线程用于处理客户逻辑，相当于逻辑单元；异步线程用于处理I&#x2F;O事件，相当于I&#x2F;O处理单元。</p>
-<p>半同步&#x2F;半异步模式存在多种变体。<br>半同步&#x2F;半反应堆（half-sync&#x2F;half-reactive）模式。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212046.png" alt="image.png"></p>
-<p>相对高效的半同步&#x2F;半异步模式，每个工作线程都能同时处理多个客户连接<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112212639.png" alt="image.png"></p>
-<h1 id="领导者-x2F-追随者模式"><a href="#领导者-x2F-追随者模式" class="headerlink" title="领导者&#x2F;追随者模式"></a>领导者&#x2F;追随者模式</h1><p>领导者&#x2F;追随者模式是多个工作线程轮流获得事件源集合，轮流监听、分发并处理事件的一种模式。<br>在任意时间点内，程序仅有一个领导者线程，它负责监听I&#x2F;O事件。而其他线程则都是追随者，它们休眠在线程池中等待成为新的领导者。当前的领导者如果检测到I&#x2F;O事件，首先要从线程池中推选出新的领导者线程，然后处理I&#x2F;O事件。此时，新的领导者等待新的I&#x2F;O事件，而原来的领导者则处理I&#x2F;O事件，二者实现了并发。<br>领导者&#x2F;追随者模式包含了如下几个组件：句柄集（HandleSet）、线程集（ThreadSet）、事件处理器（EventHandler）和具体的事件处理器（ConcreteEventHandler）。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230112214253.png" alt="image.png"></p>
-<ol>
-<li>句柄集<br> 句柄（Handle，就是描述符）用于表示I&#x2F;O资源，在Linux下通常是一个文件描述符。句柄集管理众多句柄，它使用wait_for_event()方法来监听这些句柄上的I&#x2F;O事件，并将其中的就绪事件通知给领导者线程。领导者则调用绑定到Handle上的事件处理器。领导者将Handle和事件处理器绑定时通过调用句柄集中的register_handle方法实现的。</li>
-<li>线程集</li>
-<li>事件处理器和具体的事件处理器</li>
-</ol>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/12/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC8%E7%AB%A0%20%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A1%86%E6%9E%B6/8.5%20%E4%B8%A4%E7%A7%8D%E9%AB%98%E6%95%88%E7%9A%84%E5%B9%B6%E5%8F%91%E6%A8%A1%E5%BC%8F/">展开全文 >></a>
         </p>
       
 

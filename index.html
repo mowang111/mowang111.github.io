@@ -138,6 +138,567 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-网络编程/整理/从Linux内核看IO模型" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/29/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/%E6%95%B4%E7%90%86/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BIO%E6%A8%A1%E5%9E%8B/">从Linux内核看IO模型</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/29/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/%E6%95%B4%E7%90%86/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BIO%E6%A8%A1%E5%9E%8B/" class="archive-article-date">
+  	<time datetime="2023-03-29T08:17:17.624Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-29</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>整理自<a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s?__biz=Mzg2MzU3Mjc3Ng==&mid=2247483737&idx=1&sn=7ef3afbb54289c6e839eed724bb8a9d6&chksm=ce77c71ef9004e08e3d164561e3a2708fc210c05408fa41f7fe338d8e85f39c1ad57519b614e&scene=21#wechat_redirect">聊聊Netty那些事儿之从内核角度看IO模型</a></p>
+<h1 id="从Linux内核看IO模型"><a href="#从Linux内核看IO模型" class="headerlink" title="从Linux内核看IO模型"></a>从Linux内核看IO模型</h1><h2 id="网络包接收流程"><a href="#网络包接收流程" class="headerlink" title="网络包接收流程"></a>网络包接收流程</h2><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329162139100.png" alt="image-20230329162139100"></p>
+<ul>
+<li><p>当网络数据帧通过网络传输到达网卡时，网卡会将网络数据帧通过DMA的方式放到环形缓冲区RingBuffer中</p>
+<blockquote>
+<p>RingBuffer是网卡启动的时候分配和初始化的环形缓冲队列。当RingBuffer满的时候，新来的数据包就会被丢弃。我们可以通过ifconfig命令查看网卡收发数据包的情况。其中overruns数据项表示当RingBuffer满的时候，被丢弃的数据包。如果发现出现丢包情况，可以通过ethtool命令来增大RingBuffer长度。</p>
+</blockquote>
+</li>
+<li><p>当DMA操作完成时，网卡会向CPU发起一个硬中断，告诉CPU有网络数据到达。CPU调用网卡驱动注册的硬中断响应程序。网卡中断响应程序会为网络数据帧创建内核数据结构<code>sk_buffer</code>，并将网络数据帧拷贝到<code>sk_buffer</code>。然后发起软中断请求，通知内核有新的网络数据帧到达。</p>
+<blockquote>
+<p><code>sk_buff</code>缓冲区，是一个维护网络帧结构的双向链表，链表中的每一个元素都是网络帧。<strong>虽然TCP&#x2F;IP协议栈分了好几层，但上下不同层之间的传递，实际上只需要操作这个数据结构中的指针，而无需进行数据复制。</strong></p>
+</blockquote>
+</li>
+<li><p>内核线程<code>ksoftirqd</code>发现有软中断请求到来，随后调用网卡驱动注册的<code>poll函数</code>，<code>poll函数</code>将<code>sk_buffer</code>中的网络数据包送到内核协议栈中注册的<code>ip_rcv函数</code>中。</p>
+<blockquote>
+<p>每个CPU会绑定一个ksoftirqd内核线程专门用来处理软中断响应。2个 CPU 时，就会有 <code>ksoftirqd/0</code> 和 <code>ksoftirqd/1</code>这两个内核线程。</p>
+</blockquote>
+<blockquote>
+<p><strong>这里有个事情需要注意下：</strong> 网卡接收到数据后，当<code>DMA拷贝完成</code>时，向CPU发出<code>硬中断</code>，这时<code>哪个CPU</code>上响应了这个<code>硬中断</code>，那么在网卡<code>硬中断响应程序</code>中发出的<code>软中断请求</code>也会在<code>这个CPU绑定的ksoftirqd线程</code>中响应。所以如果发现Linux软中断，CPU消耗都<code>集中在一个核上</code>的话，那么就需要调整硬中断的<code>CPU亲和性</code>，来将硬中断<code>打散</code>到<code>不通的CPU核</code>上去。</p>
+</blockquote>
+</li>
+<li><p>在ip_rcv函数中也就是上图中的网络层，取出数据包的IP头，判断该数据包的下一跳走向，如果数据包时发送给本机的，则取出传输层的协议类型（TCP或者UDP），并去掉数据包的IP头，将数据包交给上图总的传输层处理。</p>
+<blockquote>
+<p>传输层的处理函数：<code>TCP协议</code>对应内核协议栈中注册的<code>tcp_rcv函数</code>，<code>UDP协议</code>对应内核协议栈中注册的<code>udp_rcv函数</code>。</p>
+</blockquote>
+</li>
+<li><p>当我们采用的是TCP协议时，数据包到达传输层时，会在内核协议栈中的<code>tcp_rcv函数</code>处理，在tcp_rcv函数中去掉TCP头，根据<code>四元组（源IP，源端口，目的IP，目的端口）</code>查找对应的Socket，如果找到对应的Socket则将网络数据包中的传输数据拷贝到<code>Socket</code>中的接收缓冲区中。如果没有找到，则发送一个目标不可达的icmp包。</p>
+</li>
+<li><p>将视角放到应用层，当我们程序通过系统调用read读取Socket接收缓冲区中的数据时，如果接收缓冲区中没有数据。那么应用程序就会在系统调用上阻塞，直到Socket接收缓冲区有数据，然后CPU将内核空间（Socket接收缓冲区）的数据拷贝到用户空间，最后系统调用read返回，应用程序读取数据。</p>
+</li>
+</ul>
+<h3 id="性能开销"><a href="#性能开销" class="headerlink" title="性能开销"></a>性能开销</h3><ul>
+<li>应用程序通过系统调用从用户态转为内核态的开销以及系统调用返回时从内核态转为用户态的开销。</li>
+<li>网络数据从内核空间通过CPU拷贝到用户空间的开销。</li>
+<li>内核线程ksoftirqd响应软中断的开销。</li>
+<li>CPU响应硬中断的开销</li>
+<li>DMA拷贝网络数据包到内存中的开销。</li>
+</ul>
+<h2 id="网络包发送流程"><a href="#网络包发送流程" class="headerlink" title="网络包发送流程"></a>网络包发送流程</h2><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329193812492.png" alt="image-20230329193812492"></p>
+<ul>
+<li>当在应用程序调用send系统调用发送数据时，由于….</li>
+</ul>
+<h3 id="性能开销-1"><a href="#性能开销-1" class="headerlink" title="性能开销"></a>性能开销</h3><h2 id="阻塞，非阻塞-与-同步，异步"><a href="#阻塞，非阻塞-与-同步，异步" class="headerlink" title="阻塞，非阻塞 与 同步，异步"></a>阻塞，非阻塞 与 同步，异步</h2><p>首先将网络数据包接收流程分为两个阶段：</p>
+<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230329195012430.png" alt="image-20230329195012430"></p>
+<ul>
+<li>数据准备阶段：在这个阶段，网络数据包到达网卡，通过DMA的方式将数据包拷贝到内存中，然后经过硬中断，软中断，接着通过内核线程ksoftirqd经过内核协议栈的处理，最终将数据发送到内核Socket的接收缓冲区中。</li>
+<li>数据拷贝阶段：当数据到达内核Socket的接收缓冲区时，此时数据存在于内核空间中，需要将数据拷贝到用户空间，才能够被应用程序读取。</li>
+</ul>
+<h3 id="阻塞与非阻塞"><a href="#阻塞与非阻塞" class="headerlink" title="阻塞与非阻塞"></a>阻塞与非阻塞</h3><p>阻塞与非阻塞的区别主要发生在第一阶段：数据准备阶段。</p>
+<p>当应用程序发起系统调用read时，线程从用户态转为内核态，读取内核Socket的接收缓冲区中的网络数据。</p>
+<h4 id="阻塞"><a href="#阻塞" class="headerlink" title="阻塞"></a>阻塞</h4><p>如果这时内核Socket的接收缓冲区中没有数据，那么线程就会一直等待，直到Socket接收缓冲区中有数据为止。随后将数据从内核空间拷贝到用户空间，系统调用read返回。</p>
+<h4 id="非阻塞"><a href="#非阻塞" class="headerlink" title="非阻塞"></a>非阻塞</h4><ul>
+<li>在第一阶段，当socket的接收缓冲区中没有数据的时候，阻塞模式下的应用线程会一直等待。非阻塞模式下的应用线程不会等待，系统调用直接返回错误标志<code>EWOULDBLOCK</code>;</li>
+<li>当Socket的接收缓冲区中有数据的时候，阻塞和非阻塞的表现时一样的，都会进入第二阶段等待数据从内核空间拷贝到用户空间，然后系统调用返回。</li>
+</ul>
+<h3 id="同步与异步"><a href="#同步与异步" class="headerlink" title="同步与异步"></a>同步与异步</h3><ul>
+<li><p>同步模式<strong>在数据准备好后，是由用户线程的内核态来指向第二阶段。所以应用程序会在第二阶段发生阻塞，直到数据从内核空间拷贝到用户空间，系统调用才会返回</strong>。</p>
+</li>
+<li><p>异步模式下是<strong>由内核来执行第二阶段的数据拷贝操作，当内核执行完第二阶段，会通知用户线程IO操作已经完成，并将数据回调给用户线程</strong>。所以在异步模式下数据准备阶段和数据拷贝阶段均是由内核来完成的，不会对应用程序造成任何阻塞。</p>
+<blockquote>
+<p>基于以上特征，我们可以看到<code>异步模式</code>需要内核的支持，比较依赖操作系统底层的支持。</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="IO模型"><a href="#IO模型" class="headerlink" title="IO模型"></a>IO模型</h2><p>五种IO模型：阻塞IO，非阻塞IO，IO多路复用，信号驱动IO，异步IO，每一种IO模型的出现都是对前一种的升级优化。</p>
+<h3 id="阻塞IO-BIO"><a href="#阻塞IO-BIO" class="headerlink" title="阻塞IO(BIO)"></a>阻塞IO(BIO)</h3><p><strong>阻塞读</strong></p>
+<p>当用户线程发起read系统调用，用户线程从用户态切换到内核态，在内核中去查看Socket接收缓冲区是否有数据到来。</p>
+<ul>
+<li>Socket接收缓冲区中有数据，则用户线程在内核态将内核空间中的数据拷贝到用户空间，系统IO调用返回。</li>
+<li>Socket接收缓冲区中无数据，则用户线程让出CPU，进入阻塞状态。当数据到达Socket接收缓冲区后，内核唤醒阻塞状态中的用户线程进入就绪状态，随后经过CPU的调度获取到CPU quota进入运行状态，将内核空间的数据拷贝到用户空间，随后系统调用返回。</li>
+</ul>
+<p><strong>阻塞写</strong></p>
+<p>当用户发起send系统调用时，用户线程从用户态切换到内核态，将发送数据从用户空间拷贝到内核空间中的Socket发送缓冲区中。</p>
+<ul>
+<li>当Socket发送缓冲区能够容纳下发送数据时，用户线程会将全部的发送数据写入Socket缓冲区，然后执行后续流程，然后返回。</li>
+<li>当Socket发送缓冲区空间不够，无法容纳全部发送数据时，用户线程让出CPU，进入阻塞状态，直到Socket发送缓冲区能够容纳下全部发送数据时，内核唤醒用户线程，执行后续发送流程。</li>
+</ul>
+<p><strong>阻塞模型</strong></p>
+<p>由于<code>阻塞IO</code>的读写特点，所以导致在<code>阻塞IO</code>模型下，每个请求都需要被一个独立的线程处理。一个线程在同一时刻只能与一个连接绑定。来一个请求，服务端就需要创建一个线程用来处理请求。</p>
+<p>当客户端请求的并发量突然增大时，服务端在一瞬间就会创建出大量的线程，而创建线程是需要系统资源开销的，这样一来就会一瞬间占用大量的系统资源。</p>
+<p>如果客户端创建好连接后，但是一直不发数据，通常大部分情况下，网络连接也<code>并不</code>总是有数据可读，那么在空闲的这段时间内，服务端线程就会一直处于<code>阻塞状态</code>，无法干其他的事情。CPU也<code>无法得到充分的发挥</code>，同时还会<code>导致大量线程切换的开销</code>。</p>
+<p><strong>适用场景</strong></p>
+<p>基于以上<code>阻塞IO模型</code>的特点，该模型只适用于<code>连接数少</code>，<code>并发度低</code>的业务场景。</p>
+<h3 id="非阻塞IO-NIO"><a href="#非阻塞IO-NIO" class="headerlink" title="非阻塞IO(NIO)"></a>非阻塞IO(NIO)</h3><p><code>阻塞IO模型</code>最大的问题就是一个线程只能处理一个连接，如果这个连接上没有数据的话，那么这个线程就只能阻塞在系统IO调用上，不能干其他的事情。这对系统资源来说，是一种极大的浪费。同时大量的线程上下文切换，也是一个巨大的系统开销。</p>
+<p>所以为了解决这个问题，<strong>我们就需要用尽可能少的线程去处理更多的连接。</strong><code>网络IO模型的演变</code>也是根据这个需求来一步一步演进的。</p>
+<p>基于这个需求，第一种解决方案<code>非阻塞IO</code>就出现了。我们在上一小节中介绍了<code>非阻塞</code>的概念，现在我们来看下网络读写操作在<code>非阻塞IO</code>下的特点：</p>
+<p><strong>非阻塞读</strong></p>
+<p>当用户线程发起非阻塞read系统调用的时候，用户线程从用户态转为内核态，在内核中去查看Socket接收缓冲区是否有数据到来。</p>
+<ul>
+<li>Socket接收缓冲区中无数据，系统调用立马返回，并带有一个EWOULDBLOCK或EAGAIN错误，这个阶段用户线程不会阻塞，也不会让出CPU，而是会继续轮询直到Socket接收缓冲区有数据为止。</li>
+<li>Socket接收缓冲区中有数据，用户线程在内核态会将内核空间中的数据拷贝到用户空间，注意这个数据拷贝阶段，应用程序是阻塞的，当数据拷贝完成，系统调用返回。</li>
+</ul>
+<p><strong>非阻塞写</strong></p>
+<p>当发送缓冲区中没有足够的空间容纳全部发送数据时，<code>非阻塞写</code>的特点是<code>能写多少写多少</code>，写不下了，就立即返回。并将写入到发送缓冲区的字节数返回给应用程序，方便用户线程不断的<code>轮询</code>尝试将<code>剩下的数据</code>写入发送缓冲区中。</p>
+<p><strong>非阻塞IO模型</strong></p>
+<p>基于以上<code>非阻塞IO</code>的特点，我们就不必像<code>阻塞IO</code>那样为每个请求分配一个线程去处理连接上的读写了。</p>
+<p>我们可以利用<strong>一个线程或者很少的线程</strong>，去<code>不断地轮询</code>每个<code>Socket</code>的接收缓冲区是否有数据到达，如果没有数据，<code>不必阻塞</code>线程，而是接着去<code>轮询</code>下一个<code>Socket</code>接收缓冲区，直到轮询到数据后，处理连接上的读写，或者交给业务线程池去处理，轮询线程则<code>继续轮询</code>其他的<code>Socket</code>接收缓冲区。</p>
+<p>这样一个<code>非阻塞IO模型</code>就实现了我们在本小节开始提出的需求：<strong>我们需要用尽可能少的线程去处理更多的连接</strong></p>
+<p><strong>适用场景</strong></p>
+<p>虽然<code>非阻塞IO模型</code>与<code>阻塞IO模型</code>相比，减少了很大一部分的资源消耗和系统开销。</p>
+<p>但是它仍然有很大的性能问题，因为在<code>非阻塞IO模型</code>下，需要用户线程去<code>不断地</code>发起<code>系统调用</code>去轮训<code>Socket</code>接收缓冲区，这就需要用户线程不断地从<code>用户态</code>切换到<code>内核态</code>，<code>内核态</code>切换到<code>用户态</code>。随着并发量的增大，这个上下文切换的开销也是巨大的。</p>
+<p>所以单纯的<code>非阻塞IO</code>模型还是无法适用于高并发的场景。</p>
+<h3 id="多路复用"><a href="#多路复用" class="headerlink" title="多路复用"></a>多路复用</h3><p>在<code>非阻塞IO</code>这一小节的开头，我们提到<code>网络IO模型</code>的演变都是围绕着—<strong>如何用尽可能少的线程去处理更多的连接</strong>这个核心需求开始展开的。</p>
+<ul>
+<li>多路：多路连接</li>
+<li>复用：指的就是用<code>有限的资源</code>，比如用一个线程或者固定数量的线程去处理众多连接上的读写事件。换句话说，在<code>阻塞IO模型</code>中一个连接就需要分配一个独立的线程去专门处理这个连接上的读写，到了<code>IO多路复用模型</code>中，多个连接可以<code>复用</code>这一个独立的线程去处理这多个连接上的读写。</li>
+</ul>
+<h4 id="select"><a href="#select" class="headerlink" title="select"></a>select</h4><p>select系统调用将轮询的操作交给了内核来帮助我们完成，从而避免了在用户空间不断的发起轮询所带来的的系统性能开销。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329202743389.png" alt="image-20230329202743389"></p>
+<ul>
+<li>首先用户线程在发起select系统调用的时候会阻塞在select系统调用上。此时，用户线程从<code>用户态</code>切换到了<code>内核态</code>完成了一次<code>上下文切换</code></li>
+<li>用户线程将需要监听的<code>Socket</code>对应的文件描述符<code>fd</code>数组通过<code>select</code>系统调用传递给内核。此时，用户线程将<code>用户空间</code>中的文件描述符<code>fd</code>数组<code>拷贝</code>到<code>内核空间</code>。</li>
+</ul>
+<p>这里的<strong>文件描述符数组</strong>其实是一个<code>BitMap</code>，<code>BitMap</code>下标为<code>文件描述符fd</code>，下标对应的值为：<code>1</code>表示该<code>fd</code>上有读写事件，<code>0</code>表示该<code>fd</code>上没有读写事件。</p>
+<p><strong>文件描述符fd</strong>其实就是一个<code>整数值</code>，在Linux中一切皆文件，<code>Socket</code>也是一个文件。描述进程所有信息的数据结构<code>task_struct</code>中有一个属性<code>struct files_struct *files</code>，它最终指向了一个数组，数组里存放了进程打开的所有文件列表，文件信息封装在<code>struct file</code>结构体中，这个数组存放的类型就是<code>struct file</code>结构体，<code>数组的下标</code>则是我们常说的文件描述符<code>fd</code>。</p>
+<ul>
+<li>当用户线程调用完<code>select</code>后开始进入<code>阻塞状态</code>，<code>内核</code>开始轮询遍历<code>fd</code>数组，查看<code>fd</code>对应的<code>Socket</code>接收缓冲区中是否有数据到来。如果有数据到来，则将<code>fd</code>对应<code>BitMap</code>的值设置为<code>1</code>。如果没有数据到来，则保持值为<code>0</code>。</li>
+</ul>
+<blockquote>
+<p><strong>注意</strong>这里内核会修改原始的<code>fd</code>数组！！</p>
+</blockquote>
+<ul>
+<li>内核遍历一遍<code>fd</code>数组后，如果发现有些<code>fd</code>上有IO数据到来，则将修改后的<code>fd</code>数组返回给用户线程。此时，会将<code>fd</code>数组从<code>内核空间</code>拷贝到<code>用户空间</code>。</li>
+<li>当内核将修改后的<code>fd</code>数组返回给用户线程后，用户线程解除<code>阻塞</code>，由用户线程开始遍历<code>fd</code>数组然后找出<code>fd</code>数组中值为<code>1</code>的<code>Socket</code>文件描述符。最后对这些<code>Socket</code>发起系统调用读取数据。</li>
+</ul>
+<blockquote>
+<p><code>select</code>不会告诉用户线程具体哪些<code>fd</code>上有IO数据到来，只是在<code>IO活跃</code>的<code>fd</code>上打上标记，将打好标记的完整<code>fd</code>数组返回给用户线程，所以用户线程还需要遍历<code>fd</code>数组找出具体哪些<code>fd</code>上有<code>IO数据</code>到来。</p>
+</blockquote>
+<ul>
+<li>由于内核在遍历的过程中已经修改了fd数组，所以在用户线程遍历完fd数组后获取到IO就绪的Socket后，就需要重置fd数组，并重新调用select传入重置后的fd数组，让内核发起新的一轮遍历轮询。</li>
+</ul>
+<p><strong>API介绍</strong></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">select</span><span class="params">(<span class="type">int</span> maxfdp1,fd_set *readset,fd_set *writeset,fd_set *exceptset,<span class="type">const</span> <span class="keyword">struct</span> timeval *timeout)</span></span><br></pre></td></tr></table></figure>
+
+<p>从<code>select API</code>中我们可以看到，<code>select</code>系统调用是在规定的<code>超时时间内</code>，监听（<code>轮询</code>）用户感兴趣的文件描述符集合上的<code>可读</code>,<code>可写</code>,<code>异常</code>三类事件。</p>
+<ul>
+<li><code>maxfdp1 ：</code> select传递给内核监听的文件描述符集合中数值最大的文件描述符<code>+1</code>，目的是用于限定内核遍历范围。比如：<code>select</code>监听的文件描述符集合为<code>&#123;0,1,2,3,4&#125;</code>，那么<code>maxfdp1</code>的值为<code>5</code>。</li>
+<li><code>fd_set *readset：</code> 对<code>可读事件</code>感兴趣的文件描述符集合。</li>
+<li><code>fd_set *writeset：</code> 对<code>可写事件</code>感兴趣的文件描述符集合。</li>
+<li><code>fd_set *exceptset：</code>对<code>异常事件</code>感兴趣的文件描述符集合。</li>
+</ul>
+<blockquote>
+<p>这里的<code>fd_set</code>就是我们前边提到的<code>文件描述符数组</code>，是一个<code>BitMap</code>结构。</p>
+</blockquote>
+<ul>
+<li><code>const struct timeval *timeout：</code>select系统调用超时时间，在这段时间内，内核如果没有发现有<code>IO就绪</code>的文件描述符，就直接返回。</li>
+</ul>
+<p>上小节提到，在<code>内核</code>遍历完<code>fd</code>数组后，发现有<code>IO就绪</code>的<code>fd</code>，则会将该<code>fd</code>对应的<code>BitMap</code>中的值设置为<code>1</code>，并将修改后的<code>fd</code>数组，返回给用户线程。</p>
+<p>在用户线程中需要重新遍历<code>fd</code>数组，找出<code>IO就绪</code>的<code>fd</code>出来，然后发起真正的读写调用。</p>
+<p>下面介绍下在用户线程中重新遍历<code>fd</code>数组的过程中，我们需要用到的<code>API</code>：</p>
+<ul>
+<li><code>void FD_ZERO(fd_set *fdset)：</code>清空指定的文件描述符集合，即让<code>fd_set</code>中不在包含任何文件描述符。</li>
+<li><code>void FD_SET(int fd, fd_set *fdset)：</code>将一个给定的文件描述符加入集合之中。</li>
+</ul>
+<blockquote>
+<p><strong>每次调用<code>select</code>之前都要通过<code>FD_ZERO</code>和<code>FD_SET</code>重新设置文件描述符，因为文件描述符集合会在<code>内核</code>中<code>被修改</code>。</strong></p>
+</blockquote>
+<ul>
+<li><code>int FD_ISSET(int fd, fd_set *fdset)：</code>检查集合中指定的文件描述符是否可以读写。用户线程<code>遍历</code>文件描述符集合,调用该方法检查相应的文件描述符是否<code>IO就绪</code>。</li>
+<li><code>void FD_CLR(int fd, fd_set *fdset)：</code>将一个给定的文件描述符从集合中删除</li>
+</ul>
+<p><strong>性能开销</strong></p>
+<p>虽然<code>select</code>解决了<code>非阻塞IO模型</code>中频繁发起<code>系统调用</code>的问题，但是在整个<code>select</code>工作过程中，我们还是看出了<code>select</code>有些不足的地方。</p>
+<ul>
+<li>在发起<code>select</code>系统调用以及返回时，用户线程各发生了一次<code>用户态</code>到<code>内核态</code>以及<code>内核态</code>到<code>用户态</code>的上下文切换开销。<strong>发生2次上下文<code>切换</code></strong></li>
+<li>在发起<code>select</code>系统调用以及返回时，用户线程在<code>内核态</code>需要将<code>文件描述符集合</code>从用户空间<code>拷贝</code>到内核空间。以及在内核修改完<code>文件描述符集合</code>后，又要将它从内核空间<code>拷贝</code>到用户空间。<strong>发生2次文件描述符集合的<code>拷贝</code></strong></li>
+<li>虽然由原来在用户空间发起轮询优化成了在内核空间发起轮询但select不会告诉用户线程到底是哪些Socket上发生了IO就绪事件，只是对IO就绪的Socket作了标记，用户线程依然要遍历文件描述符集合去查找具体IO就绪的Socket。时间复杂度依然为O(n)。</li>
+</ul>
+<blockquote>
+<p>大部分情况下，网络连接并不总是活跃的，如果<code>select</code>监听了大量的客户端连接，只有少数的连接活跃，然而使用轮询的这种方式会随着连接数的增大，效率会越来越低。</p>
+</blockquote>
+<ul>
+<li><code>内核</code>会对原始的<code>文件描述符集合</code>进行修改。导致每次在用户空间重新发起<code>select</code>调用时，都需要对<code>文件描述符集合</code>进行<code>重置</code>。</li>
+<li><code>BitMap</code>结构的文件描述符集合，长度为固定的<code>1024</code>,所以只能监听<code>0~1023</code>的文件描述符。</li>
+<li><code>select</code>系统调用 不是线程安全的。</li>
+</ul>
+<p>以上<code>select</code>的不足所产生的<code>性能开销</code>都会随着并发量的增大而<code>线性增长</code>。</p>
+<h4 id="poll"><a href="#poll" class="headerlink" title="poll"></a>poll</h4><p><code>poll</code>相当于是改进版的<code>select</code>，但是工作原理基本和<code>select</code>没有本质的区别。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">poll</span><span class="params">(<span class="keyword">struct</span> pollfd *fds, <span class="type">unsigned</span> <span class="type">int</span> nfds, <span class="type">int</span> timeout)</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">pollfd</span> &#123;</span></span><br><span class="line">    <span class="type">int</span>   fd;         <span class="comment">/* 文件描述符 */</span></span><br><span class="line">    <span class="type">short</span> events;     <span class="comment">/* 需要监听的事件 */</span></span><br><span class="line">    <span class="type">short</span> revents;    <span class="comment">/* 实际发生的事件 由内核修改设置 */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><code>select</code>中使用的文件描述符集合是采用的固定长度为1024的<code>BitMap</code>结构的<code>fd_set</code>，而<code>poll</code>换成了一个<code>pollfd</code>结构没有固定长度的数组，这样就没有了最大描述符数量的限制（当然还会受到系统文件描述符限制）</p>
+<p><code>poll</code>只是改进了<code>select</code>只能监听<code>1024</code>个文件描述符的数量限制，但是并没有在性能方面做出改进。和<code>select</code>上本质并没有多大差别。</p>
+<ul>
+<li>同样需要在<code>内核空间</code>和<code>用户空间</code>中对文件描述符集合进行<code>轮询</code>，查找出<code>IO就绪</code>的<code>Socket</code>的时间复杂度依然为<code>O(n)</code>。</li>
+<li>同样需要将<code>包含大量文件描述符的集合</code>整体在<code>用户空间</code>和<code>内核空间</code>之间<code>来回复制</code>，<strong>无论这些文件描述符是否就绪</strong>。他们的开销都会随着文件描述符数量的增加而线性增大。</li>
+<li><code>select，poll</code>在每次新增，删除需要监听的socket时，都需要将整个新的<code>socket</code>集合全量传至<code>内核</code>。</li>
+</ul>
+<p><code>poll</code>同样不适用高并发的场景。</p>
+<h4 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h4><p>通过上边对<code>select,poll</code>核心原理的介绍，我们看到<code>select,poll</code>的性能瓶颈主要体现在下面三个地方：</p>
+<ul>
+<li>因为内核不会保存我们要监听的<code>socket</code>集合，所以在每次调用<code>select,poll</code>的时候都需要传入，传出全量的<code>socket</code>文件描述符集合。这导致了大量的文件描述符在<code>用户空间</code>和<code>内核空间</code>频繁的来回复制。</li>
+<li>由于内核不会通知具体<code>IO就绪</code>的<code>socket</code>，只是在这些<code>IO就绪</code>的socket上打好标记，所以当<code>select</code>系统调用返回时，在<code>用户空间</code>还是需要<code>完整遍历</code>一遍<code>socket</code>文件描述符集合来获取具体<code>IO就绪</code>的<code>socket</code>。</li>
+<li>在<code>内核空间</code>中也是通过遍历的方式来得到<code>IO就绪</code>的<code>socket</code></li>
+</ul>
+<h5 id="epoll-create创建epoll对象"><a href="#epoll-create创建epoll对象" class="headerlink" title="epoll_create创建epoll对象"></a>epoll_create创建epoll对象</h5><p><code>epoll_create</code>是内核提供给我们创建<code>epoll</code>对象的一个系统调用，当我们在用户进程中调用<code>epoll_create</code>时，内核会为我们创建一个<code>struct eventpoll</code>对象，并且也有相应的<code>struct file</code>与之关联，同样需要把这个<code>struct eventpoll</code>对象所关联的<code>struct file</code>放入进程打开的文件列表<code>fd_array</code>中管理。</p>
+<blockquote>
+<p><code>struct eventpoll</code>对象关联的<code>struct file</code>中的<code>file_operations 指针</code>指向的是<code>eventpoll_fops</code>操作函数集合。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> <span class="title">eventpoll_fops</span> =</span> &#123;</span><br><span class="line">     .release = ep_eventpoll_release;</span><br><span class="line">     .poll = ep_eventpoll_poll,</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329224815202.png" alt="image-20230329224815202"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">eventpoll</span> &#123;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//等待队列，阻塞在epoll上的进程会放在这里</span></span><br><span class="line">    <span class="type">wait_queue_head_t</span> wq;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//就绪队列，IO就绪的socket连接会放在这里</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">rdllist</span>;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//红黑树用来管理所有监听的socket连接</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">rb_root</span> <span class="title">rbr</span>;</span></span><br><span class="line"></span><br><span class="line">    ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>wait_queue_head_t wq：</code>epoll中的等待队列，队列里存放的是<code>阻塞</code>在<code>epoll</code>上的用户进程。在<code>IO就绪</code>的时候<code>epoll</code>可以通过这个队列找到这些<code>阻塞</code>的进程并唤醒它们，从而执行<code>IO调用</code>读写<code>Socket</code>上的数据。</li>
+</ul>
+<blockquote>
+<p>这里注意与<code>Socket</code>中的等待队列区分！！！</p>
+</blockquote>
+<ul>
+<li><code>struct list_head rdllist：</code>epoll中的就绪队列，队列里存放的是都是<code>IO就绪</code>的<code>Socket</code>，被唤醒的用户进程可以直接读取这个队列获取<code>IO活跃</code>的<code>Socket</code>。无需再次遍历整个<code>Socket</code>集合。</li>
+</ul>
+<blockquote>
+<p>这里正是<code>epoll</code>比<code>select ，poll</code>高效之处，<code>select ，poll</code>返回的是全部的<code>socket</code>连接，我们需要在<code>用户空间</code>再次遍历找出真正<code>IO活跃</code>的<code>Socket</code>连接。而<code>epoll</code>只是返回<code>IO活跃</code>的<code>Socket</code>连接。用户进程可以直接进行IO操作。</p>
+</blockquote>
+<ul>
+<li><code>struct rb_root rbr :</code> 由于红黑树在<code>查找</code>，<code>插入</code>，<code>删除</code>等综合性能方面是最优的，所以epoll内部使用一颗红黑树来管理海量的<code>Socket</code>连接。</li>
+</ul>
+<blockquote>
+<p><code>select</code>用<code>数组</code>管理连接，<code>poll</code>用<code>链表</code>管理连接。</p>
+</blockquote>
+<h5 id="epoll-ctl向epoll对象中添加监听的Socket"><a href="#epoll-ctl向epoll对象中添加监听的Socket" class="headerlink" title="epoll_ctl向epoll对象中添加监听的Socket"></a>epoll_ctl向epoll对象中添加监听的Socket</h5><p>当我们调用<code>epoll_create</code>在内核中创建出<code>epoll</code>对象<code>struct eventpoll</code>后，我们就可以利用<code>epoll_ctl</code>向<code>epoll</code>中添加我们需要管理的<code>Socket</code>连接了。</p>
+<ol>
+<li>首先要在epoll内核中创建一个表示<code>Socket连接</code>的数据结构<code>struct epitem</code>，而在<code>epoll</code>中为了综合性能的考虑，采用一颗红黑树来管理这些海量<code>socket连接</code>。所以<code>struct epitem</code>是一个红黑树节点。</li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329225059908.png" alt="image-20230329225059908"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">epitem</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">      <span class="comment">//指向所属epoll对象</span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">eventpoll</span> *<span class="title">ep</span>;</span> </span><br><span class="line">      <span class="comment">//注册的感兴趣的事件,也就是用户空间的epoll_event     </span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">epoll_event</span> <span class="title">event</span>;</span> </span><br><span class="line">      <span class="comment">//指向epoll对象中的就绪队列</span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">rdllink</span>;</span>  </span><br><span class="line">      <span class="comment">//指向epoll中对应的红黑树节点</span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">rb_node</span> <span class="title">rbn</span>;</span>     </span><br><span class="line">      <span class="comment">//指向epitem所表示的socket-&gt;file结构以及对应的fd</span></span><br><span class="line">      <span class="class"><span class="keyword">struct</span> <span class="title">epoll_filefd</span> <span class="title">ffd</span>;</span>                  </span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这里重点记住<code>struct epitem</code>结构中的<code>rdllink</code>以及<code>epoll_filefd</code>成员，后面我们会用到。</p>
+</blockquote>
+<ol start="2">
+<li>在内核中创建完表示<code>Socket连接</code>的数据结构<code>struct epitem</code>后，我们就需要在<code>Socket</code>中的等待队列上创建等待项<code>wait_queue_t</code>并且注册<code>epoll的回调函数ep_poll_callback</code>。</li>
+</ol>
+<p>通过<code>《阻塞IO中用户进程阻塞以及唤醒原理》</code>小节的铺垫，我想大家已经猜到这一步的意义所在了吧！当时在等待项<code>wait_queue_t</code>中注册的是<code>autoremove_wake_function</code>回调函数。还记得吗？</p>
+<blockquote>
+<p>epoll的回调函数<code>ep_poll_callback</code>正是<code>epoll</code>同步IO事件通知机制的核心所在，也是区别于<code>select，poll</code>采用内核轮询方式的根本性能差异所在。</p>
+</blockquote>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329225426337.png" alt="image-20230329225426337"></p>
+<p>这里又出现了一个新的数据结构struct eppoll_entry，那它的作用是干什么的呢？大家可以结合上图先猜测下它的作用!</p>
+<p>我们知道socket-&gt;sock-&gt;sk_wq等待队列中的类型是wait_queue_t，我们需要在struct epitem所表示的socket的等待队列上注册epoll回调函数ep_poll_callback。</p>
+<p>这样当数据到达socket中的接收队列时，内核会回调sk_data_ready，在阻塞IO中用户进程阻塞以及唤醒原理这一小节中，我们知道这个sk_data_ready函数指针会指向sk_def_readable函数，在sk_def_readable中会回调注册在等待队列里的等待项wait_queue_t -&gt; func回调函数ep_poll_callback。在ep_poll_callback中需要找到epitem，将IO就绪的epitem放入epoll中的就绪队列中。</p>
+<p>而socket等待队列中类型是wait_queue_t无法关联到epitem。所以就出现了struct eppoll_entry结构体，它的作用就是关联Socket等待队列中的等待项wait_queue_t和epitem。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">eppoll_entry</span> &#123;</span> </span><br><span class="line">   <span class="comment">//指向关联的epitem</span></span><br><span class="line">   <span class="class"><span class="keyword">struct</span> <span class="title">epitem</span> *<span class="title">base</span>;</span> </span><br><span class="line"></span><br><span class="line">  <span class="comment">// 关联监听socket中等待队列中的等待项 (private = null  func = ep_poll_callback)</span></span><br><span class="line">   <span class="type">wait_queue_t</span> wait;   </span><br><span class="line"></span><br><span class="line">   <span class="comment">// 监听socket中等待队列头指针</span></span><br><span class="line">   <span class="type">wait_queue_head_t</span> *whead; </span><br><span class="line">    .........</span><br><span class="line">  &#125;; </span><br></pre></td></tr></table></figure>
+
+<p>这样在<code>ep_poll_callback</code>回调函数中就可以根据<code>Socket</code>等待队列中的等待项<code>wait</code>，通过<code>container_of宏</code>找到<code>eppoll_entry</code>，继而找到<code>epitem</code>了。</p>
+<blockquote>
+<p>container_of在Linux内核中是一个常用的宏，用于从包含在某个结构中的指针获得结构本身的指针，通俗地讲就是通过结构体变量中某个成员的首地址进而获得整个结构体变量的首地址。</p>
+</blockquote>
+<blockquote>
+<p>这里需要注意下这次等待项<code>wait_queue_t</code>中的<code>private</code>设置的是<code>null</code>，因为这里<code>Socket</code>是交给<code>epoll</code>来管理的，阻塞在<code>Socket</code>上的进程是也由<code>epoll</code>来唤醒。在等待项<code>wait_queue_t</code>注册的<code>func</code>是<code>ep_poll_callback</code>而不是<code>autoremove_wake_function</code>，<code>阻塞进程</code>并不需要<code>autoremove_wake_function</code>来唤醒，所以这里设置<code>private</code>为<code>null</code></p>
+</blockquote>
+<ol start="3">
+<li>当在Socket的等待队列中创建好等待项wait_queue_t并且注册了epoll的回调函数ep_poll_callback，然后又通过eppoll_entry关联了epitem后。剩下要做的就是将epitem插入到epoll中的红黑树struct rb_root rbr中。</li>
+</ol>
+<blockquote>
+<p><strong>这里可以看到<code>epoll</code>另一个优化的地方，<code>epoll</code>将所有的<code>socket</code>连接通过内核中的红黑树来集中管理。每次添加或者删除<code>socket连接</code>都是增量添加删除，而不是像<code>select，poll</code>那样每次调用都是全量<code>socket连接</code>集合传入内核。避免了<code>频繁大量</code>的<code>内存拷贝</code>。</strong></p>
+</blockquote>
+<h5 id="epoll-wait同步阻塞获取IO就绪的Socket"><a href="#epoll-wait同步阻塞获取IO就绪的Socket" class="headerlink" title="epoll_wait同步阻塞获取IO就绪的Socket"></a>epoll_wait同步阻塞获取IO就绪的Socket</h5><ol>
+<li>用户程序调用<code>epoll_wait</code>后，内核首先会查找epoll中的就绪队列<code>eventpoll-&gt;rdllist</code>是否有<code>IO就绪</code>的<code>epitem</code>。<code>epitem</code>里封装了<code>socket</code>的信息。如果就绪队列中有就绪的<code>epitem</code>，就将<code>就绪的socket</code>信息封装到<code>epoll_event</code>返回。</li>
+<li>如果<code>eventpoll-&gt;rdllist</code>就绪队列中没有<code>IO就绪</code>的<code>epitem</code>，则会创建等待项<code>wait_queue_t</code>，将用户进程的<code>fd</code>关联到<code>wait_queue_t-&gt;private</code>上，并在等待项<code>wait_queue_t-&gt;func</code>上注册回调函数<code>default_wake_function</code>。最后将等待项添加到<code>epoll</code>中的等待队列中。用户进程让出CPU，进入<code>阻塞状态</code>。</li>
+</ol>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329225713049.png" alt="image-20230329225713049"></p>
+<blockquote>
+<p>这里和<code>阻塞IO模型</code>中的阻塞原理是一样的，只不过在<code>阻塞IO模型</code>中注册到等待项<code>wait_queue_t-&gt;func</code>上的是<code>autoremove_wake_function</code>，并将等待项添加到<code>socket</code>中的等待队列中。这里注册的是<code>default_wake_function</code>，将等待项添加到<code>epoll</code>中的等待队列上。</p>
+</blockquote>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329225729485.png" alt="image-20230329225729485"></p>
+<ol start="3">
+<li><p><strong>前边做了那么多的知识铺垫，下面终于到了<code>epoll</code>的整个工作流程了：</strong></p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329225800655.png" alt="image-20230329225800655"></p>
+<ul>
+<li>当网络数据包在软中断中经过内核协议栈的处理到达<code>socket</code>的接收缓冲区时，紧接着会调用socket的数据就绪回调指针<code>sk_data_ready</code>，回调函数为<code>sock_def_readable</code>。在<code>socket</code>的等待队列中找出等待项，其中等待项中注册的回调函数为<code>ep_poll_callback</code>。</li>
+<li>在回调函数<code>ep_poll_callback</code>中，根据<code>struct eppoll_entry</code>中的<code>struct wait_queue_t wait</code>通过<code>container_of宏</code>找到<code>eppoll_entry</code>对象并通过它的<code>base</code>指针找到封装<code>socket</code>的数据结构<code>struct epitem</code>，并将它加入到<code>epoll</code>中的就绪队列<code>rdllist</code>中。</li>
+<li>随后查看<code>epoll</code>中的等待队列中是否有等待项，也就是说查看是否有进程阻塞在<code>epoll_wait</code>上等待<code>IO就绪</code>的<code>socket</code>。如果没有等待项，则软中断处理完成。</li>
+<li>如果有等待项，则回到注册在等待项中的回调函数<code>default_wake_function</code>,在回调函数中唤醒<code>阻塞进程</code>，并将就绪队列<code>rdllist</code>中的<code>epitem</code>的<code>IO就绪</code>socket信息封装到<code>struct epoll_event</code>中返回。</li>
+<li>用户进程拿到<code>epoll_event</code>获取<code>IO就绪</code>的socket，发起系统IO调用读取数据。</li>
+</ul>
+</li>
+</ol>
+<h5 id="再谈水平触发和边缘触发"><a href="#再谈水平触发和边缘触发" class="headerlink" title="再谈水平触发和边缘触发"></a>再谈水平触发和边缘触发</h5><p>经过上边对<code>epoll</code>工作过程的详细解读，我们知道，当我们监听的<code>socket</code>上有数据到来时，软中断会执行<code>epoll</code>的回调函数<code>ep_poll_callback</code>,在回调函数中会将<code>epoll</code>中描述<code>socket信息</code>的数据结构<code>epitem</code>插入到<code>epoll</code>中的就绪队列<code>rdllist</code>中。随后用户进程从<code>epoll</code>的等待队列中被唤醒，<code>epoll_wait</code>将<code>IO就绪</code>的<code>socket</code>返回给用户进程，随即<code>epoll_wait</code>会清空<code>rdllist</code>。</p>
+<p><strong>水平触发</strong>和<strong>边缘触发</strong>最关键的<strong>区别</strong>就在于当<code>socket</code>中的接收缓冲区还有数据可读时。**<code>epoll_wait</code>是否会清空<code>rdllist</code>。**</p>
+<ul>
+<li><strong>水平触发</strong>：在这种模式下，用户线程调用<code>epoll_wait</code>获取到<code>IO就绪</code>的socket后，对<code>Socket</code>进行系统IO调用读取数据，假设<code>socket</code>中的数据只读了一部分没有全部读完，这时再次调用<code>epoll_wait</code>，<code>epoll_wait</code>会检查这些<code>Socket</code>中的接收缓冲区是否还有数据可读，如果还有数据可读，就将<code>socket</code>重新放回<code>rdllist</code>。所以当<code>socket</code>上的IO没有被处理完时，再次调用<code>epoll_wait</code>依然可以获得这些<code>socket</code>，用户进程可以接着处理<code>socket</code>上的IO事件。</li>
+<li><strong>边缘触发：</strong> 在这种模式下，<code>epoll_wait</code>就会直接清空<code>rdllist</code>，不管<code>socket</code>上是否还有数据可读。所以在边缘触发模式下，当你没有来得及处理<code>socket</code>接收缓冲区的剩下可读数据时，再次调用<code>epoll_wait</code>，因为这时<code>rdlist</code>已经被清空了，<code>socket</code>不会再次从<code>epoll_wait</code>中返回，所以用户进程就不会再次获得这个<code>socket</code>了，也就无法在对它进行IO处理了。<strong>除非，这个<code>socket</code>上有新的IO数据到达</strong>，根据<code>epoll</code>的工作过程，该<code>socket</code>会被再次放入<code>rdllist</code>中。</li>
+</ul>
+<h4 id="epoll对select，poll的优化总结"><a href="#epoll对select，poll的优化总结" class="headerlink" title="epoll对select，poll的优化总结"></a>epoll对select，poll的优化总结</h4><ul>
+<li><code>epoll</code>在内核中通过<code>红黑树</code>管理海量的连接，所以在调用<code>epoll_wait</code>获取<code>IO就绪</code>的socket时，不需要传入监听的socket文件描述符。从而避免了海量的文件描述符集合在<code>用户空间</code>和<code>内核空间</code>中来回复制。</li>
+</ul>
+<blockquote>
+<p><code>select，poll</code>每次调用时都需要传递全量的文件描述符集合，导致大量频繁的拷贝操作。</p>
+</blockquote>
+<ul>
+<li><code>epoll</code>仅会通知<code>IO就绪</code>的socket。避免了在用户空间遍历的开销。</li>
+</ul>
+<blockquote>
+<p><code>select，poll</code>只会在<code>IO就绪</code>的socket上打好标记，依然是全量返回，所以在用户空间还需要用户程序在一次遍历全量集合找出具体<code>IO就绪</code>的socket。</p>
+</blockquote>
+<ul>
+<li><code>epoll</code>通过在<code>socket</code>的等待队列上注册回调函数<code>ep_poll_callback</code>通知用户程序<code>IO就绪</code>的socket。避免了在内核中轮询的开销。</li>
+</ul>
+<blockquote>
+<p>大部分情况下<code>socket</code>上并不总是<code>IO活跃</code>的，在面对海量连接的情况下，<code>select，poll</code>采用内核轮询的方式获取<code>IO活跃</code>的socket，无疑是性能低下的核心原因。</p>
+</blockquote>
+<h4 id="epoll其他前置知识"><a href="#epoll其他前置知识" class="headerlink" title="epoll其他前置知识"></a>epoll其他前置知识</h4><p><strong>socket的创建</strong></p>
+<p>服务端线程调用<code>accept</code>系统调用后开始<code>阻塞</code>，当有客户端连接上来并完成<code>TCP三次握手</code>后，<code>内核</code>会创建一个对应的<code>Socket</code>作为服务端与客户端通信的<code>内核</code>接口。</p>
+<p>在Linux内核的角度看来，一切皆是文件，<code>Socket</code>也不例外，当内核创建出<code>Socket</code>之后，会将这个<code>Socket</code>放到当前进程所打开的文件列表中管理起来</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329220242213.png" alt="image-20230329220242213"></p>
+<ul>
+<li><p>struct task_struct 是内核中用来表示进程的一个数据结构，它包含了进程的所有信息。本小节只列出和文件管理相关的属性。</p>
+</li>
+<li><p>其中进程内打开的所有文件是通过一个数组fd_array来进行组织管理，数组的下标即为我们常提到的文件描述符，数组中存放的是对应的文件数据结构struct file。每打开一个文件，内核都会创建一个struct file与之对应，并在fd_array中找到一个空闲位置分配给它，数组中对应的下标，就是我们在用户空间用到的文件描述符。</p>
+<blockquote>
+<p>对于任何一个进程，默认情况下，文件描述符 <code>0</code>表示 <code>stdin 标准输入</code>，文件描述符 <code>1</code>表示<code>stdout 标准输出</code>，文件描述符<code>2</code>表示<code>stderr 标准错误输出</code>。</p>
+</blockquote>
+</li>
+<li><p>进程打开的文件列表定义在struct files_struct中，在struct fdtable结构中有一个指针struct fd** fd 指向fd_array。</p>
+</li>
+</ul>
+<p>以Socket文件类型举例来说：</p>
+<ul>
+<li><p>用于封装文件元信息的内核数据结构<code>struct file</code>中的<code>private_data</code>指针指向具体的<code>Socket</code>结构。</p>
+</li>
+<li><p>struct file中的file_operations属性定义了文件的操作函数，不同的文件类型，对应的file_operations是不同的，针对Socket文件类型，这里的file_operations指向socket_file_ops。</p>
+</li>
+</ul>
+<blockquote>
+<p>我们在<code>用户空间</code>对<code>Socket</code>发起的读写等系统调用，进入内核首先会调用的是<code>Socket</code>对应的<code>struct file</code>中指向的<code>socket_file_ops</code>。<strong>比如</strong>：对<code>Socket</code>发起<code>write</code>写操作，在内核中首先被调用的就是<code>socket_file_ops</code>中定义的<code>sock_write_iter</code>。<code>Socket</code>发起<code>read</code>读操作内核中对应的则是<code>sock_read_iter</code>。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">file_operations</span> <span class="title">socket_file_ops</span> =</span> &#123;</span><br><span class="line">  .owner =  THIS_MODULE,</span><br><span class="line">  .llseek =  no_llseek,</span><br><span class="line">  .read_iter =  sock_read_iter,</span><br><span class="line">  .write_iter =  sock_write_iter,</span><br><span class="line">  .poll =    sock_poll,</span><br><span class="line">  .unlocked_ioctl = sock_ioctl,</span><br><span class="line">  .mmap =    sock_mmap,</span><br><span class="line">  .release =  sock_close,</span><br><span class="line">  .fasync =  sock_fasync,</span><br><span class="line">  .sendpage =  sock_sendpage,</span><br><span class="line">  .splice_write = generic_splice_sendpage,</span><br><span class="line">  .splice_read =  sock_splice_read,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+
+<p><strong>Socket内核结构</strong></p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329215518756.png" alt="image-20230329215518756"></p>
+<p>在我们进行网络程序的编写时会首先创建一个<code>Socket</code>，然后基于这个<code>Socket</code>进行<code>bind</code>，<code>listen</code>，我们先将这个<code>Socket</code>称作为<code>监听Socket</code>。</p>
+<ol>
+<li><p>当我们调用<code>accept</code>后，内核会基于<code>监听Socket</code>创建出来一个新的<code>Socket</code>专门用于与客户端之间的网络通信。并将<code>监听Socket</code>中的<code>Socket操作函数集合</code>（<code>inet_stream_ops</code>）<code>ops</code>赋值到新的<code>Socket</code>的<code>ops</code>属性中。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">const</span> <span class="class"><span class="keyword">struct</span> <span class="title">proto_ops</span> <span class="title">inet_stream_ops</span> =</span> &#123;</span><br><span class="line">  .bind = inet_bind,</span><br><span class="line">  .connect = inet_stream_connect,</span><br><span class="line">  .accept = inet_accept,</span><br><span class="line">  .poll = tcp_poll,</span><br><span class="line">  .listen = inet_listen,</span><br><span class="line">  .sendmsg = inet_sendmsg,</span><br><span class="line">  .recvmsg = inet_recvmsg,</span><br><span class="line">  ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ol>
+<blockquote>
+<p>这里需要注意的是，<code>监听的 socket</code>和真正用来网络通信的 <code>Socket</code>，是两个 Socket，一个叫作<code>监听 Socket</code>，一个叫作<code>已连接的Socket</code>。</p>
+</blockquote>
+<ol start="2">
+<li>接着内核会为<code>已连接的Socket</code>创建<code>struct file</code>并初始化，并把Socket文件操作函数集合（<code>socket_file_ops</code>）赋值给<code>struct file</code>中的<code>f_ops</code>指针。然后将<code>struct socket</code>中的<code>file</code>指针指向这个新分配申请的<code>struct file</code>结构体。</li>
+</ol>
+<blockquote>
+<p>内核会维护两个队列：</p>
+<ul>
+<li>一个是已经完成TCP三次握手，连接状态处于established的连接队列。内核中为icsk_accept_queue。</li>
+<li>一个是还没有完成TCP三次握手，连接状态处于syn_rcvd的半连接队列。</li>
+</ul>
+</blockquote>
+<ol start="3">
+<li>然后调用<code>socket-&gt;ops-&gt;accept</code>，从<code>Socket内核结构图</code>中我们可以看到其实调用的是<code>inet_accept</code>，该函数会在<code>icsk_accept_queue</code>中查找是否有已经建立好的连接，如果有的话，直接从<code>icsk_accept_queue</code>中获取已经创建好的<code>struct sock</code>。并将这个<code>struct sock</code>对象赋值给<code>struct socket</code>中的<code>sock</code>指针。</li>
+</ol>
+<p><code>struct sock</code>在<code>struct socket</code>中是一个非常核心的内核对象，正是在这里定义了我们在介绍<code>网络包的接收发送流程</code>中提到的<code>接收队列</code>，<code>发送队列</code>，<code>等待队列</code>，<code>数据就绪回调函数指针</code>，<code>内核协议栈操作函数集合</code></p>
+<ul>
+<li>根据创建<code>Socket</code>时发起的系统调用<code>sock_create</code>中的<code>protocol</code>参数(对于<code>TCP协议</code>这里的参数值为<code>SOCK_STREAM</code>)查找到对于 tcp 定义的操作方法实现集合 <code>inet_stream_ops</code> 和<code>tcp_prot</code>。并把它们分别设置到<code>socket-&gt;ops</code>和<code>sock-&gt;sk_prot</code>上。</li>
+</ul>
+<blockquote>
+<p><code>socket</code>相关的操作接口定义在<code>inet_stream_ops</code>函数集合中，负责对上给用户提供接口。而<code>socket</code>与内核协议栈之间的操作接口定义在<code>struct sock</code>中的<code>sk_prot</code>指针上，这里指向<code>tcp_prot</code>协议操作函数集合。</p>
+</blockquote>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">proto</span> <span class="title">tcp_prot</span> =</span> &#123;</span><br><span class="line">  .name      = <span class="string">&quot;TCP&quot;</span>,</span><br><span class="line">  .owner      = THIS_MODULE,</span><br><span class="line">  .close      = tcp_close,</span><br><span class="line">  .connect    = tcp_v4_connect,</span><br><span class="line">  .disconnect    = tcp_disconnect,</span><br><span class="line">  .accept      = inet_csk_accept,</span><br><span class="line">  .keepalive    = tcp_set_keepalive,</span><br><span class="line">  .recvmsg    = tcp_recvmsg,</span><br><span class="line">  .sendmsg    = tcp_sendmsg,</span><br><span class="line">  .backlog_rcv    = tcp_v4_do_rcv,</span><br><span class="line">   ......</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>之前提到的对<code>Socket</code>发起的系统IO调用，在内核中首先会调用<code>Socket</code>的文件结构<code>struct file</code>中的<code>file_operations</code>文件操作集合，然后调用<code>struct socket</code>中的<code>ops</code>指向的<code>inet_stream_ops</code>socket操作函数，最终调用到<code>struct sock</code>中<code>sk_prot</code>指针指向的<code>tcp_prot</code>内核协议栈操作函数接口集合。</p>
+</blockquote>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329222915651.png" alt="image-20230329222915651"></p>
+<ul>
+<li>将<code>struct sock</code> 对象中的<code>sk_data_ready</code> 函数指针设置为 <code>sock_def_readable</code>，在<code>Socket</code>数据就绪的时候内核会回调该函数。</li>
+<li><strong><code>struct sock</code>中的<code>等待队列</code>中存放的是系统IO调用发生阻塞的<code>进程fd</code>，以及相应的<code>回调函数</code>。记住这个地方，后边介绍epoll的时候我们还会提到！</strong></li>
+</ul>
+<ol start="4">
+<li>当<code>struct file</code>，<code>struct socket</code>，<code>struct sock</code>这些核心的内核对象创建好之后，最后就是把<code>socket</code>对象对应的<code>struct file</code>放到进程打开的文件列表<code>fd_array</code>中。随后系统调用<code>accept</code>返回<code>socket</code>的文件描述符<code>fd</code>给用户程序。</li>
+</ol>
+<p><strong>阻塞IO中用户进程阻塞以及唤醒原理</strong></p>
+<p>在前边小节我们介绍<code>阻塞IO</code>的时候提到，当用户进程发起系统IO调用时，这里我们拿<code>read</code>举例，用户进程会在<code>内核态</code>查看对应<code>Socket</code>接收缓冲区是否有数据到来。</p>
+<ul>
+<li><code>Socket</code>接收缓冲区有数据，则拷贝数据到<code>用户空间</code>，系统调用返回。</li>
+<li><code>Socket</code>接收缓冲区没有数据，则用户进程让出<code>CPU</code>进入<code>阻塞状态</code>，当数据到达接收缓冲区时，用户进程会被唤醒，从<code>阻塞状态</code>进入<code>就绪状态</code>，等待CPU调度。</li>
+</ul>
+<p>本小节我们就来看下用户进程是如何<code>阻塞</code>在<code>Socket</code>上，又是如何在<code>Socket</code>上被唤醒的。<strong>理解这个过程很重要，对我们理解epoll的事件通知过程很有帮助</strong></p>
+<ul>
+<li>首先我们在用户进程中对<code>Socket</code>进行<code>read</code>系统调用时，用户进程会从<code>用户态</code>转为<code>内核态</code>。</li>
+<li>在进程的<code>struct task_struct</code>结构找到<code>fd_array</code>，并根据<code>Socket</code>的文件描述符<code>fd</code>找到对应的<code>struct file</code>，调用<code>struct file</code>中的文件操作函数结合<code>file_operations</code>，<code>read</code>系统调用对应的是<code>sock_read_iter</code>。</li>
+<li>在<code>sock_read_iter</code>函数中找到<code>struct file</code>指向的<code>struct socket</code>，并调用<code>socket-&gt;ops-&gt;recvmsg</code>，这里我们知道调用的是<code>inet_stream_ops</code>集合中定义的<code>inet_recvmsg</code>。</li>
+<li>在<code>inet_recvmsg</code>中会找到<code>struct sock</code>，并调用<code>sock-&gt;skprot-&gt;recvmsg</code>,这里调用的是<code>tcp_prot</code>集合中定义的<code>tcp_recvmsg</code>函数。</li>
+</ul>
+<p><strong>熟悉了内核函数调用栈后，我们来看下系统IO调用在<code>tcp_recvmsg</code>内核函数中是如何将用户进程给阻塞掉的</strong></p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329223540350.png" alt="image-20230329223540350"></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">tcp_recvmsg</span><span class="params">(<span class="keyword">struct</span> kiocb *iocb, <span class="keyword">struct</span> sock *sk, <span class="keyword">struct</span> msghdr *msg,</span></span><br><span class="line"><span class="params">  <span class="type">size_t</span> len, <span class="type">int</span> nonblock, <span class="type">int</span> flags, <span class="type">int</span> *addr_len)</span></span><br><span class="line">&#123;</span><br><span class="line">    .................省略非核心代码...............</span><br><span class="line">   <span class="comment">//访问sock对象中定义的接收队列</span></span><br><span class="line">  skb_queue_walk(&amp;sk-&gt;sk_receive_queue, skb) &#123;</span><br><span class="line"></span><br><span class="line">    .................省略非核心代码...............</span><br><span class="line"></span><br><span class="line">  <span class="comment">//没有收到足够数据，调用sk_wait_data 阻塞当前进程</span></span><br><span class="line">  sk_wait_data(sk, &amp;timeo);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> <span class="title function_">sk_wait_data</span><span class="params">(<span class="keyword">struct</span> sock *sk, <span class="type">long</span> *timeo)</span></span><br><span class="line">&#123;</span><br><span class="line"> <span class="comment">//创建struct sock中等待队列上的元素wait_queue_t</span></span><br><span class="line"> <span class="comment">//将进程描述符和回调函数autoremove_wake_function关联到wait_queue_t中</span></span><br><span class="line"> DEFINE_WAIT(wait);</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 调用 sk_sleep 获取 sock 对象下的等待队列的头指针wait_queue_head_t</span></span><br><span class="line"> <span class="comment">// 调用prepare_to_wait将新创建的等待项wait_queue_t插入到等待队列中，并将进程状态设置为可打断 INTERRUPTIBLE</span></span><br><span class="line"> prepare_to_wait(sk_sleep(sk), &amp;wait, TASK_INTERRUPTIBLE);</span><br><span class="line"> set_bit(SOCK_ASYNC_WAITDATA, &amp;sk-&gt;sk_socket-&gt;flags);</span><br><span class="line"></span><br><span class="line"> <span class="comment">// 通过调用schedule_timeout让出CPU，然后进行睡眠，导致一次上下文切换</span></span><br><span class="line"> rc = sk_wait_event(sk, timeo, !skb_queue_empty(&amp;sk-&gt;sk_receive_queue));</span><br><span class="line"> ...</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>首先会在<code>DEFINE_WAIT</code>中创建<code>struct sock</code>中等待队列上的等待类型<code>wait_queue_t</code></li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> DEFINE_WAIT(name) DEFINE_WAIT_FUNC(name, autoremove_wake_function)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> DEFINE_WAIT_FUNC(name, function)    \</span></span><br><span class="line"><span class="meta"> wait_queue_t name = &#123;      \</span></span><br><span class="line"><span class="meta">  .private = current,    \</span></span><br><span class="line"><span class="meta">  .func  = function,    \</span></span><br><span class="line"><span class="meta">  .task_list = LIST_HEAD_INIT((name).task_list), \</span></span><br><span class="line"><span class="meta"> &#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>等待类型<code>wait_queue_t</code>中的<code>private</code>用来关联<code>阻塞</code>在当前<code>socket</code>上的用户进程<code>fd</code>。<code>func</code>用来关联等待项上注册的回调函数。这里注册的是<code>autoremove_wake_function</code>。</p>
+<ul>
+<li>调用<code>sk_sleep(sk)</code>获取<code>struct sock</code>对象中的等待队列头指针<code>wait_queue_head_t</code>。</li>
+<li>调用<code>prepare_to_wait</code>将新创建的等待项<code>wait_queue_t</code>插入到等待队列中，并将进程设置为可打断 <code>INTERRUPTIBL</code>。</li>
+<li>调用<code>sk_wait_event</code>让出CPU，进程进入睡眠状态。</li>
+</ul>
+<p>用户进程的<code>阻塞过程</code>我们就介绍完了，<strong>关键是要理解记住<code>struct sock</code>中定义的等待队列上的等待类型<code>wait_queue_t</code>的结构。</strong>后面<code>epoll</code>的介绍中我们还会用到它。</p>
+<p><strong>下面我们接着介绍当数据就绪后，用户进程是如何被唤醒的</strong></p>
+<p>在本文开始介绍《网络包接收过程》这一小节中我们提到</p>
+<ul>
+<li>当网络数据包到达网卡时，网卡通过<code>DMA</code>的方式将数据放到<code>RingBuffer</code>中。</li>
+<li>然后向CPU发起硬中断，在硬中断响应程序中创建<code>sk_buffer</code>，并将网络数据拷贝至<code>sk_buffer</code>中。</li>
+<li>随后发起软中断，内核线程<code>ksoftirqd</code>响应软中断，调用<code>poll函数</code>将<code>sk_buffer</code>送往内核协议栈做层层协议处理。</li>
+<li>在传输层<code>tcp_rcv 函数</code>中，去掉TCP头，根据<code>四元组（源IP，源端口，目的IP，目的端口）</code>查找对应的<code>Socket</code>。</li>
+<li>最后将<code>sk_buffer</code>放到<code>Socket</code>中的接收队列里。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329223913373.png" alt="image-20230329223913373"></p>
+<ul>
+<li>当软中断将<code>sk_buffer</code>放到<code>Socket</code>的接收队列上时，接着就会调用<code>数据就绪函数回调指针sk_data_ready</code>，前边我们提到，这个函数指针在初始化的时候指向了<code>sock_def_readable</code>函数。</li>
+<li>在<code>sock_def_readable</code>函数中会去获取<code>socket-&gt;sock-&gt;sk_wq</code>等待队列。在<code>wake_up_common</code>函数中从等待队列<code>sk_wq</code>中找出<code>一个</code>等待项<code>wait_queue_t</code>，回调注册在该等待项上的<code>func</code>回调函数（<code>wait_queue_t-&gt;func</code>）,创建等待项<code>wait_queue_t</code>是我们提到，这里注册的回调函数是<code>autoremove_wake_function</code>。</li>
+</ul>
+<blockquote>
+<p>即使是有多个进程都阻塞在同一个 socket 上，也只唤醒 1 个进程。其作用是为了避免惊群。</p>
+</blockquote>
+<ul>
+<li>在autoremove_wake_function函数中，根据等待项wait_queue_t上的private关联的阻塞进程fd调用try_to_wake_up唤醒阻塞在该Socket上的进程。</li>
+</ul>
+<blockquote>
+<p>记住wait_queue_t中的func函数指针，在epoll中这里会注册epoll的回调函数。</p>
+</blockquote>
+<h3 id="信号驱动IO"><a href="#信号驱动IO" class="headerlink" title="信号驱动IO"></a>信号驱动IO</h3><p>在<code>信号驱动IO模型</code>下，用户进程操作通过<code>系统调用 sigaction 函数</code>发起一个 IO 请求，在对应的<code>socket</code>注册一个<code>信号回调</code>，此时<code>不阻塞</code>用户进程，进程会继续工作。当内核数据就绪时，内核就为该进程生成一个 <code>SIGIO 信号</code>，通过信号回调通知进程进行相关 IO 操作。</p>
+<blockquote>
+<p>这里需要注意的是：<code>信号驱动式 IO 模型</code>依然是<code>同步IO</code>，因为它虽然可以在等待数据的时候不被阻塞，也不会频繁的轮询，但是当数据就绪，内核信号通知后，用户进程依然要自己去读取数据，在<code>数据拷贝阶段</code>发生阻塞。</p>
+</blockquote>
+<blockquote>
+<p>信号驱动 IO模型 相比于前三种 IO 模型，实现了在等待数据就绪时，进程不被阻塞，主循环可以继续工作，所以<code>理论上</code>性能更佳。</p>
+</blockquote>
+<p>但是实际上，使用<code>TCP协议</code>通信时，<code>信号驱动IO模型</code>几乎<code>不会被采用</code>。原因如下：</p>
+<ul>
+<li>信号IO 在大量 IO 操作时可能会因为信号队列溢出导致没法通知</li>
+<li><code>SIGIO 信号</code>是一种 Unix 信号，信号没有附加信息，如果一个信号源有多种产生信号的原因，信号接收者就无法确定究竟发生了什么。而 TCP socket 生产的信号事件有七种之多，这样应用程序收到 SIGIO，根本无从区分处理。</li>
+</ul>
+<p>但<code>信号驱动IO模型</code>可以用在 <code>UDP</code>通信上，因为UDP 只有<code>一个数据请求事件</code>，这也就意味着在正常情况下 UDP 进程只要捕获 SIGIO 信号，就调用 <code>read 系统调用</code>读取到达的数据。如果出现异常，就返回一个异常错误。</p>
+<h3 id="异步IO-AIO"><a href="#异步IO-AIO" class="headerlink" title="异步IO(AIO)"></a>异步IO(AIO)</h3><p>在<code>异步IO模型</code>下，IO操作在<code>数据准备阶段</code>和<code>数据拷贝阶段</code>均是由内核来完成，不会对应用程序造成任何阻塞。应用进程只需要在<code>指定的数组</code>中引用数据即可。</p>
+<p><code>异步 IO</code> 与<code>信号驱动 IO</code> 的主要区别在于：<code>信号驱动 IO</code> 由内核通知何时可以<code>开始一个 IO 操作</code>，而<code>异步 IO</code>由内核通知 <code>IO 操作何时已经完成</code>。</p>
+<p><code>异步IO</code>的系统调用需要操作系统内核来支持，目前只有<code>Window</code>中的<code>IOCP</code>实现了非常成熟的<code>异步IO机制</code>。</p>
+<p>而<code>Linux</code>系统对<code>异步IO机制</code>实现的不够成熟，且与<code>NIO</code>的性能相比提升也不明显。</p>
+<p>再加上<code>信号驱动IO模型</code>不适用<code>TCP协议</code>，所以目前大部分采用的还是<code>IO多路复用模型</code>。</p>
+<h2 id="IO线程模型"><a href="#IO线程模型" class="headerlink" title="IO线程模型"></a>IO线程模型</h2><h3 id="Reactor"><a href="#Reactor" class="headerlink" title="Reactor"></a>Reactor</h3><p><code>Reactor</code>是利用<code>NIO</code>对<code>IO线程</code>进行不同的分工：</p>
+<ul>
+<li>使用前边我们提到的<code>IO多路复用模型</code>比如<code>select,poll,epoll,kqueue</code>,进行IO事件的注册和监听。</li>
+<li>将监听到<code>就绪的IO事件</code>分发<code>dispatch</code>到各个具体的处理<code>Handler</code>中进行相应的<code>IO事件处理</code>。</li>
+</ul>
+<p>通过<code>IO多路复用技术</code>就可以不断的监听<code>IO事件</code>，不断的分发<code>dispatch</code>，就像一个<code>反应堆</code>一样，看起来像不断的产生<code>IO事件</code>，因此我们称这种模式为<code>Reactor</code>模型。</p>
+<h4 id="单Reactor单线程"><a href="#单Reactor单线程" class="headerlink" title="单Reactor单线程"></a>单Reactor单线程</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329231146519.png" alt="image-20230329231146519"></p>
+<p>Reactor模型是依赖IO多路复用技术实现监听IO事件，从而源源不断的产生IO就绪事件，在Linux系统下我们使用epoll来进行IO多路复用，我们以Linux系统为例：</p>
+<ul>
+<li>单Reactor意味着只有一个epoll对象，用来监听所有的事件，比如连接事件，读写事件。</li>
+<li>单线程意味着只有一个线程来执行epoll_wait获取IO就绪的Socket，然后对这些就绪的Socket执行读写，以及后边的业务处理也依然是这个线程。</li>
+</ul>
+<h4 id="单Reactor多线程"><a href="#单Reactor多线程" class="headerlink" title="单Reactor多线程"></a>单Reactor多线程</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329231156096.png" alt="image-20230329231156096"></p>
+<ul>
+<li>这种模式下，也是只有一个epoll对象来监听所有的IO事件，一个线程来调用epoll_wait获取IO就绪的Socket。</li>
+<li>但是当IO就绪事件产生时，这些IO事件对应处理的业务Handler，我们是通过线程池来执行。这样相比单Reactor单线程模型提高了执行效率，充分发挥了多核CPU的优势。</li>
+</ul>
+<h4 id="主从Reactor多线程"><a href="#主从Reactor多线程" class="headerlink" title="主从Reactor多线程"></a>主从Reactor多线程</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329231204257.png" alt="image-20230329231204257"></p>
+<ul>
+<li>我们由原来的<code>单Reactor</code>变为了<code>多Reactor</code>。<code>主Reactor</code>用来优先<code>专门</code>做优先级最高的事情，也就是迎接客人（<code>处理连接事件</code>），对应的处理<code>Handler</code>就是图中的<code>acceptor</code>。</li>
+<li>当创建好连接，建立好对应的<code>socket</code>后，在<code>acceptor</code>中将要监听的<code>read事件</code>注册到<code>从Reactor</code>中，由<code>从Reactor</code>来监听<code>socket</code>上的<code>读写</code>事件。</li>
+<li>最终将读写的业务逻辑处理交给线程池处理。</li>
+</ul>
+<blockquote>
+<p><strong>注意</strong>：这里向<code>从Reactor</code>注册的只是<code>read事件</code>，并没有注册<code>write事件</code>，因为<code>read事件</code>是由<code>epoll内核</code>触发的，而<code>write事件</code>则是由用户业务线程触发的（<code>什么时候发送数据是由具体业务线程决定的</code>），所以<code>write事件</code>理应是由<code>用户业务线程</code>去注册。</p>
+</blockquote>
+<blockquote>
+<p>用户线程注册<code>write事件</code>的时机是只有当用户发送的数据<code>无法一次性</code>全部写入<code>buffer</code>时，才会去注册<code>write事件</code>，等待<code>buffer重新可写</code>时，继续写入剩下的发送数据、如果用户线程可以一股脑的将发送数据全部写入<code>buffer</code>，那么也就无需注册<code>write事件</code>到<code>从Reactor</code>中。</p>
+</blockquote>
+<p><code>主从Reactor多线程</code>模型是现在大部分主流网络框架中采用的一种<code>IO线程模型</code>。</p>
+<h3 id="Proactor"><a href="#Proactor" class="headerlink" title="Proactor"></a>Proactor</h3><p><code>Proactor</code>是基于<code>AIO</code>对<code>IO线程</code>进行分工的一种模型。前边我们介绍了<code>异步IO模型</code>，它是操作系统内核支持的一种全异步编程模型，在<code>数据准备阶段</code>和<code>数据拷贝阶段</code>全程无阻塞。</p>
+<p><code>ProactorIO线程模型</code>将<code>IO事件的监听</code>，<code>IO操作的执行</code>，<code>IO结果的dispatch</code>统统交给<code>内核</code>来做。</p>
+<h3 id="Reactor与Proactor对比"><a href="#Reactor与Proactor对比" class="headerlink" title="Reactor与Proactor对比"></a>Reactor与Proactor对比</h3><ul>
+<li>Reactor是基于NIO实现的一种IO线程模型，Proactor是基于AIO实现的IO线程模型。</li>
+<li>Reactor关心的是IO就绪事件，Proactor关心的是IO完成事件。</li>
+<li>在Proactor中，用户程序需要向内核传递用户空间的读缓冲区地址。Reactor则不需要。这也就导致了在Proactor中每个并发操作都要求有独立的缓存区，在内存上有一定的开销。</li>
+<li>Proactor 的实现逻辑复杂，编码成本较 Reactor要高很多。</li>
+<li>Proactor 在处理高耗时 IO时的性能要高于 Reactor，但对于低耗时 IO的执行效率提升并不明显。</li>
+</ul>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">网络编程</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/29/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/%E6%95%B4%E7%90%86/%E4%BB%8ELinux%E5%86%85%E6%A0%B8%E7%9C%8BIO%E6%A8%A1%E5%9E%8B/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp/数据类型和大小" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1551,254 +2112,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2023/03/25/cpp/effectivecpp/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-数据库/基础/mysql一行记录是如何存储的" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/25/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/">mysql一行记录是如何存储的？</a>
-    </h1>
-  
-
-        
-        <a href="/2023/03/25/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/" class="archive-article-date">
-  	<time datetime="2023-03-25T12:36:14.139Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-25</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>本文引用自[小林MySQL 一行记录是怎么存储的？](<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/base/row_format.html#%E6%80%BB%E7%BB%93%EF%BC%89">https://xiaolincoding.com/mysql/base/row_format.html#%E6%80%BB%E7%BB%93）</a></p>
-<h1 id="MySql一行记录是如何存储的？"><a href="#MySql一行记录是如何存储的？" class="headerlink" title="MySql一行记录是如何存储的？"></a>MySql一行记录是如何存储的？</h1><p>mysql数据库文件的存放在那个目录？</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">SHOW</span> VARIABLES <span class="keyword">LIKE</span> <span class="string">&#x27;datadir&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-----------------+</span></span><br><span class="line"><span class="operator">|</span> Variable_name <span class="operator">|</span> <span class="keyword">Value</span>           <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-----------------+</span></span><br><span class="line"><span class="operator">|</span> datadir       <span class="operator">|</span> <span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>mysql<span class="operator">/</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-----------------+</span></span><br><span class="line"><span class="number">1</span> <span class="type">row</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br></pre></td></tr></table></figure>
-
-<p>我们每创建一个 database（数据库） 都会在 &#x2F;var&#x2F;lib&#x2F;mysql&#x2F; 目录里面创建一个以 database 为名的目录，然后保存表结构和表数据的文件都会存放在这个目录里。</p>
-<p>假设这里有一个名为 my_test 的 database，该 database 里有一张名为 t_order 数据库表。</p>
-<p>进入 &#x2F;var&#x2F;lib&#x2F;mysql&#x2F;my_test 目录，看看里面有什么文件</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@xiaolin ~]#ls /var/lib/mysql/my_test</span><br><span class="line">db.opt  </span><br><span class="line">t_order.frm  </span><br><span class="line">t_order.ibd</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>db.opt，用来存储当前数据库的默认字符集和字符校验规则</li>
-<li>t_order.frm，t_order的<strong>表结构</strong>会保存在这个文件。在 MySQL 中建立一张表都会生成一个.frm 文件，该文件是用来保存每个表的元数据信息的，主要包含表结构定义。</li>
-<li>t_order.ibd，t_order的<strong>表数据</strong>会保存在这个文件。表数据既可以存在共享表空间文件（文件名：ibdata1）里，也可以存放在独占表空间文件（文件名：表名字.ibd）。这个行为是由参数 innodb_file_per_table 控制的，若设置了参数 innodb_file_per_table 为 1，则会将存储的数据、索引等信息单独存储在一个独占表空间，从 MySQL 5.6.6 版本开始，它的默认值就是 1 了，因此从这个版本之后， MySQL 中每一张表的数据都存放在一个独立的 .ibd 文件。</li>
-</ul>
-<h2 id="表空间的文件结构是怎样的？"><a href="#表空间的文件结构是怎样的？" class="headerlink" title="表空间的文件结构是怎样的？"></a>表空间的文件结构是怎样的？</h2><p>表空间由段（segment）、区（extent）、页（page）、行（row）组成。</p>
-<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/row_format/%E8%A1%A8%E7%A9%BA%E9%97%B4%E7%BB%93%E6%9E%84.drawio.png" alt="img"></p>
-<ul>
-<li>行（row）<ul>
-<li>数据库表中的记录都是按行（row）进行存放的，每行记录根据不同的行格式，有不同的存储结构。</li>
-</ul>
-</li>
-<li>页（page）<ul>
-<li>记录时按照行来存储的，但是数据库的读取并不以【行】为单位，否则一次读取（也就是一次IO操作）只能处理一行数据，效率低</li>
-<li>InnoDB的数据时按照【页】为单位来读写的</li>
-<li>默认每个页的大小为16KB，也就是最多能保证16KB的连续存储空间。</li>
-<li>页的类型有很多，常见的有数据页、undo日志页、溢出页等等。数据表中的行记录使用【数据页】来管理的。</li>
-</ul>
-</li>
-<li>区（extent）<ul>
-<li>InnoDB存储引擎使用B+树来组织数据的，B+树种每一层都是通过双向链表连接起来的，如果是以页为单位来分配存储空间，那么链表种相邻的两个页之间的物理位置并不是连续的，可能离的非常远，那么磁盘查询时就会有大量的随机I&#x2F;O，随机I&#x2F;O是非常慢的。</li>
-<li>在表种数据量大的时候，为某个索引分配空间的时候就不再按照页为单位分配了，而是按照区（extent）为单位进行分配。每个区的大小为1MB，对于16KB的页来说，连续64页会被划为一个区，这样就使得链表种相邻的页的物理位置也相邻，就能用顺序I&#x2F;O了。</li>
-</ul>
-</li>
-<li>段（segment）<ul>
-<li>表空间是由各个段（segment）组成的，段是由多个区（extent）组成的。段一般分为数据段、索引段和回滚段等<ul>
-<li>索引段：存放B+树的非叶子节点的区的集合；</li>
-<li>数据段：存放B+树的叶子节点的区的集合</li>
-<li>回滚段：存放的是回滚数据的区的集合，事务隔离种，有提到MVCC利用回滚段实现了多版本查询数据。</li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-<h2 id="InnoDB行格式有哪些？"><a href="#InnoDB行格式有哪些？" class="headerlink" title="InnoDB行格式有哪些？"></a>InnoDB行格式有哪些？</h2><p>行格式（row_format），就是一条记录的存储结构</p>
-<p>InnoDB提供了4种行格式，分别是Redundant、Compact、Dynamic和Compressed行格式</p>
-<ul>
-<li>Redundant 是很古老的行格式了， MySQL 5.0 版本之前用的行格式，现在基本没人用了。</li>
-<li>由于 Redundant 不是一种紧凑的行格式，所以 MySQL 5.0 之后引入了 Compact 行记录存储方式，Compact 是一种紧凑的行格式，设计的初衷就是为了让一个数据页中可以存放更多的行记录，从 MySQL 5.1 版本之后，行格式默认设置成 Compact。</li>
-<li>Dynamic 和 Compressed 两个都是紧凑的行格式，它们的行格式都和 Compact 差不多，因为都是基于 Compact 改进一点东西。从 MySQL5.7 版本之后，默认使用 Dynamic 行格式。</li>
-</ul>
-<p>重点介绍Compact行格式</p>
-<h3 id="COMPACT行格式"><a href="#COMPACT行格式" class="headerlink" title="COMPACT行格式"></a>COMPACT行格式</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325211542129.png" alt="image-20230325211542129"></p>
-<p>一条完整的记录分为「记录的额外信息」和「记录的真实数据」两个部分。</p>
-<h4 id="记录的额外信息"><a href="#记录的额外信息" class="headerlink" title="记录的额外信息"></a>记录的额外信息</h4><p>记录的额外信息包括3个部分：变长字段长度列表、NULL值列表、记录头信息</p>
-<ol>
-<li><p>变长字段长度列表</p>
-<p>varchar(n)和char(n)的区别就是varchar是变长的，char是定长的，变长字段实际存储的数据长度是不固定的</p>
-<p>所以，在存储数据的时候，也要把数据占用的大小存起来，存到【变长字段长度列表】里，读取数据的时候才能根据这个【变长字段长度列表】去读取对应的长度。其他TEXT、BLOB等变长字段也是这样实现的。</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">table</span> `t_user`(</span><br><span class="line">	`id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">not</span> <span class="keyword">null</span>,</span><br><span class="line">    `name` <span class="type">varchar</span>(<span class="number">20</span>) <span class="keyword">default</span> <span class="keyword">null</span>,</span><br><span class="line">    `phone` <span class="type">varchar</span>(<span class="number">20</span>) <span class="keyword">default</span> <span class="keyword">null</span>,</span><br><span class="line">    `age` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">default</span> <span class="keyword">null</span>,</span><br><span class="line">    <span class="keyword">primary</span> key(`id`) <span class="keyword">using</span> btree</span><br><span class="line">) engine <span class="operator">=</span> InnoDB <span class="keyword">default</span> <span class="type">character</span> <span class="keyword">set</span> <span class="operator">=</span> ascii row_format <span class="operator">=</span> compact;</span><br></pre></td></tr></table></figure>
-
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/t_test.png" alt="img"></p>
-<ul>
-<li><p>第一条记录</p>
-<ul>
-<li>name列的值为a, 真实数据占用的字节数是1字节，十六进制0x01;</li>
-<li>phone列的值为123，真实占用的字节数是3字节，十六进制0x03;</li>
-<li>age 列和 id 列不是变长字段，所以这里不用管。</li>
-</ul>
-<p>这些变长字段的真实数据占用的字节数会按照列的顺序<strong>逆序存放</strong>（等下会说为什么要这么设计），所以「变长字段长度列表」里的内容是「 03 01」，而不是 「01 03」。</p>
-<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230325212823590.png" alt="image-20230325212823590"></p>
-</li>
-<li><p>同样的道理，我们也可以得出<strong>第二条记录</strong>的行格式中，「变长字段长度列表」里的内容是「 04 02」，如下图：</p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325212912410.png" alt="image-20230325212912410"></p>
-</li>
-<li><p><strong>第三条记录</strong>中 phone 列的值是 NULL，<strong>NULL 是不会存放在行格式中记录的真实数据部分里的</strong>，所以「变长字段长度列表」里不需要保存值为 NULL 的变长字段的长度。</p>
-<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/row_format/%E5%8F%98%E9%95%BF%E5%AD%97%E6%AE%B5%E9%95%BF%E5%BA%A6%E5%88%97%E8%A1%A83.png" alt="img"></p>
-</li>
-</ul>
-<blockquote>
-<p>为什么【变长字段长度列表】的信息要按照逆序存放？</p>
-<p>这个设计是有想法的，主要是因为「记录头信息」中指向下一个记录的指针，指向的是下一条记录的「记录头信息」和「真实数据」之间的位置，这样的好处是向左读就是记录头信息，向右读就是真实数据，比较方便。</p>
-<p>「变长字段长度列表」中的信息之所以要逆序存放，是因为这样可以<strong>使得位置靠前的记录的真实数据和数据对应的字段长度信息可以同时在一个 CPU Cache Line 中，这样就可以提高 CPU Cache 的命中率</strong>。</p>
-<p>同样的道理， NULL 值列表的信息也需要逆序存放。</p>
-</blockquote>
-<blockquote>
-<p>变长字段字节数列表不是必须的</p>
-<p>当数据表没有变长字段的时候，比如全部都是int类型的字段，这时候表里的行格式就不会有【变长字段长度列表】了</p>
-</blockquote>
-</li>
-<li><p>NULL值列表</p>
-<p>表中的某些列可能会存储 NULL 值，如果把这些 NULL 值都放到记录的真实数据中会比较浪费空间，所以 Compact 行格式把这些值为 NULL 的列存储到 NULL值列表中。</p>
-<p>如果存在允许 NULL 值的列，则每个列对应一个二进制位（bit），二进制位按照列的顺序逆序排列。</p>
-<ul>
-<li>二进制位的值为1时，代表该列的值为NULL。</li>
-<li>二进制位的值为0时，代表该列的值不为NULL。</li>
-</ul>
-<p>另外，NULL 值列表必须用整数个字节的位表示（1字节8位），如果使用的二进制位个数不足整数个字节，则在字节的高位补 <code>0</code>。</p>
-</li>
-<li><p>记录头信息</p>
-<p>记录头信息包含的内容较多，这里列举几个比较重要的：</p>
-<ul>
-<li>delete_mask ：标识此条数据是否被删除。从这里可以知道，我们执行 detele 删除记录的时候，并不会真正的删除记录，只是将这个记录的 delete_mask 标记为 1。</li>
-<li>next_record：下一条记录的位置。从这里可以知道，记录与记录之间是通过链表组织的。在前面我也提到了，指向的是下一条记录的「记录头信息」和「真实数据」之间的位置，这样的好处是向左读就是记录头信息，向右读就是真实数据，比较方便。</li>
-<li>recore_type: 表示当前记录的类型，0表示普通记录，1表示B+树非叶子节点记录，2表示最小记录，3表示最大记录</li>
-</ul>
-</li>
-</ol>
-<h4 id="记录的真实数据"><a href="#记录的真实数据" class="headerlink" title="记录的真实数据"></a>记录的真实数据</h4><p>记录真实数据部分除了我们自己定义的字段，还有三个隐藏字段，分别是：row_id、trx_id、roll_pointer</p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325220045192.png" alt="image-20230325220045192"></p>
-<ul>
-<li><p>row_id</p>
-<p>如果我们建表的时候指定了主键或者唯一约束列，那么就没有row_id隐藏字段了。如果既没有指定主键，又没有唯一约束，那么InnoDB就会为记录添加row_id隐藏字段。row_id不是必需的，占用6个字节。</p>
-</li>
-<li><p>trx_id</p>
-<p>事务id，表示这个数据是由哪个事务生成的。trx_id是必需的，占用6个字节。</p>
-</li>
-<li><p>roll_pointer</p>
-<p>这条记录上一个版本的指针。roll_pointer是必需的，占用7个字节。</p>
-</li>
-</ul>
-<h3 id="varchar-n-中n最大取值是多少？"><a href="#varchar-n-中n最大取值是多少？" class="headerlink" title="varchar(n)中n最大取值是多少？"></a>varchar(n)中n最大取值是多少？</h3><p><strong>MySQL规定除了TEXT、BLOBs这种大对象类型之外，其他所有的列（不包括隐藏列和记录头信息）占用的字节长度加起来不能超过65535个字节。</strong></p>
-<p>也就是说，一行记录除了TEXT、BLOBs类型的列，限制最大为65535字节</p>
-<p>varchar(n) 字段类型的 n 代表的是最多存储的字符数量，并不是字节大小哦。</p>
-<p>要算 varchar(n) 最大能允许存储的字节数，还要看数据库表的字符集，因为字符集代表着，1个字符要占用多少字节，比如 ascii 字符集， 1 个字符占用 1 字节，那么 varchar(100) 意味着最大能允许存储 100 字节的数据。</p>
-<h4 id="单字段情况"><a href="#单字段情况" class="headerlink" title="单字段情况"></a>单字段情况</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> test ( </span><br><span class="line">`name` <span class="type">VARCHAR</span>(<span class="number">65535</span>)  <span class="keyword">NULL</span></span><br><span class="line">) ENGINE <span class="operator">=</span> InnoDB <span class="keyword">DEFAULT</span> <span class="type">CHARACTER</span> <span class="keyword">SET</span> <span class="operator">=</span> ascii ROW_FORMAT <span class="operator">=</span> COMPACT;</span><br></pre></td></tr></table></figure>
-
-<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230325220811376.png" alt="image-20230325220811376"></p>
-<p><strong>一行数据的最大字节数是65535（不包含TEXT、BLOBs这种大对象类型）,其中包含了storage overhead;</strong></p>
-<p>这个 storage overhead 是什么呢？其实就是「变长字段长度列表」和 「NULL 值列表」，也就是说<strong>一行数据的最大字节数 65535，其实是包含「变长字段长度列表」和 「NULL 值列表」所占用的字节数的</strong>。所以， 我们在算 varchar(n) 中 n 最大值时，需要减去 storage overhead 占用的字节数。</p>
-<p>这是因为我们存储字段类型为 varchar(n) 的数据时，其实分成了三个部分来存储：</p>
-<ul>
-<li>真实数据</li>
-<li>真实数据占用的字节数</li>
-<li>NULL 标识，如果不允许为NULL，这部分不需要</li>
-</ul>
-<p>「变长字段长度列表」所占用的字节数 &#x3D; 所有「变长字段长度」占用的字节数之和。</p>
-<p>所以，我们要先知道每个变长字段的「变长字段长度」需要用多少字节表示？具体情况分为：</p>
-<p>条件一：如果变长字段允许存储的最大字节数小于等于 255 字节，就会用 1 字节表示「变长字段长度」；<br>条件二：如果变长字段允许存储的最大字节数大于 255 字节，就会用 2 字节表示「变长字段长度」；<br>我们这里字段类型是 varchar(65535) ，字符集是 ascii，所以代表着变长字段允许存储的最大字节数是 65535，符合条件二，所以会用 2 字节来表示「变长字段长度」。</p>
-<p>因为我们这个案例是只有 1 个变长字段，所以「变长字段长度列表」&#x3D; 1 个「变长字段长度」占用的字节数，也就是 2 字节。</p>
-<p>因为我们在算 varchar(n) 中 n 最大值时，需要减去 「变长字段长度列表」和 「NULL 值列表」所占用的字节数的。所以，在数据库表只有一个 varchar(n) 字段且字符集是 ascii 的情况下，varchar(n) 中 n 最大值 &#x3D; 65535 - 2 - 1 &#x3D; 65532。</p>
-<p>当然，我上面这个例子是针对字符集为 ascii 情况，如果采用的是 UTF-8，varchar(n) 最多能存储的数据计算方式就不一样了：</p>
-<ul>
-<li>在 UTF-8 字符集下，一个字符最多需要三个字节，varchar(n) 的 n 最大取值就是 65532&#x2F;3 &#x3D; 21844。</li>
-</ul>
-<h4 id="多字段情况"><a href="#多字段情况" class="headerlink" title="多字段情况"></a>多字段情况</h4><p><strong>如果有多个字段的话，要保证所有字段的长度 + 变长字段字节数列表所占用的字节数 + NULL值列表所占用的字节数 &lt;&#x3D; 65535</strong>。</p>
-<h3 id="行溢出后，MySQL是怎么处理的？"><a href="#行溢出后，MySQL是怎么处理的？" class="headerlink" title="行溢出后，MySQL是怎么处理的？"></a>行溢出后，MySQL是怎么处理的？</h3><p>MySQL中磁盘和内存交互的基本单位是页，一个页的大小一般是16KB，也就是16384字节，而一个varchar(n)类型的列最多可以存储65532字节，一些大对象如TEXT、BLOB可能存储更多的数据，这时一个页可能就存不了一条记录。这个时候就会发生<strong>行溢出，多的数据就会存到另外的【溢出页】中</strong></p>
-<p>如果一个数据页存不了一条记录，InnoDB 存储引擎会自动将溢出的数据存放到「溢出页」中。在一般情况下，InnoDB 的数据都是存放在 「数据页」中。但是当发生行溢出时，溢出的数据会存放到「溢出页」中。</p>
-<p>当发生行溢出时，在记录的真实数据处只会保存该列的一部分数据，而把剩余的数据放在「溢出页」中，然后真实数据处用 20 字节存储指向溢出页的地址，从而可以找到剩余数据所在的页。大致如下图所示。</p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325221530708.png" alt="image-20230325221530708"></p>
-<p>Compressed 和 Dynamic 这两个行格式和 Compact 非常类似，主要的区别在于处理行溢出数据时有些区别。</p>
-<p>这两种格式采用完全的行溢出方式，记录的真实数据处不会存储该列的一部分数据，只存储 20 个字节的指针来指向溢出页。而实际的数据都存储在溢出页中，看起来就像下面这样：</p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325221615807.png" alt="image-20230325221615807"></p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
-<li><p>MySQL的NULL值是如何存放的？</p>
-<p>MySQL的Compact行格式中会用【NULL值列表】来标记值为NULL的列，NULL值并不会存储在行格式中的真实数据部分</p>
-<p>NULL值列表会占用1字节空间，当表中所有字段都定义成NOT NULL，行格式中就不会有NULL值列表，这样可节省1字节的空间</p>
-</li>
-<li><p>MySQL如何知道varchar(n)实际占用的数据大小？</p>
-<p>MySQL的Compact行格式中会用【变长字段长度列表】存储变长字段实际占用的数据大小</p>
-</li>
-<li><p>varchar(n)中n最大取值为多少？</p>
-<p>一行记录最大能存储65535字节的数据，但是这个是包含【变长字段字节数列表所占用的字节数】和【NULL值列表所占用的字节数】。所以我们在计算varchar(n)的最大值时，需要减去这两个列表所占用的字节数。</p>
-<p>如果一张表只有一个 varchar(n) 字段，且允许为 NULL，字符集为 ascii。varchar(n) 中 n 最大取值为 65532。</p>
-<p>计算公式：65535 - 变长字段字节数列表所占用的字节数 - NULL值列表所占用的字节数 &#x3D; 65535 - 2 - 1 &#x3D; 65532。</p>
-<p>如果有多个字段的话，要保证所有字段的长度 + 变长字段字节数列表所占用的字节数 + NULL值列表所占用的字节数 &lt;&#x3D; 65535。</p>
-</li>
-</ol>
-<p>4.行溢出后，MySQL是如何处理的？</p>
-<p>​	如果一个数据页存不了一条记录，InnoDB 存储引擎会自动将溢出的数据存放到「溢出页」中。</p>
-<p>​	Compact 行格式针对行溢出的处理是这样的：当发生行溢出时，在记录的真实数据处只会保存该列的一部分数	据，而把剩余的数据放在「溢出页」中，然后真实数据处用 20 字节存储指向溢出页的地址，从而可以找到剩余	数据所在的页。</p>
-<p>​	Compressed 和 Dynamic 这两种格式采用完全的行溢出方式，记录的真实数据处不会存储该列的一部分数据，	只存储 20 个字节的指针来指向溢出页。而实际的数据都存储在溢出页中。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">mysql</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/25/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/">展开全文 >></a>
         </p>
       
 

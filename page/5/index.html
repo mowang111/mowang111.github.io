@@ -138,6 +138,94 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-linux基础/4.ssh" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/">ssh</a>
+    </h1>
+  
+
+        
+        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/" class="archive-article-date">
+  	<time datetime="2022-10-29T14:52:12.995Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vim ~/.ssh/config</span><br><span class="line"></span><br><span class="line">Host myserver1</span><br><span class="line">    HostName IP地址或域名</span><br><span class="line">    User 用户名</span><br><span class="line"></span><br><span class="line">Host myserver2</span><br><span class="line">    HostName IP地址或域名</span><br><span class="line">    User 用户名</span><br></pre></td></tr></table></figure>
+
+<h2 id="密钥登录"><a href="#密钥登录" class="headerlink" title="密钥登录"></a>密钥登录</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id</span><br><span class="line"><span class="comment">#或者将公钥id_rsa.pub复制到myservr的~/.ssh/authorized_keys文件中</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="执行命令"><a href="#执行命令" class="headerlink" title="执行命令"></a>执行命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh user@hostname <span class="built_in">command</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ssh user@hostname <span class="built_in">ls</span> -a</span><br><span class="line"><span class="comment"># 单引号中的$i可以求值</span></span><br><span class="line">ssh myserver <span class="string">&#x27;for ((i = 0; i &lt; 10; i ++ )) do echo $i; done&#x27;</span></span><br><span class="line"><span class="comment"># 双引号中的$i不可以求值</span></span><br><span class="line">ssh myserver <span class="string">&quot;for ((i = 0; i &lt; 10; i ++ )) do echo <span class="variable">$i</span>; done&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>另外不加单引号或双引号 后面的命令的相对路径是相对于本地而言的，加上单引号或双引号，则是相对于服务器而言的</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ssh myserver <span class="built_in">mkdir</span> -p ~/homeworklesson_4/homework_1</span><br><span class="line">ssh myserver <span class="string">&quot;mkdir -p ~/homeworklesson_4/homework_1&quot;</span></span><br><span class="line">ssh myserver <span class="string">&#x27;mkdir -p ~/homework/lesson_4/homework_1&#x27;</span></span><br><span class="line"></span><br><span class="line">name=<span class="string">&quot;1 2 3&quot;</span></span><br><span class="line">ssh myserver <span class="built_in">mkdir</span> <span class="string">&quot;~&quot;</span>/homework/lesson_4/\&quot;<span class="variable">$name</span>\&quot;</span><br><span class="line"><span class="comment">#前面一个引号处理~,表明~是相对于服务器而言，后面转义&quot;表明&quot;不要预处理掉，需要在服务器执行命令时带上</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="复制文件"><a href="#复制文件" class="headerlink" title="复制文件"></a>复制文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">scp <span class="built_in">source</span> dist</span><br><span class="line"></span><br><span class="line">scp ~/main.cpp myserver:homework</span><br><span class="line"></span><br><span class="line">scp -r ./dir myserver:homework<span class="comment">#该操作是将dir文件夹整个复制到homework文件夹下，包括dir文件夹本身</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scp -r -P 6000 ./datacollect-III/ mowang@116.62.45.53:</span><br></pre></td></tr></table></figure>
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-linux基础/6.thrift简易项目" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
