@@ -17,7 +17,7 @@
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329162139100.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329193812492.png">
-<meta property="og:image" content="c:/Users/11547/AppData/Roaming/Typora/typora-user-images/image-20230329195012430.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329195012430.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329202743389.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329224815202.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329225059908.png">
@@ -34,7 +34,7 @@
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329231156096.png">
 <meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329231204257.png">
 <meta property="article:published_time" content="2023-03-29T08:17:17.624Z">
-<meta property="article:modified_time" content="2023-03-29T15:17:26.308Z">
+<meta property="article:modified_time" content="2023-03-30T02:25:45.441Z">
 <meta property="article:author" content="crz">
 <meta property="article:tag" content="网络编程">
 <meta name="twitter:card" content="summary">
@@ -223,7 +223,7 @@
 <li>当在应用程序调用send系统调用发送数据时，由于….</li>
 </ul>
 <h3 id="性能开销-1"><a href="#性能开销-1" class="headerlink" title="性能开销"></a>性能开销</h3><h2 id="阻塞，非阻塞-与-同步，异步"><a href="#阻塞，非阻塞-与-同步，异步" class="headerlink" title="阻塞，非阻塞 与 同步，异步"></a>阻塞，非阻塞 与 同步，异步</h2><p>首先将网络数据包接收流程分为两个阶段：</p>
-<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230329195012430.png" alt="image-20230329195012430"></p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230329195012430.png" alt="image-20230329195012430"></p>
 <ul>
 <li>数据准备阶段：在这个阶段，网络数据包到达网卡，通过DMA的方式将数据包拷贝到内存中，然后经过硬中断，软中断，接着通过内核线程ksoftirqd经过内核协议栈的处理，最终将数据发送到内核Socket的接收缓冲区中。</li>
 <li>数据拷贝阶段：当数据到达内核Socket的接收缓冲区时，此时数据存在于内核空间中，需要将数据拷贝到用户空间，才能够被应用程序读取。</li>
