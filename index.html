@@ -138,6 +138,93 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-cpp/string类的实现" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/30/cpp/string%E7%B1%BB%E7%9A%84%E5%AE%9E%E7%8E%B0/">String类的实现</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/30/cpp/string%E7%B1%BB%E7%9A%84%E5%AE%9E%E7%8E%B0/" class="archive-article-date">
+  	<time datetime="2023-03-30T12:09:17.532Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-30</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>引用自(C++面试中STRING类的一种正确写法)[<a target="_blank" rel="noopener" href="https://coolshell.cn/articles/10478.html]">https://coolshell.cn/articles/10478.html]</a></p>
+<h2 id="String类的实现"><a href="#String类的实现" class="headerlink" title="String类的实现"></a>String类的实现</h2><p>简单的实现一个String类：</p>
+<ol>
+<li>能像int类型那样定义变量，并且支持赋值、复制</li>
+<li>能用作函数的参数类型及返回类型</li>
+<li>能用作标准库容器的元素类型，即vector&#x2F;list&#x2F;deque的value_type。（用作 std::map 的 key_type 是更进一步的要求，本文从略）</li>
+</ol>
+<p>换言之，String需要让以下代码编译通过，并且没有内存方面错误。</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">foo</span><span class="params">(String x)</span></span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">bar</span><span class="params">(<span class="type">const</span> String&amp; x)</span></span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">String <span class="title">baz</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="function">String <span class="title">ret</span><span class="params">(<span class="string">&quot;world&quot;</span>)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    String s0;</span><br><span class="line">    <span class="function">String <span class="title">s1</span><span class="params">(<span class="string">&quot;hello&quot;</span>)</span></span>;</span><br><span class="line">    <span class="function">String <span class="title">s2</span><span class="params">(s0)</span></span>;</span><br><span class="line">    String s3 = s1;</span><br><span class="line">    s2 = s1;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">foo</span>(s1);</span><br><span class="line">    <span class="built_in">bar</span>(s1);</span><br><span class="line">    <span class="built_in">foo</span>(<span class="string">&quot;temporary&quot;</span>);</span><br><span class="line">    <span class="built_in">bar</span>(<span class="string">&quot;temporary&quot;</span>);</span><br><span class="line">   	String s4 = <span class="built_in">baz</span>();</span><br><span class="line">    </span><br><span class="line">    std::vector&lt;String&gt; svec;</span><br><span class="line">    svec.<span class="built_in">push_back</span>(s0);</span><br><span class="line">    svec.<span class="built_in">push_back</span>(s1);</span><br><span class="line">    svec.<span class="built_in">push_back</span>(<span class="built_in">baz</span>());</span><br><span class="line">    svec.<span class="built_in">push_back</span>(<span class="string">&quot;good job&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;utility&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">String</span>&#123;</span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">String</span>() : <span class="built_in">data_</span>(<span class="keyword">new</span> <span class="type">char</span>[<span class="number">1</span>])&#123;</span><br><span class="line">        *data_ = <span class="string">&#x27;\0&#x27;</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">String</span>(<span class="type">const</span> <span class="type">char</span>* str) : <span class="built_in">data_</span>(<span class="keyword">new</span> <span class="type">char</span>[<span class="built_in">strlen</span>(str)+<span class="number">1</span>])&#123;</span><br><span class="line">        <span class="built_in">strcpy</span>(data_, str);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">String</span>(<span class="type">const</span> String&amp; rhs) : <span class="built_in">data_</span>(<span class="keyword">new</span> <span class="type">char</span>[rhs.<span class="built_in">size</span>()+<span class="number">1</span>])&#123;</span><br><span class="line">        <span class="built_in">strcpy</span>(data_, rhs.<span class="built_in">c_str</span>());</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ~<span class="built_in">String</span>()&#123;</span><br><span class="line">        <span class="keyword">delete</span>[] data_;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    String&amp; <span class="keyword">operator</span>=(String rhs)&#123;</span><br><span class="line">        <span class="built_in">swap</span>(rhs);</span><br><span class="line">        <span class="keyword">return</span> *<span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">size_t</span> <span class="title">size</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="built_in">strlen</span>(data_);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">const</span> <span class="type">char</span>* <span class="title">c_str</span><span class="params">()</span> <span class="type">const</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> data_;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    </span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">swap</span><span class="params">(String&amp; other)</span></span>&#123;</span><br><span class="line">        <span class="built_in">swap</span>(data_, other.data_);</span><br><span class="line">    &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    <span class="type">char</span>* data_;  </span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">c++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/30/cpp/string%E7%B1%BB%E7%9A%84%E5%AE%9E%E7%8E%B0/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-网络编程/整理/从Linux内核看IO模型" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -2263,88 +2350,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-cpp/effectivecpp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/25/cpp/effectivecpp/">Effective C++</a>
-    </h1>
-  
-
-        
-        <a href="/2023/03/25/cpp/effectivecpp/" class="archive-article-date">
-  	<time datetime="2023-03-25T14:58:24.311Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-25</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="条款17-以独立语句将new的对象置入智能指针"><a href="#条款17-以独立语句将new的对象置入智能指针" class="headerlink" title="条款17 以独立语句将new的对象置入智能指针"></a>条款17 以独立语句将new的对象置入智能指针</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">processWidget</span>(sts::tr1::<span class="built_in">shared_prt</span>&lt;Widget&gt;(<span class="keyword">new</span> Widget), <span class="built_in">priority</span>());</span><br></pre></td></tr></table></figure>
-
-<p>由于执行次序的原因，可能有以下顺序：</p>
-<ol>
-<li>执行 new Widget</li>
-<li>调用priority()</li>
-<li>调用tr1::shared_ptr构造函数</li>
-</ol>
-<p>如果priority的调用导致异常，new Widget返回的指针将会丢失，可能造成资源泄漏</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">c++</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/25/cpp/effectivecpp/">展开全文 >></a>
         </p>
       
 
