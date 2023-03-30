@@ -6,15 +6,22 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://mowang111.github.io">
-  <title>Archives | crz&#39;s blog</title>
+  <title>c++内存泄漏 | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta property="og:type" content="website">
-<meta property="og:title" content="crz&#39;s blog">
-<meta property="og:url" content="https://mowang111.github.io/archives/page/5/index.html">
+  <meta name="description" content="内存泄漏（Memory Leak）是指程序中己动态分配的堆内存由于某种原因程序未释放或无法释放，造成系统内存的浪费，导致程序运行速度减慢甚至系统崩溃等严重后果。 当我们在程序中对原始指针(raw pointer)使用new操作符或者free函数的时候，实际上是在堆上为其分配内存，这个内存指的是RAM，而不是硬盘等永久存储。持续申请而不释放(或者少量释放)内存的应用程序，最终因内存耗尽导致OOM(">
+<meta property="og:type" content="article">
+<meta property="og:title" content="c++内存泄漏">
+<meta property="og:url" content="https://mowang111.github.io/2023/03/30/cpp/c++%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
+<meta property="og:description" content="内存泄漏（Memory Leak）是指程序中己动态分配的堆内存由于某种原因程序未释放或无法释放，造成系统内存的浪费，导致程序运行速度减慢甚至系统崩溃等严重后果。 当我们在程序中对原始指针(raw pointer)使用new操作符或者free函数的时候，实际上是在堆上为其分配内存，这个内存指的是RAM，而不是硬盘等永久存储。持续申请而不释放(或者少量释放)内存的应用程序，最终因内存耗尽导致OOM(">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/067029aacbe9ebcc8c7f36b0b23931a6.png">
+<meta property="article:published_time" content="2023-03-30T13:38:08.093Z">
+<meta property="article:modified_time" content="2023-03-30T14:37:20.349Z">
 <meta property="article:author" content="crz">
+<meta property="article:tag" content="c++">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/067029aacbe9ebcc8c7f36b0b23931a6.png">
   
     <link rel="alternative" href="/atom.xml" title="crz&#39;s blog" type="application/atom+xml">
   
@@ -136,215 +143,207 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            
-  
-  
+            <article id="post-cpp/c++内存泄漏" class="article article-type-post " itemscope itemprop="blogPost">
+  <div class="article-inner">
     
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      c++内存泄漏
+    </h1>
+  
+
+        
+        <a href="/2023/03/30/cpp/c++%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/" class="archive-article-date">
+  	<time datetime="2023-03-30T13:38:08.093Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-30</time>
+</a>
+        
+      </header>
     
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/067029aacbe9ebcc8c7f36b0b23931a6.png" alt="img"></p>
+<p>内存泄漏（Memory Leak）是指程序中己动态分配的堆内存由于某种原因程序未释放或无法释放，造成系统内存的浪费，导致程序运行速度减慢甚至系统崩溃等严重后果。</p>
+<p>当我们在程序中对原始指针(raw pointer)使用new操作符或者free函数的时候，实际上是在堆上为其分配内存，这个内存指的是RAM，而不是硬盘等永久存储。持续申请而不释放(或者少量释放)内存的应用程序，最终因内存耗尽导致OOM(out of memory)。</p>
+<p>内存泄漏分为以下两类：</p>
+<ul>
+<li><strong>堆内存泄漏</strong>：我们经常说的内存泄漏就是堆内存泄漏，在堆上申请了资源，在结束使用的时候，没有释放归还给OS，从而导致该块内存永远不会被再次使用</li>
+<li><strong>资源泄漏</strong>：通常指的是系统资源，比如socket，文件描述符等，因为这些在系统中都是有限制的，如果创建了而不归还，久而久之，就会耗尽资源，导致其他程序不可用</li>
+</ul>
+<p>本文主要分析堆内存泄漏，所以后面的内存泄漏均指的是<code>堆内存泄漏</code>。</p>
+<h2 id="C-内存泄漏的原因"><a href="#C-内存泄漏的原因" class="headerlink" title="C++内存泄漏的原因"></a>C++内存泄漏的原因</h2><h3 id="未释放内存"><a href="#未释放内存" class="headerlink" title="未释放内存"></a>未释放内存</h3><p>这种比较常见，比如new或者malloc一块内存，但是没有将其释放，就造成了内存泄漏。</p>
+<p>又比如析构函数中没有释放已经申请的内存。</p>
+<h3 id="未匹配"><a href="#未匹配" class="headerlink" title="未匹配"></a>未匹配</h3><p>当我们使用new操作符来进行内存分配的时候，其内部做了两件事：</p>
+<ul>
+<li>通过operator new从堆上申请内存</li>
+<li>调用构造函数（如果操作对象是一个class的话）</li>
+</ul>
+<p>使用delete操作符来释放内存，其顺序和new相反</p>
+<ul>
+<li>调用对象的析构函数（如果操作对象是一个class的话）</li>
+<li>通过operator delete释放内存</li>
+</ul>
+<p>如果不匹配调用</p>
+<ul>
+<li>new 和 free<ul>
+<li>new操作符会通过operator new分配一块内存，然后调用所属对象的构造函数，而free函数释放了内存，但是没有调用构造函数，造成了内存泄漏</li>
+</ul>
+</li>
+<li>new[] 和 delete<ul>
+<li>new[]操作符会通过operator new[]分配内存，会保存申请数组内元素的数量，delete[]会对每个元素都调用析构函数，而delete只会调用一次析构函数，造成了其他元素的内存泄漏</li>
+</ul>
+</li>
+</ul>
+<h3 id="虚析构"><a href="#虚析构" class="headerlink" title="虚析构"></a>虚析构</h3><p>std::string能否被继承，为什么？</p>
+<p>不能，因为std::string的析构函数不为virtual，会引起内存泄漏。</p>
+<p>当使用父类的指针指向子类的对象的时候，如果父类的析构函数没有申明为virtual函数，那么就不会调用子类的析构函数，子类中特有的申请的内存就不会被释放。</p>
+<h3 id="循环引用"><a href="#循环引用" class="headerlink" title="循环引用"></a>循环引用</h3><p>使用shared_ptr时，A和B两个类内有对方类型的shaed_ptr指针的对象，new出两个a和b，然后对里面两个指针进行互相赋值，此时，两个智能指针的引用计数为2，程序结束时，引用计数只会减一，不会调用智能指针的析构函数，造成内存泄漏。</p>
+<p>使用weak_ptr来解决循环引用的问题</p>
+<h2 id="C-内存泄漏的避免"><a href="#C-内存泄漏的避免" class="headerlink" title="C++内存泄漏的避免"></a>C++内存泄漏的避免</h2><ul>
+<li>避免在堆上分配，如果对象可以在栈上进行分配，就在栈上进行分配，一方面栈的效率远高于堆，另一方面，还能避免内存泄漏。</li>
+<li>手动释放</li>
+<li>避免使用裸指针，尽量使用智能指针</li>
+</ul>
+<h2 id="C-内存泄漏的定位"><a href="#C-内存泄漏的定位" class="headerlink" title="C++内存泄漏的定位"></a>C++内存泄漏的定位</h2><h3 id="日志"><a href="#日志" class="headerlink" title="日志"></a>日志</h3><p>这种方案的核心思想，就是在每次分配内存的时候，打印指针地址，在释放内存的时候，打印内存地址，这样在程序结束的时候，通过分配和释放的差，如果分配的条数大于释放的条数，那么基本就能确定程序存在内存泄漏，然后根据日志进行详细分析和定位。</p>
+<h3 id="统计"><a href="#统计" class="headerlink" title="统计"></a>统计</h3><p>统计方案可以理解为日志方案的一种特殊实现，其主要原理是在分配的时候，统计分配次数，在释放的时候，则是统计释放的次数，这样在程序结束前判断这俩值是否一致，就能判断出是否存在内存泄漏。</p>
+<p>此方法可帮助跟踪已分配内存的状态。为了实现这个方案，需要创建三个自定义函数，一个用于内存分配，第二个用于内存释放，最后一个用于检查内存泄漏。代码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">int</span> allocated  = <span class="number">0</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">unsigned</span> <span class="type">int</span> deallocated  = <span class="number">0</span>;</span><br><span class="line"><span class="type">void</span> *<span class="title function_">Memory_Allocate</span> <span class="params">(<span class="type">size_t</span> size)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">void</span> *ptr = <span class="literal">NULL</span>;</span><br><span class="line">    ptr = <span class="built_in">malloc</span>(size);</span><br><span class="line">    <span class="keyword">if</span> (<span class="literal">NULL</span> != ptr) &#123;</span><br><span class="line">        ++allocated;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">//Log error</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ptr;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">void</span> <span class="title function_">Memory_Deallocate</span> <span class="params">(<span class="type">void</span> *ptr)</span> &#123;</span><br><span class="line">    <span class="keyword">if</span>(ptr != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="built_in">free</span>(ptr);</span><br><span class="line">        ++deallocated;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="type">int</span> <span class="title function_">Check_Memory_Leak</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">    <span class="type">int</span> ret = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (allocated != deallocated) &#123;</span><br><span class="line">        <span class="comment">//Log error</span></span><br><span class="line">        ret = MEMORY_LEAK;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ret = OK;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="工具"><a href="#工具" class="headerlink" title="工具"></a>工具</h3><p>在Linux上比较常用的内存泄漏检测工具是<code>valgrind</code>，所以咱们就以valgrind为工具，进行检测。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
       
       
-      <section class="archives-wrap">
-        <div class="archive-year-wrap">
-          <a href="/archives/2022" class="archive-year">2022</a>
-        </div>
-        <div class="archives">
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:53:26.438Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">Linux基础常用命令</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
 		<ul class="article-tag-list">
 			 
         		<li class="article-tag-list-item">
-        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">c++</a>
         		</li>
       		
 		</ul>
 	</div>
 
+      
 
+      
+
+      
+        
+<div class="share-btn share-icons tooltip-left">
+  <div class="tooltip tooltip-east">
+    <span class="tooltip-item">
+      <a href="javascript:;" class="share-sns share-outer">
+        <i class="icon icon-share"></i>
+      </a>
+    </span>
+    <span class="tooltip-content">
+      <div class="share-wrap">
+        <div class="share-icons">
+          <a class="weibo share-sns" href="javascript:;" data-type="weibo">
+            <i class="icon icon-weibo"></i>
+          </a>
+          <a class="weixin share-sns wxFab" href="javascript:;" data-type="weixin">
+            <i class="icon icon-weixin"></i>
+          </a>
+          <a class="qq share-sns" href="javascript:;" data-type="qq">
+            <i class="icon icon-qq"></i>
+          </a>
+          <a class="douban share-sns" href="javascript:;" data-type="douban">
+            <i class="icon icon-douban"></i>
+          </a>
+          <a class="qzone share-sns" href="javascript:;" data-type="qzone">
+            <i class="icon icon-qzone"></i>
+          </a>
+          <a class="facebook share-sns" href="javascript:;" data-type="facebook">
+            <i class="icon icon-facebook"></i>
+          </a>
+          <a class="twitter share-sns" href="javascript:;" data-type="twitter">
+            <i class="icon icon-twitter"></i>
+          </a>
+          <a class="google share-sns" href="javascript:;" data-type="google">
+            <i class="icon icon-google"></i>
+          </a>
         </div>
-        <div class="clearfix"></div>
-    </header>
+      </div>
+    </span>
+  </div>
+</div>
+
+<div class="page-modal wx-share js-wx-box">
+    <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
+    <p>扫一扫，分享到微信</p>
+    <div class="wx-qrcode">
+      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2023/03/30/cpp/c++%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F/" alt="微信分享二维码">
+    </div>
+</div>
+
+<div class="mask js-mask"></div>
+      
+      <div class="clearfix"></div>
+    </div>
   </div>
 </article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:53:26.438Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
-</a>
+<nav id="article-nav">
+  
+  
+    <a href="/2023/03/30/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%94%A8%E6%B3%95/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">SQL用法</div>
+      <i class="icon-circle-right"></i>
+    </a>
+  
+</nav>
+
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
         </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">管道、环境变量与常用命令</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
+        
+        
+        <div class="toc-container tooltip-left">
+            <i class="icon-font icon-category"></i>
+            <div class="tooltip tooltip-east">
+                <span class="tooltip-item">
+                </span>
+                <span class="tooltip-content">
+                    <div class="toc-article">
+                    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%8E%9F%E5%9B%A0"><span class="toc-number">1.</span> <span class="toc-text">C++内存泄漏的原因</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AA%E9%87%8A%E6%94%BE%E5%86%85%E5%AD%98"><span class="toc-number">1.1.</span> <span class="toc-text">未释放内存</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AA%E5%8C%B9%E9%85%8D"><span class="toc-number">1.2.</span> <span class="toc-text">未匹配</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%99%9A%E6%9E%90%E6%9E%84"><span class="toc-number">1.3.</span> <span class="toc-text">虚析构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8"><span class="toc-number">1.4.</span> <span class="toc-text">循环引用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E9%81%BF%E5%85%8D"><span class="toc-number">2.</span> <span class="toc-text">C++内存泄漏的避免</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E5%86%85%E5%AD%98%E6%B3%84%E6%BC%8F%E7%9A%84%E5%AE%9A%E4%BD%8D"><span class="toc-number">3.</span> <span class="toc-text">C++内存泄漏的定位</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A5%E5%BF%97"><span class="toc-number">3.1.</span> <span class="toc-text">日志</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%9F%E8%AE%A1"><span class="toc-number">3.2.</span> <span class="toc-text">统计</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7"><span class="toc-number">3.3.</span> <span class="toc-text">工具</span></a></li></ol></li></ol>
+                    </div>
+                </span>
+            </div>
         </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:53:26.438Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/">docker</a>
-    </h1>
-  
-
-        <div class="article-info info-on-right">
-          
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
-        		</li>
-      		
-		</ul>
-	</div>
+        
+    </div>
+</aside>
 
 
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
+
   
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:52:12.995Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
-</a>
-        </div>
-    	 
   
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/">ssh</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-    
-    
-    <article class="archive-article archive-type-post">
-  <div class="archive-article-inner">
-    <header class="archive-article-header">
-      	<div class="article-meta">
-	      	<a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:52:12.995Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
-</a>
-        </div>
-    	 
-  
-    <h1 itemprop="name">
-      <a class="archive-article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/">thrift在线匹配系统</a>
-    </h1>
   
 
-        <div class="article-info info-on-right">
-          
-          
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-        </div>
-        <div class="clearfix"></div>
-    </header>
-  </div>
-</article>
-  
-  
-    </div></section>
   
 
-    
-    <nav id="page-nav">
-      <a class="extend prev" rel="prev" href="/archives/page/4/">&amp;laquo; Prev</a><a class="page-number" href="/archives/">1</a><span class="space">&hellip;</span><a class="page-number" href="/archives/page/3/">3</a><a class="page-number" href="/archives/page/4/">4</a><span class="page-number current">5</span>
-    </nav>
   
 
 
@@ -368,8 +367,8 @@
 	var yiliaConfig = {
 		mathjax: true,
 		isHome: false,
-		isPost: false,
-		isArchive: true,
+		isPost: true,
+		isArchive: false,
 		isTag: false,
 		isCategory: false,
 		open_in_new: false,

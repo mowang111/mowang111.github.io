@@ -138,6 +138,662 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-数据库/日志/日志" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%97%A5%E5%BF%97/%E6%97%A5%E5%BF%97/">MySQL日志</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%97%A5%E5%BF%97/%E6%97%A5%E5%BF%97/" class="archive-article-date">
+  	<time datetime="2023-03-27T07:49:53.452Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文引用自<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/index/index_interview.html#%E6%80%BB%E7%BB%93">小林索引常见面试题</a></p>
+<h2 id="MySQL日志：undo-log、redo-log、binlog有什么用？"><a href="#MySQL日志：undo-log、redo-log、binlog有什么用？" class="headerlink" title="MySQL日志：undo log、redo log、binlog有什么用？"></a>MySQL日志：undo log、redo log、binlog有什么用？</h2><p>执行一条SQL查询语句，期间发生了什么？</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327155153877.png" alt="image-20230327155153877"></p>
+<p>执行一条update语句，期间发生了什么？</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">UPDATE</span> t_user <span class="keyword">SET</span> name <span class="operator">=</span> <span class="string">&#x27;xiaolin&#x27;</span> <span class="keyword">where</span> id <span class="operator">=</span> <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+
+<p>查询语句的那一套流程，更新语句也是会同样走一遍：</p>
+<ul>
+<li>客户端先通过连接器建立连接，连接器自会判断用户身份；</li>
+<li>因为这是一条update语句，所以不需要经过查询缓存，但是表上有更新语句，是会把整个表的查询缓存情况的，所以说查询缓存很鸡肋，在 MySQL 8.0 就被移除这个功能了；</li>
+<li>解析器会通过词法分析识别出关键字update，表名等等，构建出语法树，接着还会做语法分析，判断输入的语句是否会符合MySQL语法；</li>
+<li>预处理器会判断表和字段是否存在</li>
+<li>优化器确定执行计划，因为where条件中的id是主键索引，所以决定要使用id这个索引</li>
+<li>执行器负责具体执行，找到这一行然后更新。</li>
+</ul>
+<p>不过，更新语句的流程会涉及到undo log（回滚日志）、redo log（重做日志）、binlog（归档日志）这三种日志：</p>
+<ul>
+<li>undo log（回滚日志）：是Innodb存储引擎层生成的日志，实现了<strong>事务中的原子性</strong>，主要用于事务回滚和MVCC。</li>
+<li>redo log（重做日志）：是Innodb存储引擎生成的日志，实现了<strong>事务中的持久性</strong>，主要<strong>用户掉电等故障恢复</strong>；</li>
+<li>binlog（归档日志）：是Server层生成的日志，主要用于<strong>数据备份和主从复制</strong>。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327161057467.png" alt="image-20230327161057467"></p>
+<h2 id="为什么需要undo-log"><a href="#为什么需要undo-log" class="headerlink" title="为什么需要undo log?"></a>为什么需要undo log?</h2><p>我们在执行一条”增删改“语句的时候，虽然没有输入begin开启事务和commit提交事务，但是MySQL会<strong>隐式开启事务（由autocommit参数决定）</strong>来执行”增删改“语句的。</p>
+<p>在还没有提交事务之前，如果MySQL发生了崩溃，怎么回滚到事务之前的数据？</p>
+<p>解决这个问题的机制就是undo log（回滚日志）, 它保证了事务的ACID特性中的原子性（Atomicity）;</p>
+<p>undo log是一种用于撤销回退的日志。在事务没提交之前，MySQL会先记录更新前的数据到undo log日志文件里面，当事务回滚时，可以利用undo log来进行回滚。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327161601293.png" alt="image-20230327161601293"></p>
+<p>在发生回滚时，就读取undo log 里面的数据，然后做原先相反的操作。</p>
+<p>不同的操作，需要记录的内容也是不同的，所以不同类型的操作（修改、删除、新增）产生的 undo log 的格式也是不同的。</p>
+<p>一条记录的每一次更新操作产生的undo log格式都有一个roll_pointer指针和一个trx_id事务id:</p>
+<ul>
+<li><p>通过trx_id可以直到该记录时被哪个事务修改的</p>
+</li>
+<li><p>通过roll_pointer指针可以将这些undo log串成一个链表，这个链表就被称为版本链。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327161856328.png" alt="image-20230327161856328"></p>
+</li>
+</ul>
+<p><strong>undo log还有一个作用，就是通过ReadView + undo log实现MVCC（多版本并发控制）</strong></p>
+<p>对于【读提交】和【可重复读】隔离级别的事务来说，它们的快照读（普通select语句）时通过Read View + undo log来实现的，它们的区别在于创建ReadView的时机不同。</p>
+<ul>
+<li>【读提交】隔离级别时在每个select都会生成一个新的Read View， 也意味着，事务期间的多次读取同一条数据，前后两次读的数据可能会出现不一致，因为可能这期间另外一个事务修改了该记录，并提交了事务。</li>
+<li>【可重复读】隔离级别是启动事务时生成一个Read View，然后整个事务期间都在用这个ReadView，这样就保证了在事务期间读到的数据都是事务启动前的记录。</li>
+</ul>
+<p>这两个隔离级别的实现是通过【事务的Read View里的字段】和【记录中的两个隐藏列（trx_id和roll_pointer）】的比对，不过不满足可见行，就会顺着undo log版本链找到满足其可见性的记录，从而控制并发事务访问同一个记录时的行为，这就叫做MVCC（多并发版本控制）。</p>
+<p>因此，undo log的两大作用：</p>
+<ul>
+<li>实现事务回滚，保障事务的原子性。事务处理过程中，如果出现了错误或者用户执行了ROLLBACK语句，MySQL可以利用undo log中的历史数据将数据恢复到事务开始之前的状态。</li>
+<li>实现MVCC的关键因素之一。MVCC是通过ReadView + undo log 实现的。undo log为每条记录保存多份历史数据，MySQL在执行快照读（普通select语句）的时候，会根据事务的Read View 里的信息，顺着undo log的版本链找到满足其可见性的记录。</li>
+</ul>
+<blockquote>
+<p>TIP</p>
+<p>很多人疑问 undo log 是如何刷盘（持久化到磁盘）的？</p>
+<p>undo log 和数据页的刷盘策略是一样的，都需要通过 redo log 保证持久化。</p>
+<p>buffer pool 中有 undo 页，对 undo 页的修改也都会记录到 redo log。redo log 会每秒刷盘，提交事务时也会刷盘，数据页和 undo 页都是靠这个机制保证持久化的。</p>
+</blockquote>
+<h2 id="为什么需要redo-log"><a href="#为什么需要redo-log" class="headerlink" title="为什么需要redo log?"></a>为什么需要redo log?</h2><p>Buffer Pool是提高了读写效率，但是Buffer Pool是基于内存的，而内存总是不可靠，万一断电重启，还没来得及落盘的脏页数据就会丢失。</p>
+<p>为了防止断电导致数据丢失的问题，当有一条记录需要更新的时候，InnoDB引擎就会先更新内存(同时标记为脏页），然后将本次对这个页的修改以redo log的形式记录下来，这个时候更新就算完成了。</p>
+<p>后续，InnoDB引擎会在适当的时候，由后台线程将缓存在Buffer Pool的脏页刷新到磁盘里，这就是WAL（Write-Ahead Logging）技术。</p>
+<p>WAL技术指的是，MySQL的写操作并不是立刻写道磁盘中，而是先写道日志，然后在合适的时间再写到磁盘上。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327164534744.png" alt="image-20230327164534744"></p>
+<h3 id="什么是redo-log"><a href="#什么是redo-log" class="headerlink" title="什么是redo log?"></a>什么是redo log?</h3><p>redo log是物理日志，记录某个数据做了什么修改，比如对xxx表空间中的YYY数据页ZZZ偏移量的地方做了AAA更新，每当执行一个事务就会产生一条或多条物理日志。</p>
+<p>在事务提交时，只要先将redo log持久化到磁盘即可，可以不需要等到将缓存在Buffer Pool里的脏页数据持久化到磁盘。</p>
+<p>当系统崩溃的时候，虽然脏页数据没有持久化，但是redo log已经持久化，接着MySQL重启后，可以根据redo log的内容，将所有数据恢复到最新的状态。</p>
+<h3 id="被修改的Undo页面，需要记录对应的redo-log吗？"><a href="#被修改的Undo页面，需要记录对应的redo-log吗？" class="headerlink" title="被修改的Undo页面，需要记录对应的redo log吗？"></a>被修改的Undo页面，需要记录对应的redo log吗？</h3><p>需要的。开启事务后，InnoDB层更新记录前，首先要记录对应的undo log，如果是更新操作，需要把被更新的列的旧值记下来，也就是要生成一条undo log，undo log会写入Buffer Pool中的Undo页面。</p>
+<p>不过，在内存修改该Undo页面后，需要记录对应的redo log</p>
+<h3 id="redo-log和undo-log区别？"><a href="#redo-log和undo-log区别？" class="headerlink" title="redo log和undo log区别？"></a>redo log和undo log区别？</h3><p>这两种日志属于InnoDB存储引擎的日志，它们的区别在于：</p>
+<ul>
+<li>redo log记录了此次事务【完成后】的数据状态，记录的是更新之后的值。</li>
+<li>undo log记录了此次事务【开始前】的数据状态，记录的是更新之前的值。</li>
+</ul>
+<p><strong>事务提交之前发生了崩溃，重启后会通过undo log回滚事务，事务提交之后发生了崩溃，重启后会通过redo log恢复。</strong></p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327165358757.png" alt="image-20230327165358757"></p>
+<p>所以有了redo log，再通过WAL技术，InnoDB就可以保证即使数据库发生异常重启，之前已提交的记录都不会丢失，这个能力称为crash-safe（崩溃恢复）。可以看出，redo log保证了事务四大特性中的持久性。</p>
+<h3 id="redo-log要写到磁盘，数据也要写到磁盘，为什么要多次一举？"><a href="#redo-log要写到磁盘，数据也要写到磁盘，为什么要多次一举？" class="headerlink" title="redo log要写到磁盘，数据也要写到磁盘，为什么要多次一举？"></a>redo log要写到磁盘，数据也要写到磁盘，为什么要多次一举？</h3><p>写入redo log的方式使用了追加操作，所以磁盘操作是顺序写，而写入数据需要先找到写入位置，然后才写到磁盘，所以磁盘操作是随机写。<strong>MySQL 的写操作从磁盘的「随机写」变成了「顺序写」</strong>。</p>
+<p>针对为什么需要有redo log这个问题？</p>
+<ul>
+<li>实现了事务的持久性，让MySQL有了crash-safe的能力，能够保证MySQL再任何时间段突然崩溃，重启后之前已提交的记录都不会丢失。</li>
+<li>将写操作从随机写变成了顺序写，提升了MySQL写入磁盘的性能。</li>
+</ul>
+<h3 id="产生的redo-log是直接写入磁盘的吗？"><a href="#产生的redo-log是直接写入磁盘的吗？" class="headerlink" title="产生的redo log是直接写入磁盘的吗？"></a>产生的redo log是直接写入磁盘的吗？</h3><p>不是的。实际上，执行一个事务的过程中，产生的redo log也不是直接写入磁盘的，因为这样会产生大量的IO操作，而且磁盘的运行速度远慢于内存。</p>
+<p>所以，redo log也有自己的缓存——redo log buffer，每当产生一条redo log时，会先写入到redo log buffer，后续再持久化到磁盘中：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327170219058.png" alt="image-20230327170219058"></p>
+<p>redo log buffer 默认大小 16 MB，可以通过 <code>innodb_log_Buffer_size</code> 参数动态的调整大小，增大它的大小可以让 MySQL 处理「大事务」是不必写入磁盘，进而提升写 IO 性能。</p>
+<h3 id="redo-log什么时候刷盘？"><a href="#redo-log什么时候刷盘？" class="headerlink" title="redo log什么时候刷盘？"></a>redo log什么时候刷盘？</h3><ul>
+<li>当MySQL正常关闭时</li>
+<li>当redo log buffer中记录的写入量大于redo log buffer内存空间的一半的时候，会触发落盘；</li>
+<li>InnoDB的后台线程每隔1秒，将redo log buffer持久化到磁盘</li>
+<li>每次事务提交时，都将缓存在redo log buffer里的redo log直接持久化到磁盘（这个策略可由 <code>innodb_flush_log_at_trx_commit</code> 参数控制）</li>
+</ul>
+<blockquote>
+<p>innodb_flush_log_at_trx_commit参数控制的是什么？</p>
+</blockquote>
+<p>单独执行一个更新语句的时候，InnoDB引擎会自己启动一个事务，在执行更新语句的过程中，生成的redo log会先写到redo log buffer中，然后等事务提交的时候，再将缓存在redo log buffer中的redo log按组的方式顺序写到磁盘。</p>
+<p>上面这种redo log刷盘时机是在事务提交的时候，这个默认的行为。</p>
+<p>除此之外，InnoDB还提供了另外两种策略，由参数<code>innodb_flush_log_at_trx_commit</code>参数控制，可取的值有：0、1、2，默认值为1：</p>
+<ul>
+<li>当设置该<strong>参数为 0 时</strong>，表示每次事务提交时 ，还是<strong>将 redo log 留在 redo log buffer 中</strong> ，该模式下在事务提交时不会主动触发写入磁盘的操作。</li>
+<li>当设置该<strong>参数为 1 时</strong>，表示每次事务提交时，都<strong>将缓存在 redo log buffer 里的 redo log 直接持久化到磁盘</strong>，这样可以保证 MySQL 异常重启之后数据不会丢失。</li>
+<li>当设置该<strong>参数为 2 时</strong>，表示每次事务提交时，都只是缓存在 redo log buffer 里的 redo log <strong>写到 redo log 文件，注意写入到「 redo log 文件」并不意味着写入到了磁盘</strong>，因为操作系统的文件系统中有个 Page Cache（如果你想了解 Page Cache，可以看<a target="_blank" rel="noopener" href="https://xiaolincoding.com/os/6_file_system/pagecache.html">这篇 (opens new window)</a>），Page Cache 是专门用来缓存文件数据的，所以写入「 redo log文件」意味着写入到了操作系统的文件缓存。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330104243149.png" alt="image-20230330104243149"></p>
+<blockquote>
+<p>innodb_flush_log_at_trx_commit 为 0 和 2 的时候，什么时候才将 redo log 写入磁盘？</p>
+</blockquote>
+<p>InnoDB 的后台线程每隔 1 秒：</p>
+<ul>
+<li>针对参数 0 ：会把缓存在 redo log buffer 中的 redo log ，通过调用 <code>write()</code> 写到操作系统的 Page Cache，然后调用 <code>fsync()</code> 持久化到磁盘。<strong>所以参数为 0 的策略，MySQL 进程的崩溃会导致上一秒钟所有事务数据的丢失</strong>;</li>
+<li>针对参数 2 ：调用 fsync，将缓存在操作系统中 Page Cache 里的 redo log 持久化到磁盘。<strong>所以参数为 2 的策略，较取值为 0 情况下更安全，因为 MySQL 进程的崩溃并不会丢失数据，只有在操作系统崩溃或者系统断电的情况下，上一秒钟所有事务数据才可能丢失</strong>。</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330104727923.png" alt="image-20230330104727923"></p>
+<blockquote>
+<p>这三个参数的应用场景是什么？</p>
+</blockquote>
+<p>这三个参数的数据安全性和写入性能的比较如下：</p>
+<p>数据安全性：参数 1 &gt; 参数 2 &gt; 参数 0<br>写入性能：参数 0 &gt; 参数 2&gt; 参数 1<br>所以，数据安全性和写入性能是熊掌不可得兼的，要不追求数据安全性，牺牲性能；要不追求性能，牺牲数据安全性。</p>
+<p>在一些对数据安全性要求比较高的场景中，显然 innodb_flush_log_at_trx_commit 参数需要设置为 1。<br>在一些可以容忍数据库崩溃时丢失 1s 数据的场景中，我们可以将该值设置为 0，这样可以明显地减少日志同步到磁盘的 I&#x2F;O 操作。<br>安全性和性能折中的方案就是参数 2，虽然参数 2 没有参数 0 的性能高，但是数据安全性方面比参数 0 强，因为参数 2 只要操作系统不宕机，即使数据库崩溃了，也不会丢失数据，同时性能方便比参数 1 高。</p>
+<h3 id="redo-log文件写满了怎么办"><a href="#redo-log文件写满了怎么办" class="headerlink" title="redo log文件写满了怎么办?"></a>redo log文件写满了怎么办?</h3><p>默认情况下， InnoDB 存储引擎有 1 个重做日志文件组( redo log Group），「重做日志文件组」由有 2 个 redo log 文件组成，这两个 redo 日志的文件名叫 ：<code>ib_logfile0</code> 和 <code>ib_logfile1</code> 。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330110357441.png" alt="image-20230330110357441"></p>
+<p>在重做日志组中，每个 redo log File 的大小是固定且一致的，假设每个 redo log File 设置的上限是 1 GB，那么总共就可以记录 2GB 的操作。</p>
+<p>重做日志文件组是以<strong>循环写</strong>的方式工作的，从头开始写，写到末尾就又回到开头，相当于一个环形。</p>
+<p>所以 InnoDB 存储引擎会先写 ib_logfile0 文件，当 ib_logfile0 文件被写满的时候，会切换至 ib_logfile1 文件，当 ib_logfile1 文件也被写满时，会切换回 ib_logfile0 文件。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330110431808.png" alt="image-20230330110431808"></p>
+<p>我们知道 redo log 是为了防止 Buffer Pool 中的脏页丢失而设计的，那么如果随着系统运行，Buffer Pool 的脏页刷新到了磁盘中，那么 redo log 对应的记录也就没用了，这时候我们擦除这些旧记录，以腾出空间记录新的更新操作。</p>
+<p>redo log 是循环写的方式，相当于一个环形，InnoDB 用 write pos 表示 redo log 当前记录写到的位置，**用 checkpoint 表示当前要擦除的位置(write pos到checkpoint可以擦除)**，如下图：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330110540383.png" alt="image-20230330110540383"></p>
+<ul>
+<li>write pos 和 checkpoint 的移动都是顺时针方向；</li>
+<li>write pos ～ checkpoint 之间的部分（图中的红色部分），用来记录新的更新操作；</li>
+<li>check point ～ write pos 之间的部分（图中蓝色部分）：待落盘的脏数据页记录；</li>
+</ul>
+<p>如果 write pos 追上了 checkpoint，就意味着 <strong>redo log 文件满了，这时 MySQL 不能再执行新的更新操作，也就是说 MySQL 会被阻塞</strong>（<em>因此所以针对并发量大的系统，适当设置 redo log 的文件大小非常重要</em>），此时<strong>会停下来将 Buffer Pool 中的脏页刷新到磁盘中，然后标记 redo log 哪些记录可以被擦除，接着对旧的 redo log 记录进行擦除，等擦除完旧记录腾出了空间，checkpoint 就会往后移动（图中顺时针）</strong>，然后 MySQL 恢复正常运行，继续执行新的更新操作。</p>
+<p>所以，一次 checkpoint 的过程就是脏页刷新到磁盘中变成干净页，然后标记 redo log 哪些记录可以被覆盖的过程。</p>
+<h2 id="为什么需要binlog"><a href="#为什么需要binlog" class="headerlink" title="为什么需要binlog?"></a>为什么需要binlog?</h2><p>前面介绍的 undo log 和 redo log 这两个日志都是 Innodb 存储引擎生成的。</p>
+<p>MySQL 在完成一条更新操作后，Server 层还会生成一条 binlog，等之后事务提交的时候，会将该事物执行过程中产生的所有 binlog 统一写 入 binlog 文件。</p>
+<p>binlog 文件是记录了所有数据库表结构变更和表数据修改的日志，不会记录查询类的操作，比如 SELECT 和 SHOW 操作。</p>
+<blockquote>
+<p>为什么有了binlog，还要有redo log?</p>
+<p>这个问题跟 MySQL 的时间线有关系。</p>
+<p>最开始 MySQL 里并没有 InnoDB 引擎，MySQL 自带的引擎是 MyISAM，但是 MyISAM 没有 crash-safe 的能力，binlog 日志只能用于归档。</p>
+<p>而 InnoDB 是另一个公司以插件形式引入 MySQL 的，既然只依靠 binlog 是没有 crash-safe 能力的，所以 InnoDB 使用 redo log 来实现 crash-safe 能力。</p>
+</blockquote>
+<h3 id="redo-log-和bin-log有什么区别？"><a href="#redo-log-和bin-log有什么区别？" class="headerlink" title="redo log 和bin log有什么区别？"></a>redo log 和bin log有什么区别？</h3><ol>
+<li>适用对象不同<ul>
+<li>binlog是MySQL的Server层实现的日志，所有存储引擎都可以使用</li>
+<li>redo log是Innodb存储引擎实现的日志</li>
+</ul>
+</li>
+<li>文件格式不同<ul>
+<li>binlog 有 3 种格式类型，分别是 STATEMENT（默认格式）、ROW、 MIXED，区别如下：<ul>
+<li>STATEMENT：每一条修改数据的 SQL 都会被记录到 binlog 中（相当于记录了逻辑操作，所以针对这种格式， binlog 可以称为逻辑日志），主从复制中 slave 端再根据 SQL 语句重现。但 STATEMENT 有动态函数的问题，比如你用了 uuid 或者 now 这些函数，你在主库上执行的结果并不是你在从库执行的结果，这种随时在变的函数会导致复制的数据不一致；</li>
+<li>ROW：记录行数据最终被修改成什么样了（这种格式的日志，就不能称为逻辑日志了），不会出现 STATEMENT 下动态函数的问题。但 ROW 的缺点是每行数据的变化结果都会被记录，比如执行批量 update 语句，更新多少行数据就会产生多少条记录，使 binlog 文件过大，而在 STATEMENT 格式下只会记录一个 update 语句而已；</li>
+<li>MIXED：包含了 STATEMENT 和 ROW 模式，它会根据不同的情况自动使用 ROW 模式和 STATEMENT 模式；</li>
+</ul>
+</li>
+<li>redo log 是物理日志，记录的是在某个数据页做了什么修改，比如对 XXX 表空间中的 YYY 数据页 ZZZ 偏移量的地方做了AAA 更新；</li>
+</ul>
+</li>
+<li>写入方式不同<ul>
+<li>binlog 是追加写，写满一个文件，就创建一个新的文件继续写，不会覆盖以前的日志，保存的是全量的日志。</li>
+<li>redo log 是循环写，日志空间大小是固定，全部写满就从头开始，保存未被刷入磁盘的脏页日志。</li>
+</ul>
+</li>
+<li>用途不同<ul>
+<li>binlog用户备份恢复、主从复制</li>
+<li>redo log用于掉电等故障恢复</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>如果不小心整个数据库的数据被删除了，能适用redo log文件恢复吗?</p>
+</blockquote>
+<p>不可以使用 redo log 文件恢复，只能使用 binlog 文件恢复。</p>
+<p>因为 redo log 文件是循环写，是会边写边擦除日志的，只记录未被刷入磁盘的数据的物理日志，已经刷入磁盘的数据都会从 redo log 文件里擦除。</p>
+<p>binlog 文件保存的是全量的日志，也就是保存了所有数据变更的情况，理论上只要记录在 binlog 上的数据，都可以恢复，所以如果不小心整个数据库的数据被删除了，得用 binlog 文件恢复数据。</p>
+<h3 id="主从复制如何实现"><a href="#主从复制如何实现" class="headerlink" title="主从复制如何实现"></a>主从复制如何实现</h3><p>主从复制依赖于binlog，也就是记录MySQL上所有变化并以二进制形式保存在磁盘上。复制的过程就是将binlog中的数据从主库传输到从库上。</p>
+<p>这个过程一般是异步的，也就是主库上执行事务操作的线程不会等待复制binlog的线程同步完成。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330120602004.png" alt="image-20230330120602004"></p>
+<ul>
+<li><strong>写入binlog：主库写binlog日志，提交事务，并更新本地存储数据</strong></li>
+<li><strong>同步binlog： 把binlog复制到所有从库上，每个从库把binlog写到暂存日志里</strong></li>
+<li><strong>回放binlog：回放binlog，并更新存储引擎中的数据。</strong></li>
+</ul>
+<p>详细过程：</p>
+<ul>
+<li>MySQL主库在收到客户端提交的事务请求之后，会先写入binlog，再提交事务，更新存储引擎中的数据，事务提交完成后，返回客户端“操作成功”的响应。</li>
+<li>从库会创建一个专门的I&#x2F;O线程，连接主库的log dump线程，来接收主库的binlog日志，再把binlog信息写入relay log中继日志中，再返回给主库“复制成功”的响应。</li>
+<li>从库会创建一个用于回放binlog的线程，去读relay log中继日志，然后回放binlgo更新存储引擎中的数据，最终实现主从的数据一致性。</li>
+</ul>
+<blockquote>
+<p>MySQL主从复制还有哪些模型</p>
+<ul>
+<li>同步复制</li>
+<li>异步复制（默认）</li>
+<li>半同步复制</li>
+</ul>
+</blockquote>
+<h3 id="binlog什么时候刷盘？"><a href="#binlog什么时候刷盘？" class="headerlink" title="binlog什么时候刷盘？"></a>binlog什么时候刷盘？</h3><p>事务执行过程中，先把日志写到 binlog cache（Server 层的 cache），事务提交的时候，再把 binlog cache 写到 binlog 文件中。</p>
+<p>一个事务的 binlog 是不能被拆开的，因此无论这个事务有多大（比如有很多条语句），也要保证一次性写入。</p>
+<p>MySQL 给每个线程分配了一片内存用于缓冲 binlog ，该内存叫 binlog cache，参数 binlog_cache_size 用于控制单个线程内 binlog cache 所占内存的大小。如果超过了这个参数规定的大小，就要暂存到磁盘。</p>
+<blockquote>
+<p>什么时候 binlog cache 会写到 binlog 文件？</p>
+</blockquote>
+<p>在事务提交的时候，执行器把 binlog cache 里的完整事务写入到 binlog 文件中，并清空 binlog cache。如下图：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330143321380.png" alt="image-20230330143321380"></p>
+<p>虽然每个线程有自己 binlog cache，但是最终都写到同一个 binlog 文件：</p>
+<ul>
+<li>图中的 write，指的就是指把日志写入到 binlog 文件，但是并没有把数据持久化到磁盘，因为数据还缓存在文件系统的 page cache 里，write 的写入速度还是比较快的，因为不涉及磁盘 I&#x2F;O。</li>
+<li>图中的 fsync，才是将数据持久化到磁盘的操作，这里就会涉及磁盘 I&#x2F;O，所以频繁的 fsync 会导致磁盘的 I&#x2F;O 升高。</li>
+</ul>
+<p>MySQL提供一个 sync_binlog 参数来控制数据库的 binlog 刷到磁盘上的频率：</p>
+<ul>
+<li>sync_binlog &#x3D; 0 的时候，表示每次提交事务都只 write，不 fsync，后续交由操作系统决定何时将数据持久化到磁盘；</li>
+<li>sync_binlog &#x3D; 1 的时候，表示每次提交事务都会 write，然后马上执行 fsync；</li>
+<li>sync_binlog &#x3D;N(N&gt;1) 的时候，表示每次提交事务都 write，但累积 N 个事务后才 fsync。</li>
+</ul>
+<p>在MySQL中系统默认的设置是 sync_binlog &#x3D; 0，也就是不做任何强制性的磁盘刷新指令，这时候的性能是最好的，但是风险也是最大的。因为一旦主机发生异常重启，还没持久化到磁盘的数据就会丢失。</p>
+<p>而当 sync_binlog 设置为 1 的时候，是最安全但是性能损耗最大的设置。因为当设置为 1 的时候，即使主机发生异常重启，最多丢失一个事务的 binlog，而已经持久化到磁盘的数据就不会有影响，不过就是对写入性能影响太大。</p>
+<p>如果能容忍少量事务的 binlog 日志丢失的风险，为了提高写入的性能，一般会 sync_binlog 设置为 100~1000 中的某个数值。</p>
+<h2 id="Update语句执行过程"><a href="#Update语句执行过程" class="headerlink" title="Update语句执行过程"></a>Update语句执行过程</h2><p>当优化器分析出成本最小的执行计划后，执行器就按照执行计划开始进行更新操作。</p>
+<p>具体更新一条记录 <code>UPDATE t_user SET name = &#39;xiaolin&#39; WHERE id = 1;</code> 的流程如下:</p>
+<ul>
+<li>执行器负责具体执行，会调用存储引擎的接口，通过主键索引树搜索获取 id &#x3D; 1 这一行记录：<ul>
+<li>如果 id&#x3D;1 这一行所在的数据页本来就在 buffer pool 中，就直接返回给执行器更新；</li>
+<li>如果记录不在 buffer pool，将数据页从磁盘读入到 buffer pool，返回记录给执行器。</li>
+</ul>
+</li>
+<li>执行器得到聚簇索引记录后，会看一下更新前的记录和更新后的记录是否一样：<ul>
+<li>如果一样的话就不进行后续更新流程；</li>
+<li>如果不一样的话就把更新前的记录和更新后的记录都当作参数传给 InnoDB 层，让 InnoDB 真正的执行更新记录的操作；</li>
+</ul>
+</li>
+<li>开启事务， InnoDB 层更新记录前，<strong>首先要记录相应的 undo log</strong>，因为这是更新操作，需要把被更新的列的旧值记下来，也就是要生成一条 undo log，undo log 会写入 Buffer Pool 中的 Undo 页面，不过<strong>在内存修改该 Undo 页面后，需要记录对应的 redo log</strong>。</li>
+<li>InnoDB 层开始更新记录，会先<strong>更新内存（同时标记为脏页）</strong>，<strong>然后将记录写到 redo log 里面</strong>，这个时候更新就算完成了。<strong>为了减少磁盘I&#x2F;O，不会立即将脏页写入磁盘，后续由后台线程选择一个合适的时机将脏页写入到磁盘。</strong>这就是 <strong>WAL 技术</strong>，MySQL 的写操作并不是立刻写到磁盘上，而是先写 redo 日志，然后在合适的时间再将修改的行数据写到磁盘上。</li>
+<li>至此，一条记录更新完了。</li>
+<li>在一条更新语句执行完成后，然后开始记录该语句对应的 binlog，此时记录的 binlog 会被保存到 binlog cache，并没有刷新到硬盘上的 binlog 文件，在事务提交时才会统一将该事务运行过程中的所有 binlog 刷新到硬盘。</li>
+<li>事务提交，剩下的就是「两阶段提交」的事情了，接下来就讲这个。</li>
+</ul>
+<h2 id="为什么需要两阶段提交？"><a href="#为什么需要两阶段提交？" class="headerlink" title="为什么需要两阶段提交？"></a>为什么需要两阶段提交？</h2><p>事务提交后，redo log 和 binlog 都要持久化到磁盘，但是这两个是独立的逻辑，可能出现半成功的状态，这样就造成两份日志之间的逻辑不一致。</p>
+<p>举个例子，假设 id &#x3D; 1 这行数据的字段 name 的值原本是 ‘jay’，然后执行 <code>UPDATE t_user SET name = &#39;xiaolin&#39; WHERE id = 1;</code> 如果在持久化 redo log 和 binlog 两个日志的过程中，出现了半成功状态，那么就有两种情况：</p>
+<ul>
+<li><strong>如果在将 redo log 刷入到磁盘之后， MySQL 突然宕机了，而 binlog 还没有来得及写入</strong>。MySQL 重启后，通过 redo log 能将 Buffer Pool 中 id &#x3D; 1 这行数据的 name 字段恢复到新值 xiaolin，但是 binlog 里面没有记录这条更新语句，在主从架构中，binlog 会被复制到从库，由于 binlog 丢失了这条更新语句，从库的这一行 name 字段是旧值 jay，与主库的值不一致性；</li>
+<li><strong>如果在将 binlog 刷入到磁盘之后， MySQL 突然宕机了，而 redo log 还没有来得及写入</strong>。由于 redo log 还没写，崩溃恢复以后这个事务无效，所以 id &#x3D; 1 这行数据的 name 字段还是旧值 jay，而 binlog 里面记录了这条更新语句，在主从架构中，binlog 会被复制到从库，从库执行了这条更新语句，那么这一行 name 字段是新值 xiaolin，与主库的值不一致性；</li>
+</ul>
+<p>可以看到，在持久化 redo log 和 binlog 这两份日志的时候，如果出现半成功的状态，就会造成主从环境的数据不一致性。这是因为 redo log 影响主库的数据，binlog 影响从库的数据，所以 redo log 和 binlog 必须保持一致才能保证主从数据一致。</p>
+<p><strong>MySQL 为了避免出现两份日志之间的逻辑不一致的问题，使用了「两阶段提交」来解决</strong>，两阶段提交其实是分布式事务一致性协议，它可以保证多个逻辑操作要不全部成功，要不全部失败，不会出现半成功的状态。</p>
+<p><strong>两阶段提交把单个事务的提交拆分成了 2 个阶段，分别是「准备（Prepare）阶段」和「提交（Commit）阶段」</strong>，每个阶段都由协调者（Coordinator）和参与者（Participant）共同完成。注意，不要把提交（Commit）阶段和 commit 语句混淆了，commit 语句执行的时候，会包含提交（Commit）阶段。</p>
+<h3 id="两阶段提交的过程"><a href="#两阶段提交的过程" class="headerlink" title="两阶段提交的过程"></a>两阶段提交的过程</h3><p>在 MySQL 的 InnoDB 存储引擎中，开启 binlog 的情况下，MySQL 会同时维护 binlog 日志与 InnoDB 的 redo log，为了保证这两个日志的一致性，MySQL 使用了<strong>内部 XA 事务</strong>（是的，也有外部 XA 事务，跟本文不太相关，我就不介绍了），内部 XA 事务由 binlog 作为协调者，存储引擎是参与者。</p>
+<p>当客户端执行 commit 语句或者在自动提交的情况下，MySQL 内部开启一个 XA 事务，<strong>分两阶段来完成 XA 事务的提交</strong>，如下图：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330144203359.png" alt="image-20230330144203359"></p>
+<p>从图中可看出，事务的提交过程有两个阶段，就是<strong>将 redo log 的写入拆成了两个步骤：prepare 和 commit，中间再穿插写入binlog</strong>，具体如下：</p>
+<ul>
+<li><strong>prepare 阶段</strong>：将 XID（内部 XA 事务的 ID） 写入到 redo log，同时将 redo log 对应的事务状态设置为 prepare，然后将 redo log 持久化到磁盘（innodb_flush_log_at_trx_commit &#x3D; 1 的作用）；</li>
+<li><strong>commit 阶段</strong>：把 XID 写入到 binlog，然后将 binlog 持久化到磁盘（sync_binlog &#x3D; 1 的作用），接着调用引擎的提交事务接口，将 redo log 状态设置为 commit，此时该状态并不需要持久化到磁盘，只需要 write 到文件系统的 page cache 中就够了，因为只要 binlog 写磁盘成功，就算 redo log 的状态还是 prepare 也没有关系，一样会被认为事务已经执行成功；</li>
+</ul>
+<h3 id="异常重启会出现什么现象？"><a href="#异常重启会出现什么现象？" class="headerlink" title="异常重启会出现什么现象？"></a>异常重启会出现什么现象？</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330144602240.png" alt="image-20230330144602240"></p>
+<p>不管是时刻 A（redo log 已经写入磁盘， binlog 还没写入磁盘），还是时刻 B （redo log 和 binlog 都已经写入磁盘，还没写入 commit 标识）崩溃，<strong>此时的 redo log 都处于 prepare 状态</strong>。</p>
+<p>在 MySQL 重启后会按顺序扫描 redo log 文件，碰到处于 prepare 状态的 redo log，就拿着 redo log 中的 XID 去 binlog 查看是否存在此 XID：</p>
+<ul>
+<li><strong>如果 binlog 中没有当前内部 XA 事务的 XID，说明 redolog 完成刷盘，但是 binlog 还没有刷盘，则回滚事务</strong>。对应时刻 A 崩溃恢复的情况。</li>
+<li><strong>如果 binlog 中有当前内部 XA 事务的 XID，说明 redolog 和 binlog 都已经完成了刷盘，则提交事务</strong>。对应时刻 B 崩溃恢复的情况。</li>
+</ul>
+<p>可以看到，<strong>对于处于 prepare 阶段的 redo log，即可以提交事务，也可以回滚事务，这取决于是否能在 binlog 中查找到与 redo log 相同的 XID</strong>，如果有就提交事务，如果没有就回滚事务。这样就可以保证 redo log 和 binlog 这两份日志的一致性了。</p>
+<p>所以说，<strong>两阶段提交是以 binlog 写成功为事务提交成功的标识</strong>，因为 binlog 写成功了，就意味着能在 binlog 中查找到与 redo log 相同的 XID。</p>
+<blockquote>
+<p>事务没提交的时候，redo log 会被持久化到磁盘吗？</p>
+</blockquote>
+<p>会的。</p>
+<p>事务执行中间过程的 redo log 也是直接写在 redo log buffer 中的，这些缓存在 redo log buffer 里的 redo log 也会被「后台线程」每隔一秒一起持久化到磁盘。</p>
+<p>也就是说，<strong>事务没提交的时候，redo log 也是可能被持久化到磁盘的</strong>。</p>
+<p>有的同学可能会问，如果 mysql 崩溃了，还没提交事务的 redo log 已经被持久化磁盘了，mysql 重启后，数据不就不一致了？</p>
+<p>放心，这种情况 mysql 重启会进行回滚操作，因为事务没提交的时候，binlog 是还没持久化到磁盘的。</p>
+<p>所以， <strong>redo log 可以在事务没提交之前持久化到磁盘，但是 binlog 必须在事务提交之后，才可以持久化到磁盘。</strong></p>
+<h3 id="两阶段提交有什么问题？"><a href="#两阶段提交有什么问题？" class="headerlink" title="两阶段提交有什么问题？"></a>两阶段提交有什么问题？</h3><p>两阶段提交虽然保证了两个日志文件的数据一致性，但是性能很差，主要有两个方面的影响：</p>
+<ul>
+<li><strong>磁盘 I&#x2F;O 次数高</strong>：对于“双1”配置，每个事务提交都会进行两次 fsync（刷盘），一次是 redo log 刷盘，另一次是 binlog 刷盘。</li>
+<li><strong>锁竞争激烈</strong>：两阶段提交虽然能够保证「单事务」两个日志的内容一致，但在「多事务」的情况下，却不能保证两者的提交顺序一致，因此，在两阶段提交的流程基础上，还需要加一个锁来保证提交的原子性，从而保证多事务的情况下，两个日志的提交顺序一致。</li>
+</ul>
+<blockquote>
+<p>为什么两阶段提交的磁盘 I&#x2F;O 次数会很高？</p>
+</blockquote>
+<p>binlog 和 redo log 在内存中都对应的缓存空间，binlog 会缓存在 binlog cache，redo log 会缓存在 redo log buffer，它们持久化到磁盘的时机分别由下面这两个参数控制。一般我们为了避免日志丢失的风险，会将这两个参数设置为 1：</p>
+<ul>
+<li>当 sync_binlog &#x3D; 1 的时候，表示每次提交事务都会将 binlog cache 里的 binlog 直接持久到磁盘；</li>
+<li>当 innodb_flush_log_at_trx_commit &#x3D; 1 时，表示每次事务提交时，都将缓存在 redo log buffer 里的 redo log 直接持久化到磁盘；</li>
+</ul>
+<p>可以看到，如果 sync_binlog 和 当 innodb_flush_log_at_trx_commit 都设置为 1，那么在每个事务提交过程中， 都会<strong>至少调用 2 次刷盘操作</strong>，一次是 redo log 刷盘，一次是 binlog 落盘，所以这会成为性能瓶颈。</p>
+<blockquote>
+<p>为什么锁竞争激烈？</p>
+</blockquote>
+<p>在早期的 MySQL 版本中，通过使用 prepare_commit_mutex 锁来保证事务提交的顺序，在一个事务获取到锁时才能进入 prepare 阶段，一直到 commit 阶段结束才能释放锁，下个事务才可以继续进行 prepare 操作。</p>
+<p>通过加锁虽然完美地解决了顺序一致性的问题，但在并发量较大的时候，就会导致对锁的争用，性能不佳。</p>
+<h3 id="组提交"><a href="#组提交" class="headerlink" title="组提交"></a>组提交</h3><p><strong>MySQL 引入了 binlog 组提交（group commit）机制，当有多个事务提交的时候，会将多个 binlog 刷盘操作合并成一个，从而减少磁盘 I&#x2F;O 的次数</strong></p>
+<p>引入了组提交机制后，prepare 阶段不变，只针对 commit 阶段，将 commit 阶段拆分为三个过程：</p>
+<ul>
+<li><strong>flush 阶段</strong>：多个事务按进入的顺序将 binlog 从 cache 写入文件（不刷盘）；<ul>
+<li>第一个事务会成为 flush 阶段的 Leader，此时后面到来的事务都是 Follower ：</li>
+<li>接着，获取队列中的事务组，由绿色事务组的 Leader 对 rodo log 做一次 write + fsync，即一次将同组事务的 redolog 刷盘：</li>
+<li>完成了 prepare 阶段后，将绿色这一组事务执行过程中产生的 binlog 写入 binlog 文件（调用 write，不会调用 fsync，所以不会刷盘，binlog 缓存在操作系统的文件系统中）。</li>
+<li>从上面这个过程，可以知道 flush 阶段队列的作用是<strong>用于支撑 redo log 的组提交</strong>。</li>
+<li>如果在这一步完成后数据库崩溃，由于 binlog 中没有该组事务的记录，所以 MySQL 会在重启后回滚该组事务。</li>
+</ul>
+</li>
+<li><strong>sync 阶段</strong>：对 binlog 文件做 fsync 操作（多个事务的 binlog 合并一次刷盘）；<ul>
+<li>绿色这一组事务的 binlog 写入到 binlog 文件后，并不会马上执行刷盘的操作，而是<strong>会等待一段时间</strong>，这个等待的时长由 <code>Binlog_group_commit_sync_delay</code> 参数控制，<strong>目的是为了组合更多事务的 binlog，然后再一起刷盘</strong>，如下过程：</li>
+<li>不过，在等待的过程中，如果事务的数量提前达到了 Binlog_group_commit_sync_no_delay_count 参数设置的值，就不用继续等待了，就马上将 binlog 刷盘，如下图：</li>
+<li>从上面的过程，可以知道 sync 阶段队列的作用是<strong>用于支持 binlog 的组提交</strong>。</li>
+<li>如果想提升 binlog 组提交的效果，可以通过设置下面这两个参数来实现：<ul>
+<li><code>binlog_group_commit_sync_delay= N</code>，表示在等待 N 微秒后，直接调用 fsync，将处于文件系统中 page cache 中的 binlog 刷盘，也就是将「 binlog 文件」持久化到磁盘。</li>
+<li><code>binlog_group_commit_sync_no_delay_count = N</code>，表示如果队列中的事务数达到 N 个，就忽视binlog_group_commit_sync_delay 的设置，直接调用 fsync，将处于文件系统中 page cache 中的 binlog 刷盘。</li>
+</ul>
+</li>
+<li>如果在这一步完成后数据库崩溃，由于 binlog 中已经有了事务记录，MySQL会在重启后通过 redo log 刷盘的数据继续进行事务的提交。</li>
+</ul>
+</li>
+<li><strong>commit 阶段</strong>：各个事务按顺序做 InnoDB commit 操作；<ul>
+<li>最后进入 commit 阶段，调用引擎的提交事务接口，将 redo log 状态设置为 commit。</li>
+<li>commit 阶段队列的作用是承接 sync 阶段的事务，完成最后的引擎提交，使得 sync 可以尽早的处理下一组事务，最大化组提交的效率。</li>
+</ul>
+</li>
+</ul>
+<p>上面的<strong>每个阶段都有一个队列</strong>，每个阶段有锁进行保护，因此保证了事务写入的顺序，第一个进入队列的事务会成为 leader，leader领导所在队列的所有事务，全权负责整队的操作，完成后通知队内其他事务操作结束。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330145251992.png" alt="image-20230330145251992"></p>
+<blockquote>
+<p>有 binlog 组提交，那有 redo log 组提交吗？</p>
+</blockquote>
+<p>这个要看 MySQL 版本，MySQL 5.6 没有 redo log 组提交，MySQL 5.7 有 redo log 组提交。</p>
+<p>在 MySQL 5.6 的组提交逻辑中，每个事务各自执行 prepare 阶段，也就是各自将 redo log 刷盘，这样就没办法对 redo log 进行组提交。</p>
+<p>所以在 MySQL 5.7 版本中，做了个改进，在 prepare 阶段不再让事务各自执行 redo log 刷盘操作，而是推迟到组提交的 flush 阶段，也就是说 prepare 阶段融合在了 flush 阶段。</p>
+<p>这个优化是将 redo log 的刷盘延迟到了 flush 阶段之中，sync 阶段之前。通过延迟写 redo log 的方式，为 redolog 做了一次组写入，这样 binlog 和 redo log 都进行了优化。</p>
+<p>接下来介绍每个阶段的过程，注意下面的过程针对的是“双 1” 配置（sync_binlog 和 innodb_flush_log_at_trx_commit 都配置为 1）。</p>
+<h3 id="MySQL-磁盘-I-x2F-O-很高，有什么优化的方法？"><a href="#MySQL-磁盘-I-x2F-O-很高，有什么优化的方法？" class="headerlink" title="MySQL 磁盘 I&#x2F;O 很高，有什么优化的方法？"></a>MySQL 磁盘 I&#x2F;O 很高，有什么优化的方法？</h3><p>现在我们知道事务在提交的时候，需要将 binlog 和 redo log 持久化到磁盘，那么如果出现 MySQL 磁盘 I&#x2F;O 很高的现象，我们可以通过控制以下参数，来 “延迟” binlog 和 redo log 刷盘的时机，从而降低磁盘 I&#x2F;O 的频率：</p>
+<ul>
+<li>设置组提交的两个参数： binlog_group_commit_sync_delay 和 binlog_group_commit_sync_no_delay_count 参数，延迟 binlog 刷盘的时机，从而减少 binlog 的刷盘次数。这个方法是基于“额外的故意等待”来实现的，因此可能会增加语句的响应时间，但即使 MySQL 进程中途挂了，也没有丢失数据的风险，因为 binlog 早被写入到 page cache 了，只要系统没有宕机，缓存在 page cache 里的 binlog 就会被持久化到磁盘。</li>
+<li>将 sync_binlog 设置为大于 1 的值（比较常见是 100~1000），表示每次提交事务都 write，但累积 N 个事务后才 fsync，相当于延迟了 binlog 刷盘的时机。但是这样做的风险是，主机掉电时会丢 N 个事务的 binlog 日志。</li>
+<li>将 innodb_flush_log_at_trx_commit 设置为 2。表示每次事务提交时，都只是缓存在 redo log buffer 里的 redo log 写到 redo log 文件，注意写入到「 redo log 文件」并不意味着写入到了磁盘，因为操作系统的文件系统中有个 Page Cache，专门用来缓存文件数据的，所以写入「 redo log文件」意味着写入到了操作系统的文件缓存，然后交由操作系统控制持久化到磁盘的时机。但是这样做的风险是，主机掉电的时候会丢数据。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>具体更新一条记录 <code>UPDATE t_user SET name = &#39;xiaolin&#39; WHERE id = 1;</code> 的流程如下:</p>
+<ol>
+<li>执行器负责具体执行，会调用存储引擎的接口，通过主键索引树搜索获取 id &#x3D; 1 这一行记录：<ul>
+<li>如果 id&#x3D;1 这一行所在的数据页本来就在 buffer pool 中，就直接返回给执行器更新；</li>
+<li>如果记录不在 buffer pool，将数据页从磁盘读入到 buffer pool，返回记录给执行器。</li>
+</ul>
+</li>
+<li>执行器得到聚簇索引记录后，会看一下更新前的记录和更新后的记录是否一样：<ul>
+<li>如果一样的话就不进行后续更新流程；</li>
+<li>如果不一样的话就把更新前的记录和更新后的记录都当作参数传给 InnoDB 层，让 InnoDB 真正的执行更新记录的操作；</li>
+</ul>
+</li>
+<li>开启事务， <strong>InnoDB 层更新记录前，首先要记录相应的 undo log</strong>，因为这是更新操作，需要把被更新的列的旧值记下来，也就是要生成一条 undo log，<strong>undo log 会写入 Buffer Pool 中的 Undo 页面，不过在内存修改该 Undo 页面后，需要记录对应的 redo log</strong>。</li>
+<li><strong>InnoDB 层开始更新记录，会先更新内存（同时标记为脏页），然后将记录写到 redo log 里面，这个时候更新就算完成了</strong>。为了减少磁盘I&#x2F;O，不会立即将脏页写入磁盘，后续由后台线程选择一个合适的时机将脏页写入到磁盘。这就是 <strong>WAL 技术</strong>，MySQL 的写操作并不是立刻写到磁盘上，而是先写 redo 日志，然后在合适的时间再将修改的行数据写到磁盘上。</li>
+<li>至此，一条记录更新完了。</li>
+<li>在一条更新语句执行完成后，然后开始记录该语句对应的 binlog，此时记录的 binlog 会被保存到 binlog cache，并没有刷新到硬盘上的 binlog 文件，在事务提交时才会统一将该事务运行过程中的所有 binlog 刷新到硬盘。</li>
+<li>事务提交（为了方便说明，这里不说组提交的过程，只说两阶段提交）：<ul>
+<li><strong>prepare 阶段</strong>：将 redo log 对应的事务状态设置为 prepare，然后将 redo log 刷新到硬盘；</li>
+<li><strong>commit 阶段</strong>：将 binlog 刷新到磁盘，接着调用引擎的提交事务接口，将 redo log 状态设置为 commit（将事务设置为 commit 状态后，刷入到磁盘 redo log 文件）；</li>
+</ul>
+</li>
+<li>至此，一条更新语句执行完成。</li>
+</ol>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">日志</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/日志//" class="article-tag-list-link color3">日志</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E6%97%A5%E5%BF%97/%E6%97%A5%E5%BF%97/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-数据库/内存/Buffer Pool" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/">Buffer pool</a>
+    </h1>
+  
+
+        
+        <a href="/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/" class="archive-article-date">
+  	<time datetime="2023-03-26T14:36:09.065Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-26</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>引用自(小林揭开 Buffer Pool 的面纱)[<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/buffer_pool/buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool]">https://xiaolincoding.com/mysql/buffer_pool/buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool]</a></p>
+<h2 id="Buffer-pool"><a href="#Buffer-pool" class="headerlink" title="Buffer pool"></a>Buffer pool</h2><p>虽然说 MySQL 的数据是存储在磁盘里的，但是也不能每次都从磁盘里面读取数据，这样性能是极差的。</p>
+<p>要想提升查询性能，加个缓存就行了嘛。所以，当数据从磁盘中取出后，缓存内存中，下次查询同样的数据的时候，直接从内存中读取。</p>
+<p>为此，Innodb 存储引擎设计了一个<strong>缓冲池（*Buffer Pool*）</strong>，来提高数据库的读写性能。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230326224319547.png" alt="image-20230326224319547"></p>
+<p>有了缓冲池后：</p>
+<ul>
+<li>当读取数据时，如果数据存在于Buffer Pool中，客户端就会直接读取Buffer Pool 中的数据，否则再去磁盘中读取。</li>
+<li>当修改数据时，首先是修改Buffer Pool 中数据所在的页，然后将其页设置为脏页，最后由后台线程将脏页写入到磁盘。</li>
+</ul>
+<h2 id="Buffer-Pool有多大"><a href="#Buffer-Pool有多大" class="headerlink" title="Buffer Pool有多大?"></a>Buffer Pool有多大?</h2><p>Buffer Pool是在MySQL启动的时候，向操作系统申请的一片连续的内存空间，默认配置下Buffer Pool只有128MB。</p>
+<p>可以通过调整<code>innodb_buffer_pool_size</code>参数来设置Buffer Pool的大小，一般建议设置成可用物理内存的60%~80%</p>
+<h2 id="Buffer-Pool-缓存什么？"><a href="#Buffer-Pool-缓存什么？" class="headerlink" title="Buffer Pool 缓存什么？"></a>Buffer Pool 缓存什么？</h2><p>InnoDB会把存储的数据划分为若干个【页】，以页作为磁盘和内存交互的基本单位，一个页的默认大小为16KB。因此，Buffer Pool同样需要按【页】来划分。</p>
+<p>在MySQL启动的时候，<strong>InnoDB会为Buffer Pool申请一篇连续的内存空间，然后按照默认的16KB大小划分成一个个页，Buffer Pool 中的页就叫做缓存页。</strong>此时，这些缓存也都是空闲的，之后随着程序的运行，才会有磁盘上的页被缓存到Buffer Pool中。</p>
+<p>Buffer Pool 中除了缓存【索引页】和【数据页】，还包括了undo页，插入缓存、自适应哈希索引、锁信息等。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142306681.png" alt="image-20230327142306681"></p>
+<p>为了更好的管理这些在Buffer Pool中的缓存页，InnoDB为每一个缓存页都创建了一个<strong>控制块</strong>，控制块信息包括【缓存页的表空间、页号、缓存地址、链表节点】等等。</p>
+<p>控制块也是占用内存空间的，它是放在Buffer Pool的最前面，接着才是缓存页：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142550106.png" alt="image-20230327142550106"></p>
+<p>上图中，控制块和缓存页中的中间部分称为碎片空间。</p>
+<h3 id="为什么会有碎片空间？"><a href="#为什么会有碎片空间？" class="headerlink" title="为什么会有碎片空间？"></a>为什么会有碎片空间？</h3><p>你想想啊，每一个控制块都对应一个缓存页，那在分配足够多的控制块和缓存页后，可能剩余的那点儿空间不够一对控制块和缓存页的大小，自然就用不到喽，这个用不到的那点儿内存空间就被称为碎片了。</p>
+<p>当然，如果你把 Buffer Pool 的大小设置的刚刚好的话，也可能不会产生碎片。</p>
+<h3 id="查询一条记录，就只需要缓冲一条记录吗？"><a href="#查询一条记录，就只需要缓冲一条记录吗？" class="headerlink" title="查询一条记录，就只需要缓冲一条记录吗？"></a>查询一条记录，就只需要缓冲一条记录吗？</h3><p>不是。当我们查询一条记录的时候，InnoDB是会把整个页的数据加载到Buffer Pool 中，因为通过索引只能定位到磁盘中的页，而不能定位到页中的一条记录，将页加载到Buffer Pool中后，再通过页里的页目录去定位到某条具体的记录。</p>
+<h2 id="如何管理Buffer-Pool"><a href="#如何管理Buffer-Pool" class="headerlink" title="如何管理Buffer Pool?"></a>如何管理Buffer Pool?</h2><h3 id="如何管理空闲页？"><a href="#如何管理空闲页？" class="headerlink" title="如何管理空闲页？"></a>如何管理空闲页？</h3><p>Buffer Pool是一片连续的内存空间，当MySQL运行一段时间后，这片连续的内存空间中的缓存页既有空闲的，也有被使用的。</p>
+<p>当我们从磁盘读取数据的时候，为了快速找到空闲的缓存页，可以使用链表结构，将空闲缓存页的【控制块】作为链表的节点，这个链表称为<strong>Free链表（空闲链表）</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327143446027.png" alt="image-20230327143446027"></p>
+<p>Free链表上除了控制块，还有一个头节点，该头节点中包含了链表的头节点地址，尾节点地址，以及当前链表中节点的数量等信息。</p>
+<p>Free链表节点是一个一个控制块，而每个控制块包含着对应缓存页的地址，所以相当于Free链表节点都对应一个空闲的缓存页。</p>
+<p>有了Free链表之后，每当需要从磁盘中加载一个页到Buffer Pool中时，就从Free链表中取一个空闲的缓存页，并且把该缓存页对应的控制块的信息填上，然后把该缓存页对应的控制块从Free链表上移除。</p>
+<h3 id="如何管理脏页？"><a href="#如何管理脏页？" class="headerlink" title="如何管理脏页？"></a>如何管理脏页？</h3><p>设计Buffer Pool除了能提高读性能，还能提高写性能，也就是更新数据的时候，不需要每次都要写入磁盘，而是将Buffer Pool对应的缓存页标记为【脏页】,然后再由后台线程将脏页写入到磁盘。</p>
+<p>为了快速知道哪些缓存页是脏的，于是设计出【Flush链表】，和Free链表类似，链表的节点也是控制块，区别在于Flush链表的元素都是脏页。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144101488.png" alt="image-20230327144101488"></p>
+<h3 id="如何提高缓存命中率？"><a href="#如何提高缓存命中率？" class="headerlink" title="如何提高缓存命中率？"></a>如何提高缓存命中率？</h3><p>最容易想到的就是 LRU（Least recently used）算法。</p>
+<p>该算法的思路是，链表头部的节点是最近使用的，而链表末尾的节点是最久没被使用的。那么，当空间不够了，就淘汰最久没被使用的节点，从而腾出空间。</p>
+<p>简单的 LRU 算法的实现思路是这样的：</p>
+<ul>
+<li>当访问的页在 Buffer Pool 里，就直接把该页对应的 LRU 链表节点移动到链表的头部。</li>
+<li>当访问的页不在 Buffer Pool 里，除了要把页放入到 LRU 链表的头部，还要淘汰 LRU 链表末尾的节点。</li>
+</ul>
+<p>到这里我们可以知道，Buffer Pool 里有三种页和链表来管理数据。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144430307.png" alt="image-20230327144430307"></p>
+<p>图中：</p>
+<ul>
+<li>Free Page（空闲页），表示此页未被使用，位于 Free 链表；</li>
+<li>Clean Page（干净页），表示此页已被使用，但是页面未发生修改，位于LRU 链表。</li>
+<li>Dirty Page（脏页），表示此页「已被使用」且「已经被修改」，其数据和磁盘上的数据已经不一致。当脏页上的数据写入磁盘后，内存数据和磁盘数据一致，那么该页就变成了干净页。脏页同时存在于 LRU 链表和 Flush 链表。</li>
+</ul>
+<p>简单的LRU算法并没有被MySQL使用，因为简单的LRU算法无法避免下面两个问题：</p>
+<ul>
+<li><p>预读失效</p>
+<ul>
+<li><p>MySQL的预读机制。程序是由空间局部性的，靠近当前被访问数据的数据，在未来很大概率会被访问到。所以MySQL在加载数据页时，会提前把它相邻的数据页一并加载进来，目的是为了减少磁盘IO。但<strong>可能这些被提前加载进来的数据页并没有被访问到，相当于这个预读是白做了，这就是预读失效。</strong>如果使用简单的LRU算法，就会把预读页放到LRU链表头部，而当Buffer Pool空间不够的时候，还需要把末尾的页淘汰掉。如果这些预读页一直不被访问到，不会访问的预读页却占用了LRU链表前排的位置，而末尾淘汰的页，可能是频繁访问的页，这样就大大降低了缓存命中率。</p>
+</li>
+<li><p>如何解决预读失效而导致的缓存命中率降低的问题？</p>
+<ul>
+<li><p>最好就是让预读的页停留在Buffer Pool里的时间要尽可能短，让真正被访问的页才能移动到LRU链表的头部，从而保证真正被读取的热数据留在Buffer Pool里的时间尽可能长。</p>
+</li>
+<li><p><strong>MySQL改进了LRU算法，将LRU划分了2个区域：old区域和young区域。</strong>young区域在LRU链表的前半部分，old区域则是在链表的后半部分。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327145437308.png" alt="image-20230327145437308"></p>
+<p>old 区域占整个 LRU 链表长度的比例可以通过 <code>innodb_old_blocks_pct</code> 参数来设置，默认是 37，代表整个 LRU 链表中 young 区域与 old 区域比例是 63:37。</p>
+<p><strong>划分为两个区域后，预读的页就只需要加入old区域的头部，当页被真正访问的时候，才将页插入young区域的头部。</strong>如果预读的页一直没有被访问，就会从old区域移除，这样就不会影响young区域中的热点数据。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Buffer Pool污染</p>
+<ul>
+<li><p>当<strong>某个SQL语句扫描了大量的数据</strong>时，在Buffer Pool空间比较有限的情况下，可能会将<strong>Buffer Pool里的所有页都替换出去，导致大量的热数据被淘汰</strong>，等这些热数据又被再次访问的时候，由于缓存未命中，就会产生大量的磁盘IO，MySQL性能就会急剧下降，这个过程被称为<strong>Buffer Pool污染</strong>。</p>
+</li>
+<li><p>注意，Buffer Pool污染并不是查询语句查询出了大量的数据才出现的问题，即使查询出来的结果集很小，也会造成Buffer Pool污染。</p>
+<ul>
+<li><p>比如在一个数据量非常大的表，执行了以下语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> name <span class="keyword">like</span> &quot;%xiaolin%&quot;;</span><br></pre></td></tr></table></figure>
+
+<p>可能这个查询出来的结果就几条记录，但是由于这条语句会发生索引失效，所以这个查询过程是全表扫描的，接着会发生如下过程：</p>
+<ul>
+<li>从磁盘读到的页加入到LRU链表的old区域头部；</li>
+<li>当从页里读取行记录的时候，也就是页被访问的时候，就要将该页放到young区域头部；</li>
+<li>接下来拿行记录的name字段和字符串xiaolin进行模糊匹配，如果符合条件，就加入到结果集里。</li>
+<li>如此往复，直到扫描完表中的所有记录</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>如何解决Buffer Pool污染而导致的缓存命中率下降的问题？</p>
+<ul>
+<li>LRU链表中young区域就是热点数据，只要我们提高进入young区域的门槛，就能有效保证young区域里的热点数据不会被替换掉</li>
+<li>MySQL是这样做的，进入到young区域条件增加了一个停留在old区域的时间判断。<ul>
+<li>具体是这样的，在对某个处在old区域的缓存页进行第一次访问时，就在它对应的控制块中记录下来这个访问的时间<ul>
+<li>如果后续的访问时间与第一次访问的时间在某个时间间隔内，那么该缓存页就不会被从old区域移动到young区域的头部</li>
+<li>如果后续的访问时间与第一次访问的时间不在某个时间间隔内，那么该缓存页移动到young区域的头部。</li>
+<li>这个时间间隔是由<code>innodb_old_blocks_time</code>控制的，默认是1000ms</li>
+</ul>
+</li>
+<li><strong>只有同时满足【被访问】与【在old区域停留时间超过1秒】两个条件，才会被插入到young区域头部。</strong></li>
+</ul>
+</li>
+<li>另外，MySQL对young区域做了一个优化，为了防止young区域节点频繁移动到头部。young区域前面1&#x2F;4被访问不会移动到链表头部，只有后面的3&#x2F;4被访问才会</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="脏页什么时候会被输入磁盘？"><a href="#脏页什么时候会被输入磁盘？" class="headerlink" title="脏页什么时候会被输入磁盘？"></a>脏页什么时候会被输入磁盘？</h3><p>引入了Buffer Pool后，当修改数据时，首先是修改Buffer Pool中数据所在页，然后将其页设置为脏页，但是磁盘中还是原数据。</p>
+<p>因此，脏页需要被刷入到磁盘，保证缓存和磁盘的数据一致，但是若每次修改数都刷入磁盘，则性能会很差，所以一般都会在一定时机进行批量刷盘。</p>
+<p>如果在脏页还没有来得及刷入磁盘时，MySQL宕机了，不就丢失数据了？</p>
+<p>InnoDB的更新操作采用的是Write Ahead Log策略，即先写入日志，再写入磁盘，通过redo log日志让MySQL拥有了崩溃恢复能力。</p>
+<p>下面几种情况会触发脏页的刷新：</p>
+<ul>
+<li>当redo log日志满了的情况下，会主动触发脏页刷新到磁盘；</li>
+<li>Buffer Pool空间不足时，需要将一部分数据页淘汰掉，如果淘汰的是脏页，需要先将脏页同步到磁盘；</li>
+<li>MySQL认为空闲时，后台线程会定期将适量的脏页刷入到磁盘</li>
+<li>MySQL正常关闭之前，会把所有的脏页刷入到磁盘</li>
+</ul>
+<p>在我们开启了慢 SQL 监控后，如果你发现<strong>「偶尔」会出现一些用时稍长的 SQL</strong>，这可能是因为脏页在刷新到磁盘时可能会给数据库带来性能开销，导致数据库操作抖动。</p>
+<p>如果间断出现这种现象，就需要调大 Buffer Pool 空间或 redo log 日志的大小。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>InnoDB存储引擎设置了一个缓冲池（Buffer Pool），来提高数据库的读写性能。</p>
+<p>Buffer Pool以页为单位缓冲数据，可以通过<code>innodb_buffer_pool_size</code>参数调整缓冲池的大小，默认是128M。</p>
+<p>InnoDB通过三种链表来管理缓存页：</p>
+<ul>
+<li>Free List（空闲页链表），管理空闲页</li>
+<li>Flush List（脏页链表），管理脏页</li>
+<li>LRU List，管理脏页+干净页，将最近且经常查询的数据缓存在其中，而不常查询的数据就淘汰出去。</li>
+</ul>
+<p>InnoDB对LRU做了一些优化，我们熟悉的LRU算法通常将最近查询的数据放到LRU链表的头部，而InnoDB做了2点优化：</p>
+<ul>
+<li>将LRU链表分为young和old区域，加入缓冲池的页，优先插入old区域；页被访问时，才会进入young区域，目的是解决预读失效的问题。</li>
+<li>当【页被访问】且【 old 区域停留时间超过 <code>innodb_old_blocks_time</code> 阈值（默认为1秒）】时，才会将页插入到young区域，否则还是插入到old区域，目的是为了解决批量数据访问，大量热数据淘汰的问题。</li>
+</ul>
+<p>可以通过调整 <code>innodb_old_blocks_pct</code> 参数，设置 young 区域和 old 区域比例。</p>
+<p>在开启了慢 SQL 监控后，如果你发现「偶尔」会出现一些用时稍长的 SQL，这可因为脏页在刷新到磁盘时导致数据库性能抖动。如果在很短的时间出现这种现象，就需要调大 Buffer Pool 空间或 redo log 日志的大小。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">mysql</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/03/26/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp/effectivecpp" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -158,7 +814,8 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="条款17-以独立语句将new的对象置入智能指针"><a href="#条款17-以独立语句将new的对象置入智能指针" class="headerlink" title="条款17 以独立语句将new的对象置入智能指针"></a>条款17 以独立语句将new的对象置入智能指针</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">processWidget</span>(sts::tr1::<span class="built_in">shared_prt</span>&lt;Widget&gt;(<span class="keyword">new</span> Widget), <span class="built_in">priority</span>());</span><br></pre></td></tr></table></figure>
+        <h2 id="条款04-确定对象被使用前已先被初始化"><a href="#条款04-确定对象被使用前已先被初始化" class="headerlink" title="条款04 确定对象被使用前已先被初始化"></a>条款04 确定对象被使用前已先被初始化</h2><p>注意一点：不同编译单元内定义的non-local static对象的初始化次序不一定</p>
+<h2 id="条款17-以独立语句将new的对象置入智能指针"><a href="#条款17-以独立语句将new的对象置入智能指针" class="headerlink" title="条款17 以独立语句将new的对象置入智能指针"></a>条款17 以独立语句将new的对象置入智能指针</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">processWidget</span>(sts::tr1::<span class="built_in">shared_prt</span>&lt;Widget&gt;(<span class="keyword">new</span> Widget), <span class="built_in">priority</span>());</span><br></pre></td></tr></table></figure>
 
 <p>由于执行次序的原因，可能有以下顺序：</p>
 <ol>
@@ -1512,6 +2169,7 @@
 <li>归并排序</li>
 <li>堆排序</li>
 </ul>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230330225825483.png" alt="image-20230330225825483"></p>
 <h1 id="计网"><a href="#计网" class="headerlink" title="计网"></a>计网</h1><h2 id="键入网址到网页显示，期间发生了什么？"><a href="#键入网址到网页显示，期间发生了什么？" class="headerlink" title="键入网址到网页显示，期间发生了什么？"></a>键入网址到网页显示，期间发生了什么？</h2><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230221230905.png" alt="image.png"></p>
 <ol>
 <li>浏览器做的第一步工作就是解析URL</li>
@@ -2044,6 +2702,15 @@
 <blockquote>
 <p>统一事件源，是将信号事件与其他事件一样被处理。<br>具体的，信号处理函数使用管道将信号传递给主循环，信号处理函数往管道的写端写入信号值，主循环则从管道的读端读出信号值，使用I&#x2F;O复用系统调用来监听管道读端的可读事件，这样信号事件与其他文件描述符都可以通过epoll来监测，从而实现统一处理。</p>
 </blockquote>
+<h2 id="压力测试"><a href="#压力测试" class="headerlink" title="压力测试"></a>压力测试</h2><p>在关闭日志后，使用Webbench对服务器进行压力测试，对listenfd和connfd分别采用ET和LT模式，均可实现上万的并发连接，下面列出的是两者组合后的测试结果.</p>
+<ul>
+<li>Proactor，LT + LT，93251 QPS</li>
+<li>Proactor，LT + ET，97459 QPS</li>
+<li>Proactor，ET + LT，80498 QPS</li>
+<li>Proactor，ET + ET，92167 QPS</li>
+<li>Reactor，LT + ET，69175 QPS</li>
+</ul>
+<p>Webbench 的原理是通过在本地主机上创建多个客户端连接，对目标服务器发送 HTTP 请求，并记录相应的响应时间和状态码等信息。Webbench 支持多种 HTTP 请求方法、多种文件类型和不同的请求参数，可以根据实际需求进行定制化配置。</p>
 <h2 id="绞线生产工业一体机"><a href="#绞线生产工业一体机" class="headerlink" title="绞线生产工业一体机"></a>绞线生产工业一体机</h2><h3 id="介绍一下这个项目-1"><a href="#介绍一下这个项目-1" class="headerlink" title="介绍一下这个项目"></a>介绍一下这个项目</h3><p>这个项目是一个绞线工厂的工业一体机项目，每台绞线机配备一台一体机，用于生产流程控制和数据采集管理。<br>一方面，生产流程控制上，一体机主要是工人使用，需要实现打卡签到，查看生产任务以及任务需要的工艺卡信息，打印产品标签，并完成对生产任务的状态控制等功能，此外，为了便于故障排查，增加网络状态显示，以及网络ip修改的功能。另一方面，数据采集管理上，需要采集生产机器的信息，比如生产长度，便于后台统计生产信息，结算工人工资。<br>整个一体机主要包括Linux开发板，大彩屏幕以及打印机，RFID刷卡器等外设，程序方面分为两个部分，一个负责生产流程 控制，一个负责数据采集。<br>生产流程控制的程序，采用多线程技术，分别处理与屏幕等多个外设以及后台的通信，为每个通信设置一个收发工作队列，存储收发的数据，实现功能解耦。<br>数据采集程序，使用modbus协议定时采集生产机器上的数据，并发送给后台。 最终将程序部署到一百多台一体机上，完成到现在仍正常运行。</p>
 <h3 id="modbus协议"><a href="#modbus协议" class="headerlink" title="modbus协议"></a>modbus协议</h3><p>Modbus协议采用主从通信模式（即Master&#x2F;Slave通信模式），其具有多个变种，包括支持串口（RS-485、RS-232总线），以太网多个版本，最著名的是Modbus RTU, Modbus ASCII和Modbus TCP三种，其中Modbus RTU和Modbus ASCII均为支持RS-485总线的通信协议。<br>Modbus RTU由于采用二进制表现形式以及紧凑数据结构，通信效率较高，应用比较广泛。<br>Modbus ASCII由于采用ASCII码传输，并且利用特殊字符作为其字节的开始和结束标识，其传输效率远远低于Modbus RTU协议<br>Modbus TCP则是在RTU协议上加一个MBAP报头文，依靠TCP的可靠连接服务，在以太网中通信。</p>
 <h3 id="mqtt协议"><a href="#mqtt协议" class="headerlink" title="mqtt协议"></a>mqtt协议</h3><p>MQTT是一种基于发布&#x2F;订阅模式的轻量级消息传输协议。</p>
@@ -2079,337 +2746,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2023/03/22/%E9%9D%A2%E8%AF%95/%E9%87%8D%E7%82%B9%E9%9D%A2%E8%AF%95%E6%95%B4%E7%90%86/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-算法/博弈论" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/22/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/">NIM游戏</a>
-    </h1>
-  
-
-        
-        <a href="/2023/03/22/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/" class="archive-article-date">
-  	<time datetime="2023-03-22T08:30:26.703Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-22</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="NIM游戏"><a href="#NIM游戏" class="headerlink" title="NIM游戏"></a>NIM游戏</h2><h3 id="题目"><a href="#题目" class="headerlink" title="题目"></a>题目</h3><p>给定 n 堆石子，两位玩家轮流操作，每次操作可以从任意一堆石子中拿走任意数量的石子（可以拿完，但不能不拿），最后无法进行操作的人视为失败。<br>问如果两人都采用最优策略，先手是否必胜。</p>
-<h4 id="输入样例："><a href="#输入样例：" class="headerlink" title="输入样例："></a>输入样例：</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">2</span><br><span class="line">2 3</span><br></pre></td></tr></table></figure>
-
-<h4 id="输出样例："><a href="#输出样例：" class="headerlink" title="输出样例："></a>输出样例：</h4><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Yes</span><br></pre></td></tr></table></figure>
-
-<h3 id="题解"><a href="#题解" class="headerlink" title="题解"></a>题解</h3><p>首先先说结论：如果n堆石子的个数异或值为0则先手必败，反之先手必胜<br>再来证明：</p>
-<ol>
-<li><p>首先来阐明两个状态：一个是必胜态，一个是必败态，其中必胜态表示有一种选择的方式使得对手进入必败态，而必败态表示无论如何选择，对手一定进入必胜态。</p>
-</li>
-<li><p>然后来说明异或和必胜态，必败态的关系</p>
-<ol>
-<li>最终结果一定是全0的状态，也就是异或值为0</li>
-<li>如果石子的异或值不为0，则一定可以经过一个操作让石子的异或值变为0，也就是从必胜态，让对手进入必败态。<ul>
-<li>假设石子的数量分别是：$x_1$,$x_2$…$x_n$,其异或值为$x$</li>
-<li>假设$x$的二进制表示中值为1的最高位是第k位，则在$x_1$,$x_2$…$x_n$中，必有$x_i$的二进制表示的第k位为1，且$x_i$$\bigoplus$$x$一定小于$x_i$(因为$x$比k高的位值都是0，$x_i$的第k位为1，两者异或，相当于$x_i$高位值不变，第k位值变成0，其异或值也就比$x_i$小了)，接着在该石堆中取出($x_i$-$x_i$$\bigoplus$$x$)个石子，于是该石堆还剩余($x_i$$\bigoplus$$x$)个石子，再求剩余石子数的异或值($x_1$$\bigoplus$$x_2$…$\bigoplus$$x_i$$\bigoplus$$x$…$\bigoplus$$x_n$)&#x3D;($x$$\bigoplus$$x$)&#x3D;0</li>
-</ul>
-</li>
-<li>如果石子的异或值为0，则不管经过什么操作，石子的异或值都会变成非0，也就是从必败态变为必胜态。<ul>
-<li>这个使用反证法证明，假设经过在第i堆石子中拿走若干石子后，该堆石子的石子数为$x’$，石子数的异或值是0，则有两个等式<ul>
-<li>($x_1$$\bigoplus$$x_2$…$\bigoplus$$x_i$…$\bigoplus$$x_n$)&#x3D;0</li>
-<li>($x_1$$\bigoplus$$x_2$…$\bigoplus$$x’$…$\bigoplus$$x_n$)&#x3D;0</li>
-</ul>
-</li>
-<li>两个等式两边分别异或<ul>
-<li>($x_i$$\bigoplus$$x’$)&#x3D;0</li>
-<li>则$x_i$与$x’$一定相等，出现矛盾</li>
-</ul>
-</li>
-<li>故拿走若干石子后，石子异或值一定变成非0</li>
-</ul>
-</li>
-</ol>
-</li>
-<li><p>经过第2点中的三点证明，则当开局石子异或值为0时，最终的必败态也必定是先手的，反之，最终的必败态是后手的。</p>
-</li>
-</ol>
-<h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">    <span class="type">int</span> res=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span>(n--)&#123;</span><br><span class="line">        <span class="type">int</span> a;cin&gt;&gt;a;</span><br><span class="line">        res^=a;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(res) <span class="built_in">puts</span>(<span class="string">&quot;Yes&quot;</span>);</span><br><span class="line">    <span class="keyword">else</span> <span class="built_in">puts</span>(<span class="string">&quot;No&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">算法</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/算法//" class="article-tag-list-link color3">算法</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/22/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-算法/0.算法大纲" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/22/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/">算法笔记</a>
-    </h1>
-  
-
-        
-        <a href="/2023/03/22/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/" class="archive-article-date">
-  	<time datetime="2023-03-22T08:30:26.698Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-22</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="算法笔记"><a href="#算法笔记" class="headerlink" title="算法笔记"></a>算法笔记</h1><h2 id="基础算法"><a href="#基础算法" class="headerlink" title="基础算法"></a>基础算法</h2><h3 id="快排"><a href="#快排" class="headerlink" title="快排"></a>快排</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">quick_sort</span><span class="params">(<span class="type">int</span>* q,<span class="type">int</span> l,<span class="type">int</span> r)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(l&gt;=r) <span class="keyword">return</span>;</span><br><span class="line">    <span class="comment">//随机选取的x,一般选中间点,将数组分成了左右两部分</span></span><br><span class="line">    <span class="type">int</span> i=l<span class="number">-1</span>,j=r+<span class="number">1</span>,x=q[i+j&gt;&gt;<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">while</span>(i&lt;j)&#123;</span><br><span class="line">        <span class="keyword">do</span> i++;<span class="keyword">while</span>(q[i]&lt;x);<span class="comment">//从左往右找到第一个比q[x]大的q[i]</span></span><br><span class="line">        <span class="keyword">do</span> j--;<span class="keyword">while</span>(q[j]&gt;x);<span class="comment">//从右往左找到第一个比q[x]小的q[j]</span></span><br><span class="line">        <span class="keyword">if</span>(i&lt;j) <span class="built_in">swap</span>(q[i],q[j]);<span class="comment">//然后q[i]和q[j]交换</span></span><br><span class="line">    &#125;<span class="comment">//这样一轮循环下来,保证比q[x]小的都在x左边,比q[x]大的都在x右边</span></span><br><span class="line">    <span class="comment">//然后分别递归左边和右边</span></span><br><span class="line">    <span class="built_in">quick_sort</span>(q,l,j);</span><br><span class="line">    <span class="built_in">quick_sort</span>(q,j+<span class="number">1</span>,r);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="归并"><a href="#归并" class="headerlink" title="归并"></a>归并</h3><h3 id="二分"><a href="#二分" class="headerlink" title="二分"></a>二分</h3><p>二分模板一共有两个，分别适用于不同情况。<br>算法思路：假设目标值在闭区间[l, r]中， 每次将区间长度缩小一半，当l &#x3D; r时，我们就找到了目标值。</p>
-<p>版本1<br>当我们将区间[l, r]划分成[l, mid]和[mid + 1, r]时，其更新操作是r &#x3D; mid或者l &#x3D; mid + 1;，计算mid时不需要加1。</p>
-<p>C++ 代码模板：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">bsearch_1</span><span class="params">(<span class="type">int</span> l, <span class="type">int</span> r)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (l &lt; r)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">int</span> mid = l + r &gt;&gt; <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">check</span>(mid)) r = mid;</span><br><span class="line">        <span class="keyword">else</span> l = mid + <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> l;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>版本2<br>当我们将区间[l, r]划分成[l, mid - 1]和[mid, r]时，其更新操作是r &#x3D; mid - 1或者l &#x3D; mid;，此时为了防止死循环，计算mid时需要加1。</p>
-<p>C++ 代码模板：c++</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">bsearch_2</span><span class="params">(<span class="type">int</span> l, <span class="type">int</span> r)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (l &lt; r)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="type">int</span> mid = l + r + <span class="number">1</span> &gt;&gt; <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">check</span>(mid)) l = mid;</span><br><span class="line">        <span class="keyword">else</span> r = mid - <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> l;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>思考方式：比如在一个排好序的序列g[l]到g[r]中，找到小于x的最大值的位置，首先令mid&#x3D;l+r&gt;&gt;1，判断条件为g[mid]小于x，如果成立，则需要改变左端点，即l&#x3D;mid,对应的不成立，则r&#x3D;mid-1，式中没用加一，所以mid就需要加一</p>
-</blockquote>
-<h3 id="高精度"><a href="#高精度" class="headerlink" title="高精度"></a>高精度</h3><p>用数组存储大整数，数组0位存个位</p>
-<h4 id="高精度加法"><a href="#高精度加法" class="headerlink" title="高精度加法"></a>高精度加法</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">1e5</span>+<span class="number">10</span>;</span><br><span class="line"></span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">add</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; a,vector&lt;<span class="type">int</span>&gt;&amp; b)</span></span>&#123;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; c;</span><br><span class="line">    <span class="type">int</span> t=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;a.<span class="built_in">size</span>()||i&lt;b.<span class="built_in">size</span>();i++)&#123;</span><br><span class="line">        <span class="keyword">if</span>(i&lt;a.<span class="built_in">size</span>()) t+=a[i];</span><br><span class="line">        <span class="keyword">if</span>(i&lt;b.<span class="built_in">size</span>()) t+=b[i];</span><br><span class="line">        c.<span class="built_in">push_back</span>(t%<span class="number">10</span>);</span><br><span class="line">        t/=<span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(t) c.<span class="built_in">push_back</span>(t);</span><br><span class="line">    <span class="keyword">return</span> c;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    string sa,sb;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; a,b,c;</span><br><span class="line">    cin&gt;&gt;sa&gt;&gt;sb;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=sa.<span class="built_in">size</span>()<span class="number">-1</span>;i&gt;=<span class="number">0</span>;i--) a.<span class="built_in">push_back</span>(sa[i]-<span class="string">&#x27;0&#x27;</span>);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=sb.<span class="built_in">size</span>()<span class="number">-1</span>;i&gt;=<span class="number">0</span>;i--) b.<span class="built_in">push_back</span>(sb[i]-<span class="string">&#x27;0&#x27;</span>);</span><br><span class="line">    c=<span class="built_in">add</span>(a,b);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=c.<span class="built_in">size</span>()<span class="number">-1</span>;i&gt;=<span class="number">0</span>;i--) <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>,c[i]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="高精度减法"><a href="#高精度减法" class="headerlink" title="高精度减法"></a>高精度减法</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">cmp</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; A,vector&lt;<span class="type">int</span>&gt;&amp; B)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(A.<span class="built_in">size</span>()&lt;B.<span class="built_in">size</span>()) <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    <span class="keyword">if</span>(A.<span class="built_in">size</span>()&gt;B.<span class="built_in">size</span>()) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=A.<span class="built_in">size</span>();i&gt;=<span class="number">0</span>;i--)&#123;</span><br><span class="line">        <span class="keyword">if</span>(A[i]&gt;B[i]) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">        <span class="keyword">if</span>(A[i]&lt;B[i]) <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">sub</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; A,vector&lt;<span class="type">int</span>&gt;&amp; B)</span></span>&#123;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; C;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>,t=<span class="number">0</span>;i&lt;A.<span class="built_in">size</span>();i++)&#123;</span><br><span class="line">        t=A[i]-t;</span><br><span class="line">        <span class="keyword">if</span>(i&lt;B.<span class="built_in">size</span>()) t-=B[i];</span><br><span class="line">        C.<span class="built_in">push_back</span>((t+<span class="number">10</span>)%<span class="number">10</span>);</span><br><span class="line">        <span class="keyword">if</span>(t&lt;<span class="number">0</span>) t=<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">else</span> t=<span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span>(C[C.<span class="built_in">size</span>()<span class="number">-1</span>]==<span class="number">0</span>) C.<span class="built_in">pop_back</span>();</span><br><span class="line">    <span class="keyword">return</span> C;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="高精度乘法"><a href="#高精度乘法" class="headerlink" title="高精度乘法"></a>高精度乘法</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">mul</span><span class="params">(vector&lt;<span class="type">int</span>&gt;&amp; A,<span class="type">int</span> b)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> t=<span class="number">0</span>;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; C;</span><br><span class="line">    <span class="keyword">if</span>(b==<span class="number">0</span>)&#123;</span><br><span class="line">        C.<span class="built_in">push_back</span>(<span class="number">0</span>);</span><br><span class="line">        <span class="keyword">return</span> C;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;A.<span class="built_in">size</span>()||t;i++)&#123;</span><br><span class="line">        <span class="keyword">if</span>(i&lt;A.<span class="built_in">size</span>()) t+=A[i]*b;</span><br><span class="line">        C.<span class="built_in">push_back</span>(t%<span class="number">10</span>);</span><br><span class="line">        t/=<span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> C;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="高精度除法"><a href="#高精度除法" class="headerlink" title="高精度除法"></a>高精度除法</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">vector&lt;<span class="type">int</span>&gt; <span class="title">div</span><span class="params">(vector&lt;<span class="type">int</span>&gt; &amp;A,<span class="type">int</span> b,<span class="type">int</span>&amp; r)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> t=<span class="number">0</span>;</span><br><span class="line">    vector&lt;<span class="type">int</span>&gt; C;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=A.<span class="built_in">size</span>()<span class="number">-1</span>;i&gt;=<span class="number">0</span>;i--)&#123;</span><br><span class="line">        t=r*<span class="number">10</span>+A[i];</span><br><span class="line">        C.<span class="built_in">push_back</span>(t/b);</span><br><span class="line">        r=t%b;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">reverse</span>(C.<span class="built_in">begin</span>(),C.<span class="built_in">end</span>());</span><br><span class="line">    <span class="keyword">while</span>(C.<span class="built_in">size</span>()&gt;<span class="number">1</span>&amp;&amp;C[C.<span class="built_in">size</span>()<span class="number">-1</span>]==<span class="number">0</span>) C.<span class="built_in">pop_back</span>();</span><br><span class="line">    <span class="keyword">return</span> C;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="数据结构"><a href="#数据结构" class="headerlink" title="数据结构"></a>数据结构</h2><h2 id="搜索与图论"><a href="#搜索与图论" class="headerlink" title="搜索与图论"></a>搜索与图论</h2><h2 id="数学知识"><a href="#数学知识" class="headerlink" title="数学知识"></a>数学知识</h2><h3 id="质数"><a href="#质数" class="headerlink" title="质数"></a>质数</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">bool</span> <span class="title">isprime</span><span class="params">(<span class="type">int</span> n)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(n&lt;<span class="number">2</span>) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=n/i;i++)&#123;</span><br><span class="line">        <span class="keyword">if</span>(n%i==<span class="number">0</span>) <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="分解质因数"><a href="#分解质因数" class="headerlink" title="分解质因数"></a>分解质因数</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">divide</span><span class="params">(<span class="type">int</span> n)</span></span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=n/i;i++)&#123;</span><br><span class="line">        <span class="keyword">if</span>(n%i==<span class="number">0</span>)&#123;</span><br><span class="line">            <span class="type">int</span> cnt=<span class="number">0</span>;</span><br><span class="line">            <span class="keyword">while</span>(n%i==<span class="number">0</span>)&#123;</span><br><span class="line">                n/=i;</span><br><span class="line">                cnt++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">printf</span>(<span class="string">&quot;%d %d\n&quot;</span>,i,cnt);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(n&gt;<span class="number">1</span>) <span class="built_in">printf</span>(<span class="string">&quot;%d 1\n&quot;</span>,n);</span><br><span class="line">    cout&lt;&lt;endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="筛质数"><a href="#筛质数" class="headerlink" title="筛质数"></a>筛质数</h3><h4 id="埃式筛法"><a href="#埃式筛法" class="headerlink" title="埃式筛法"></a>埃式筛法</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//埃式筛法</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">get_prime</span><span class="params">(<span class="type">int</span> n)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> cnt=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">if</span>(!st[i])&#123;</span><br><span class="line">            prime[++cnt]=i;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> j=i+i;j&lt;=n;j+=i) st[j]=<span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> cnt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="线性筛法"><a href="#线性筛法" class="headerlink" title="线性筛法"></a>线性筛法</h4><p>线性筛法就是用质数和当前遍历到的i的乘积来筛掉合数<br>首先保证了n只会被最小质因子筛掉<br>同时保证了所有合数都会被最小质因子筛掉<br>对于合数x,<code>x=pj*i,i&lt;x</code>，所以一定会被<code>pj*i</code>筛掉</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//线性筛法</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">get_prime</span><span class="params">(<span class="type">int</span> n)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> cnt=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">if</span>(!st[i]) prime[++cnt]=i;</span><br><span class="line">        <span class="comment">//遍历所有小于n/i的质数</span></span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">1</span>;prime[j]&lt;=n/i;j++)&#123;</span><br><span class="line">            st[prime[j]*i]=<span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">if</span>(i%prime[j]==<span class="number">0</span>) <span class="keyword">break</span>;<span class="comment">//prime[j]一定是i的最小质因子,这个优化保证了合数是被最小质因子筛掉的</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> cnt;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="约数"><a href="#约数" class="headerlink" title="约数"></a>约数</h3><h4 id="试除法求所有约数"><a href="#试除法求所有约数" class="headerlink" title="试除法求所有约数"></a>试除法求所有约数</h4><h4 id="求约数个数"><a href="#求约数个数" class="headerlink" title="求约数个数"></a>求约数个数</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211129113415.png" alt="Pasted-image-20211129113415.png"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line">unordered_map&lt;<span class="type">int</span>,<span class="type">int</span>&gt; primes;</span><br><span class="line"><span class="keyword">typedef</span> <span class="type">long</span> <span class="type">long</span> LL;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> mod=<span class="number">1e9</span>+<span class="number">7</span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> m;cin&gt;&gt;m;</span><br><span class="line">    <span class="keyword">while</span>(m--)&#123;</span><br><span class="line">        <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=n/i;i++)&#123;</span><br><span class="line">            <span class="keyword">while</span>(n%i==<span class="number">0</span>)&#123;</span><br><span class="line">                primes[i]++;</span><br><span class="line">                n/=i;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(n&gt;<span class="number">1</span>) primes[n]++;</span><br><span class="line">    &#125;</span><br><span class="line">    LL res=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span> t:primes)&#123;</span><br><span class="line">        res=res*(t.second+<span class="number">1</span>)%mod;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;res&lt;&lt;endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="求约数之和"><a href="#求约数之和" class="headerlink" title="求约数之和"></a>求约数之和</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211129113427.png" alt="Pasted-image-20211129113427.png"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="keyword">typedef</span> <span class="type">long</span> <span class="type">long</span> LL;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> mod=<span class="number">1e9</span>+<span class="number">7</span>;</span><br><span class="line">unordered_map&lt;<span class="type">int</span>,<span class="type">int</span>&gt; primes;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> t;cin&gt;&gt;t;</span><br><span class="line">    <span class="keyword">while</span>(t--)&#123;</span><br><span class="line">        <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=n/i;i++)&#123;</span><br><span class="line">            <span class="keyword">while</span>(n%i==<span class="number">0</span>)&#123;</span><br><span class="line">                primes[i]++;</span><br><span class="line">                n/=i;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(n&gt;<span class="number">1</span>) primes[n]++;</span><br><span class="line">    &#125;</span><br><span class="line">    LL res=<span class="number">1</span>,sum=<span class="number">0</span>,tmp=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">auto</span> p:primes)&#123;</span><br><span class="line">        <span class="comment">//注释掉的做法不够简洁</span></span><br><span class="line">        <span class="comment">// sum=0,tmp=1;</span></span><br><span class="line">        <span class="comment">// for(int i=0;i&lt;=p.second;i++)&#123;</span></span><br><span class="line">        <span class="comment">//     sum=(sum+tmp)%mod;</span></span><br><span class="line">        <span class="comment">//     tmp=(tmp*p.first)%mod;</span></span><br><span class="line">        <span class="comment">// &#125;</span></span><br><span class="line">        <span class="comment">// res=res*sum%mod;</span></span><br><span class="line">        </span><br><span class="line">        LL a=p.first,b=p.second;</span><br><span class="line">        LL t=<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span>(b--) t=(t*a+<span class="number">1</span>)%mod;</span><br><span class="line">        res=res*t%mod;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;res&lt;&lt;endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="求最大公约数——欧几里得算法（辗转相除法）"><a href="#求最大公约数——欧几里得算法（辗转相除法）" class="headerlink" title="求最大公约数——欧几里得算法（辗转相除法）"></a>求最大公约数——欧几里得算法（辗转相除法）</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">gcd</span><span class="params">(<span class="type">int</span> a,<span class="type">int</span> b)</span></span>&#123; </span><br><span class="line">    <span class="keyword">return</span> b?<span class="built_in">gcd</span>(b,a%b):a;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="扩展欧几里得算法"><a href="#扩展欧几里得算法" class="headerlink" title="扩展欧几里得算法"></a>扩展欧几里得算法</h4><p>裴蜀定理(a,b)表示a,b最大公约数<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211203215341.png" alt="Pasted-image-20211203215341.png"><br>扩展欧几里得算法就是用来求这个x,y的值的</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">exgcd</span><span class="params">(<span class="type">int</span> a,<span class="type">int</span> b,<span class="type">int</span>&amp; x,<span class="type">int</span>&amp; y)</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(!b)&#123;</span><br><span class="line">        x=<span class="number">1</span>,y=<span class="number">0</span>;</span><br><span class="line">        <span class="keyword">return</span> a;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> d=<span class="built_in">exgcd</span>(b,a%b,y,x);</span><br><span class="line">    y-=a/b*x;</span><br><span class="line">    <span class="keyword">return</span> d;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="欧拉函数"><a href="#欧拉函数" class="headerlink" title="欧拉函数"></a>欧拉函数</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211201103501.png" alt="Pasted-image-20211201103501.png"><br>互质是公约数只有1的两个整数，叫做互质整数。<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E5%85%AC%E7%BA%A6%E6%95%B0/1063409">公约数</a>只有1的两个<a target="_blank" rel="noopener" href="https://baike.baidu.com/item/%E8%87%AA%E7%84%B6%E6%95%B0/385394">自然数</a>，叫做互质自然数，后者是前者的特殊情形。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;unordered_map&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">    <span class="keyword">while</span>(n--)&#123;</span><br><span class="line">        <span class="type">int</span> a;cin&gt;&gt;a;</span><br><span class="line">        <span class="type">int</span> res=a;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=a/i;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(a%i==<span class="number">0</span>)&#123; </span><br><span class="line">                res=res/i*(i<span class="number">-1</span>);</span><br><span class="line">                <span class="keyword">while</span>(a%i==<span class="number">0</span>) a/=i;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(a&gt;<span class="number">1</span>) res=res/a*(a<span class="number">-1</span>);<span class="comment">//注意这部分不要漏了</span></span><br><span class="line">        cout&lt;&lt;res&lt;&lt;endl;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h4 id="筛法求欧拉函数"><a href="#筛法求欧拉函数" class="headerlink" title="筛法求欧拉函数"></a>筛法求欧拉函数</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">get_eulars</span><span class="params">(<span class="type">int</span> n)</span></span>&#123;</span><br><span class="line">    eular[<span class="number">1</span>]=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">2</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">if</span>(!st[i])&#123;</span><br><span class="line">            primes[cnt++]=i;</span><br><span class="line">            eular[i]=i<span class="number">-1</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;primes[j]&lt;=n/i;j++)&#123;</span><br><span class="line">            <span class="type">int</span> t=primes[j]*i;</span><br><span class="line">            st[t]=<span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">if</span>(i%primes[j]==<span class="number">0</span>)&#123;</span><br><span class="line">                eular[t]=eular[i]*primes[j];</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            eular[t]=eular[i]*(primes[j]<span class="number">-1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="快速幂"><a href="#快速幂" class="headerlink" title="快速幂"></a>快速幂</h3><p>在求a^k%p时，可以将a^k分解成多个数相乘，依次取余数，比如第一个数%p的结果和第二个数%p的结果相乘再%p，而分解的这个步骤可以利用二进制</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">qmi</span><span class="params">(<span class="type">int</span> a,<span class="type">int</span> k,<span class="type">int</span> p)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> res=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(k)&#123;</span><br><span class="line">        <span class="keyword">if</span>(k&amp;<span class="number">1</span>) res=(LL)res*a%p;</span><br><span class="line">        k&gt;&gt;=<span class="number">1</span>;</span><br><span class="line">        a=(LL)a*a%p;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>欧拉定理·<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211203105809.png" alt="Pasted-image-20211203105809.png"><br>其中φ(n)是1-n中与n互质的数的个数（1与任意数互质）</p>
-</blockquote>
-<blockquote>
-<p>费马定理<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211203113405.png" alt="Pasted-image-20211203113405.png"><br>p是质数</p>
-</blockquote>
-<h4 id="快速幂求逆元"><a href="#快速幂求逆元" class="headerlink" title="快速幂求逆元"></a>快速幂求逆元</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211211105605.png" alt="Pasted-image-20211211105605.png"></p>
-<h3 id="高斯消元"><a href="#高斯消元" class="headerlink" title="高斯消元"></a>高斯消元</h3><p>枚举每一列c<br>    1. 找到绝对值最大的一行<br>    2. 将改行换到第r行<br>    3. 将第一行该列值变成1<br>    4. 将下面所有行的第c列消成0</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">gauss</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> r=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> c=<span class="number">0</span>;c&lt;n;c++)&#123;</span><br><span class="line">        <span class="type">int</span> t=r;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=r;i&lt;n;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(<span class="built_in">fabs</span>(g[i][c])&gt;<span class="built_in">fabs</span>(g[t][c])) t=i;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(<span class="built_in">fabs</span>(g[t][c])&lt;eps) <span class="keyword">continue</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=c;i&lt;=n;i++) <span class="built_in">swap</span>(g[r][i],g[t][i]);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=n;i&gt;=c;i--) g[r][i]/=g[r][c];</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(<span class="built_in">fabs</span>(g[i][c])&gt;eps&amp;&amp;i!=r)</span><br><span class="line">                <span class="keyword">for</span>(<span class="type">int</span> j=n;j&gt;=c;j--)&#123;</span><br><span class="line">                    g[i][j]-=g[i][c]*g[r][j];</span><br><span class="line">                &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        r++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span>(r&lt;n)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=r;i&lt;n;i++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(<span class="built_in">fabs</span>(g[i][n])&lt;eps)&#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="number">2</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h3 id="组合数"><a href="#组合数" class="headerlink" title="组合数"></a>组合数</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/Pasted-image-20211210114427.png" alt="Pasted-image-20211210114427.png"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">init</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;N;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;=i;j++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(!j) c[i][j]=<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">else</span> c[i][j]=(c[i<span class="number">-1</span>][j]+c[i<span class="number">-1</span>][j<span class="number">-1</span>])%mod;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-<h2 id="动态规划"><a href="#动态规划" class="headerlink" title="动态规划"></a>动态规划</h2><h3 id="背包问题"><a href="#背包问题" class="headerlink" title="背包问题"></a>背包问题</h3><h4 id="0-1背包问题"><a href="#0-1背包问题" class="headerlink" title="0-1背包问题"></a>0-1背包问题</h4><p>每件物品最多用一次</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">1010</span>;</span><br><span class="line"><span class="type">int</span> v[N],w[N];</span><br><span class="line"><span class="type">int</span> f[N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,V;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;V;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        cin&gt;&gt;v[i]&gt;&gt;w[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=V;j&gt;=v[i];j--)&#123;</span><br><span class="line">            f[j]=<span class="built_in">max</span>(f[j],f[j-v[i]]+w[i]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[V];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="完全背包问题"><a href="#完全背包问题" class="headerlink" title="完全背包问题"></a>完全背包问题</h4><p>每件物品有无限个</p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98.28uexv9ahq80.png" alt="完全背包问题"></p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E5%AE%8C%E5%85%A8%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98%E4%BC%98%E5%8C%96.3u8ok2e0rbg0.png" alt="完全背包问题优化"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">1010</span>;</span><br><span class="line"><span class="type">int</span> v[N],w[N];</span><br><span class="line"><span class="type">int</span> f[N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,m;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        cin&gt;&gt;v[i]&gt;&gt;w[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=v[i];j&lt;=m;j++)&#123;</span><br><span class="line">            f[j]=<span class="built_in">max</span>(f[j],f[j-v[i]]+w[i]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[m];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="多重背包问题"><a href="#多重背包问题" class="headerlink" title="多重背包问题"></a>多重背包问题</h4><p>每件物品最多有Si个</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">1010</span>;</span><br><span class="line"><span class="type">int</span> v[N],w[N],s[N];</span><br><span class="line"><span class="type">int</span> f[N][N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,m;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        cin&gt;&gt;v[i]&gt;&gt;w[i]&gt;&gt;s[i];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;=m;j++)&#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> k=<span class="number">0</span>;k&lt;=s[i]&amp;&amp;k*v[i]&lt;=j;k++)&#123;</span><br><span class="line">                f[i][j]=<span class="built_in">max</span>(f[i][j],f[i<span class="number">-1</span>][j-k*v[i]]+k*w[i]);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[n][m];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>二进制优化版本</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">25000</span>;</span><br><span class="line"><span class="type">int</span> v[N],w[N];</span><br><span class="line"><span class="type">int</span> f[N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,m;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="type">int</span> a,b,c;</span><br><span class="line">    <span class="type">int</span> cnt=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;i++)&#123;</span><br><span class="line">        cin&gt;&gt;a&gt;&gt;b&gt;&gt;c;</span><br><span class="line">        <span class="type">int</span> k=<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">while</span>(k&lt;=c)&#123;</span><br><span class="line">            cnt++;</span><br><span class="line">            v[cnt]=a*k;</span><br><span class="line">            w[cnt]=b*k;</span><br><span class="line">            c-=k;</span><br><span class="line">            k*=<span class="number">2</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span>(c&gt;<span class="number">0</span>)&#123;</span><br><span class="line">            cnt++;</span><br><span class="line">            v[cnt]=a*c;</span><br><span class="line">            w[cnt]=b*c;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=cnt;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=m;j&gt;=v[i];j--)&#123;</span><br><span class="line">            f[j]=<span class="built_in">max</span>(f[j],f[j-v[i]]+w[i]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[m];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h4 id="分组背包问题"><a href="#分组背包问题" class="headerlink" title="分组背包问题"></a>分组背包问题</h4><p>每组物品最多选一个</p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E5%88%86%E7%BB%84%E8%83%8C%E5%8C%85%E9%97%AE%E9%A2%98.464er2x8rpk0.png" alt="分组背包问题"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">110</span>;</span><br><span class="line"><span class="type">int</span> v[N][N],w[N][N];</span><br><span class="line"><span class="type">int</span> f[N][N];</span><br><span class="line"><span class="type">int</span> cnt[N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,m;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        cin&gt;&gt;cnt[i];</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">1</span>;j&lt;=cnt[i];j++)&#123;</span><br><span class="line">            cin&gt;&gt;v[i][j]&gt;&gt;w[i][j];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;=m;j++)&#123;</span><br><span class="line">            f[i][j]=f[i<span class="number">-1</span>][j];</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> k=<span class="number">1</span>;k&lt;=cnt[i];k++)&#123;</span><br><span class="line">                <span class="keyword">if</span>(v[i][k]&lt;=j)&#123;</span><br><span class="line">                    f[i][j]=<span class="built_in">max</span>(f[i][j],f[i<span class="number">-1</span>][j-v[i][k]]+w[i][k]);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[n][m];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">110</span>;</span><br><span class="line"><span class="type">int</span> v[N][N],w[N][N];</span><br><span class="line"><span class="type">int</span> f[N];</span><br><span class="line"><span class="type">int</span> cnt[N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,m;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        cin&gt;&gt;cnt[i];</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">1</span>;j&lt;=cnt[i];j++)&#123;</span><br><span class="line">            cin&gt;&gt;v[i][j]&gt;&gt;w[i][j];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=m;j&gt;=<span class="number">0</span>;j--)&#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> k=<span class="number">1</span>;k&lt;=cnt[i];k++)&#123;</span><br><span class="line">                <span class="keyword">if</span>(v[i][k]&lt;=j)&#123;</span><br><span class="line">                    f[j]=<span class="built_in">max</span>(f[j],f[j-v[i][k]]+w[i][k]);<span class="comment">//因为j从大到小遍历j-v[i][k]&lt;j </span></span><br><span class="line">                                                        <span class="comment">//所以在j之后更新，f[j-v[i][k]]为上一层的值</span></span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[m];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="线性DP"><a href="#线性DP" class="headerlink" title="线性DP"></a>线性DP</h3><h4 id="数字三角形"><a href="#数字三角形" class="headerlink" title="数字三角形"></a>数字三角形</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E6%95%B0%E5%AD%97%E4%B8%89%E8%A7%92%E5%BD%A2.265x4pfwike8.png" alt="数字三角形"></p>
-<h4 id="最长上升子序列"><a href="#最长上升子序列" class="headerlink" title="最长上升子序列"></a>最长上升子序列</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E6%9C%80%E9%95%BF%E4%B8%8A%E5%8D%87%E5%AD%90%E5%BA%8F%E5%88%97.5em4gd9xb8w0.png" alt="最长上升子序列"></p>
-<h4 id="最长公共子序列"><a href="#最长公共子序列" class="headerlink" title="最长公共子序列"></a>最长公共子序列</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E6%9C%80%E9%95%BF%E5%85%AC%E5%85%B1%E5%AD%90%E5%BA%8F%E5%88%97.21gns8gsi2w0.png" alt="最长公共子序列"></p>
-<h4 id="最短编辑距离"><a href="#最短编辑距离" class="headerlink" title="最短编辑距离"></a>最短编辑距离</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/computer/%E6%9C%80%E7%9F%AD%E7%BC%96%E8%BE%91%E8%B7%9D%E7%A6%BB.60m2idagtzw0.png" alt="最短编辑距离"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">1010</span>;</span><br><span class="line"><span class="type">int</span> f[N][N];</span><br><span class="line"><span class="type">char</span> a[N],b[N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> m,n;</span><br><span class="line">    <span class="built_in">scanf</span>(<span class="string">&quot;%d %s %d %s&quot;</span>,&amp;m,a+<span class="number">1</span>,&amp;n,b+<span class="number">1</span>);</span><br><span class="line">    <span class="comment">//注意这两行初始化代码</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=m;i++) f[i][<span class="number">0</span>]=i;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++) f[<span class="number">0</span>][i]=i;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=m;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">1</span>;j&lt;=n;j++)&#123;</span><br><span class="line">            f[i][j]=<span class="built_in">min</span>(<span class="built_in">min</span>(f[i<span class="number">-1</span>][j],f[i][j<span class="number">-1</span>]),f[i<span class="number">-1</span>][j<span class="number">-1</span>])+<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">if</span>(a[i]==b[j]) f[i][j]=<span class="built_in">min</span>(f[i][j],f[i<span class="number">-1</span>][j<span class="number">-1</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[m][n];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="区间DP"><a href="#区间DP" class="headerlink" title="区间DP"></a>区间DP</h3><h4 id="石子合并"><a href="#石子合并" class="headerlink" title="石子合并"></a>石子合并</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E7%9F%B3%E5%AD%90%E5%90%88%E5%B9%B6.7iowefrf6c80.png" alt="石子合并"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">310</span>;</span><br><span class="line"><span class="type">int</span> s[N];</span><br><span class="line"><span class="type">int</span> f[N][N];</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        cin&gt;&gt;s[i];s[i]+=s[i<span class="number">-1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//先遍历区间长度，再遍历区间左端点</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> l=<span class="number">2</span>;l&lt;=n;l++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i+l<span class="number">-1</span>&lt;=n;i++)&#123;</span><br><span class="line">            <span class="type">int</span> j=i+l<span class="number">-1</span>;</span><br><span class="line">            f[i][j]=<span class="number">1e8</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> k=i;k&lt;j;k++)&#123;</span><br><span class="line">                f[i][j]=<span class="built_in">min</span>(f[i][j],f[i][k]+f[k+<span class="number">1</span>][j]+s[j]-s[i<span class="number">-1</span>]);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[<span class="number">1</span>][n]&lt;&lt;endl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="计数类DP"><a href="#计数类DP" class="headerlink" title="计数类DP"></a>计数类DP</h3><h4 id="整数划分"><a href="#整数划分" class="headerlink" title="整数划分"></a>整数划分</h4><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E6%95%B4%E6%95%B0%E5%88%92%E5%88%86.22pyck4po3r4.png" alt="整数划分"></p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> mod=<span class="number">1e9</span>+<span class="number">7</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">1010</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> f[N][N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">    <span class="comment">//for(int i=0;i&lt;=n;i++) f[i][0]=1;</span></span><br><span class="line">    f[<span class="number">0</span>][<span class="number">0</span>]=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;=n;j++)&#123;</span><br><span class="line">            f[i][j]=f[i<span class="number">-1</span>][j]%mod;</span><br><span class="line">            <span class="keyword">if</span>(j&gt;=i) f[i][j]=(f[i<span class="number">-1</span>][j]+f[i][j-i])%mod;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[n][n];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> mod=<span class="number">1e9</span>+<span class="number">7</span>;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">1010</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> f[N];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">    f[<span class="number">0</span>]=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=i;j&lt;=n;j++)&#123;</span><br><span class="line">            f[j]=(f[j]+f[j-i])%mod;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[n];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="数位统计DP"><a href="#数位统计DP" class="headerlink" title="数位统计DP"></a>数位统计DP</h3><h4 id="计数问题"><a href="#计数问题" class="headerlink" title="计数问题"></a>计数问题</h4><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">count</span><span class="params">(<span class="type">int</span> a,<span class="type">int</span> k)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> res=<span class="number">0</span>;</span><br><span class="line">    <span class="type">int</span> n=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(a/(<span class="type">int</span>)<span class="built_in">pow</span>(<span class="number">10</span>,n)) n++;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="type">int</span> d=a/(<span class="type">int</span>)<span class="built_in">pow</span>(<span class="number">10</span>,i<span class="number">-1</span>)%<span class="number">10</span>;</span><br><span class="line">        <span class="keyword">if</span>(k) res+=a/(<span class="type">int</span>)<span class="built_in">pow</span>(<span class="number">10</span>,i)*<span class="built_in">pow</span>(<span class="number">10</span>,i<span class="number">-1</span>);</span><br><span class="line">        <span class="keyword">else</span> res+=(a/(<span class="type">int</span>)<span class="built_in">pow</span>(<span class="number">10</span>,i)<span class="number">-1</span>)*<span class="built_in">pow</span>(<span class="number">10</span>,i<span class="number">-1</span>);</span><br><span class="line">        <span class="keyword">if</span>(d==k) res+=a%(<span class="type">int</span>)<span class="built_in">pow</span>(<span class="number">10</span>,i<span class="number">-1</span>)+<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">if</span>(d&gt;k) res+=<span class="built_in">pow</span>(<span class="number">10</span>,i<span class="number">-1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> res;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> a,b;</span><br><span class="line">    cin&gt;&gt;a&gt;&gt;b;</span><br><span class="line">    <span class="keyword">while</span>(a&amp;&amp;b)&#123;</span><br><span class="line">        <span class="keyword">if</span>(a&gt;b) <span class="built_in">swap</span>(a,b);</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">10</span>;i++)&#123;</span><br><span class="line">            cout&lt;&lt;<span class="built_in">count</span>(b,i)-<span class="built_in">count</span>(a<span class="number">-1</span>,i);</span><br><span class="line">            <span class="keyword">if</span>(i==<span class="number">9</span>) cout&lt;&lt;endl;</span><br><span class="line">            <span class="keyword">else</span> cout&lt;&lt;<span class="string">&quot; &quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        cin&gt;&gt;a&gt;&gt;b;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="状态压缩DP"><a href="#状态压缩DP" class="headerlink" title="状态压缩DP"></a>状态压缩DP</h3><p>蒙德里安的梦想</p>
-<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/algorithm/%E8%92%99%E5%BE%B7%E9%87%8C%E5%AE%89%E7%9A%84%E6%A2%A6%E6%83%B3.2md4ewwnu7c0.png" alt="蒙德里安的梦想"></p>
-<p>未优化代码</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">12</span>,M=<span class="number">1</span>&lt;&lt;N;</span><br><span class="line"><span class="type">long</span> <span class="type">long</span> f[N][M];</span><br><span class="line"><span class="type">bool</span> st[M];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,m;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="keyword">while</span>(n||m)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">1</span>&lt;&lt;n;i++)&#123;</span><br><span class="line">            st[i]=<span class="literal">true</span>;</span><br><span class="line">            <span class="type">int</span> cnt=<span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;n;j++)&#123;</span><br><span class="line">                <span class="keyword">if</span>(i&gt;&gt;j&amp;<span class="number">1</span>)&#123;</span><br><span class="line">                    <span class="keyword">if</span>(cnt&amp;<span class="number">1</span>)&#123;<span class="comment">//判断cnt是否为偶数</span></span><br><span class="line">                        st[i]=<span class="literal">false</span>;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    cnt=<span class="number">0</span>;</span><br><span class="line">                &#125;<span class="keyword">else</span> cnt++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(cnt&amp;<span class="number">1</span>) st[i]=<span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">memset</span>(f,<span class="number">0</span>,<span class="keyword">sizeof</span> f);</span><br><span class="line">        f[<span class="number">0</span>][<span class="number">0</span>]=<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=m;i++)&#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;<span class="number">1</span>&lt;&lt;n;j++)&#123;</span><br><span class="line">                <span class="keyword">for</span>(<span class="type">int</span> k=<span class="number">0</span>;k&lt;<span class="number">1</span>&lt;&lt;n;k++)&#123;</span><br><span class="line">                    <span class="keyword">if</span>((j&amp;k)==<span class="number">0</span>&amp;&amp;st[j|k])&#123;<span class="comment">//注意优先级：== 高于 &amp;</span></span><br><span class="line">                        f[i][j]+=f[i<span class="number">-1</span>][k];</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        cout&lt;&lt;f[m][<span class="number">0</span>]&lt;&lt;endl;</span><br><span class="line">        cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>优化代码</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cmath&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">12</span>,M=<span class="number">1</span>&lt;&lt;N;</span><br><span class="line"><span class="type">long</span> <span class="type">long</span> f[N][M];</span><br><span class="line"><span class="type">bool</span> st[M];</span><br><span class="line">vector&lt;<span class="type">int</span>&gt; state[M];</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n,m;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="keyword">while</span>(n||m)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">1</span>&lt;&lt;n;i++)&#123;</span><br><span class="line">            st[i]=<span class="literal">true</span>;</span><br><span class="line">            <span class="type">int</span> cnt=<span class="number">0</span>;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;n;j++)&#123;</span><br><span class="line">                <span class="keyword">if</span>(i&gt;&gt;j&amp;<span class="number">1</span>)&#123;</span><br><span class="line">                    <span class="keyword">if</span>(cnt&amp;<span class="number">1</span>)&#123;<span class="comment">//判断cnt是否为偶数</span></span><br><span class="line">                        st[i]=<span class="literal">false</span>;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                    cnt=<span class="number">0</span>;</span><br><span class="line">                &#125;<span class="keyword">else</span> cnt++;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span>(cnt&amp;<span class="number">1</span>) st[i]=<span class="literal">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">1</span>&lt;&lt;n;i++)&#123;</span><br><span class="line">            state[i].<span class="built_in">clear</span>();</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;<span class="number">1</span>&lt;&lt;n;j++)&#123;</span><br><span class="line">                <span class="keyword">if</span>((i&amp;j)==<span class="number">0</span>&amp;&amp;st[i|j])&#123;</span><br><span class="line">                    state[i].<span class="built_in">push_back</span>(j);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="built_in">memset</span>(f,<span class="number">0</span>,<span class="keyword">sizeof</span> f);</span><br><span class="line">        f[<span class="number">0</span>][<span class="number">0</span>]=<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=m;i++)&#123;</span><br><span class="line">            <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;<span class="number">1</span>&lt;&lt;n;j++)&#123;</span><br><span class="line">                <span class="keyword">for</span>(<span class="keyword">auto</span> k:state[j]) f[i][j]+=f[i<span class="number">-1</span>][k];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        cout&lt;&lt;f[m][<span class="number">0</span>]&lt;&lt;endl;</span><br><span class="line">        cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p> 最短Hamilton路径</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">20</span>,M=<span class="number">1</span>&lt;&lt;N;</span><br><span class="line"><span class="type">int</span> f[M][N],w[N][N];</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n;cin&gt;&gt;n;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;n;j++)</span><br><span class="line">            cin&gt;&gt;w[i][j];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">memset</span>(f,<span class="number">0x3f</span>,<span class="keyword">sizeof</span> f);</span><br><span class="line">    f[<span class="number">1</span>][<span class="number">0</span>]=<span class="number">0</span>;</span><br><span class="line">    <span class="comment">//如果反过来写，不能保证在f[i][j] = min(f[i][j], f[i - (1 &lt;&lt; j)][k] + w[k][j])中右边的状态在左边的状态之前被计算出来。</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">0</span>;i&lt;<span class="number">1</span>&lt;&lt;n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">0</span>;j&lt;n;j++)&#123;</span><br><span class="line">            <span class="keyword">if</span>(((i&gt;&gt;j)&amp;<span class="number">1</span>))&#123;</span><br><span class="line">                <span class="keyword">for</span>(<span class="type">int</span> k=<span class="number">0</span>;k&lt;n;k++)&#123;</span><br><span class="line">                    <span class="keyword">if</span>((i&gt;&gt;k)&amp;<span class="number">1</span>)&#123;</span><br><span class="line">                        f[i][j]=<span class="built_in">min</span>(f[i][j],f[i-(<span class="number">1</span>&lt;&lt;j)][k]+w[k][j]);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;f[(<span class="number">1</span>&lt;&lt;n)<span class="number">-1</span>][n<span class="number">-1</span>];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="树形DP"><a href="#树形DP" class="headerlink" title="树形DP"></a>树形DP</h3><p>没有上司的舞会</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;vector&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">6010</span>;</span><br><span class="line"><span class="type">int</span> h[N],e[N],ne[N],idx;</span><br><span class="line"><span class="type">int</span> happy[N];</span><br><span class="line"><span class="type">int</span> f[N][<span class="number">2</span>];</span><br><span class="line"><span class="type">bool</span> is_child[N];</span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">add</span><span class="params">(<span class="type">int</span> a,<span class="type">int</span> b)</span></span>&#123;</span><br><span class="line">    e[idx]=b,ne[idx]=h[a],h[a]=idx++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">dfs</span><span class="params">(<span class="type">int</span> root)</span></span>&#123;</span><br><span class="line">    f[root][<span class="number">1</span>]=happy[root];</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=h[root];~i;i=ne[i])&#123;</span><br><span class="line">        <span class="type">int</span> j=e[i];</span><br><span class="line">        <span class="built_in">dfs</span>(j);</span><br><span class="line">        f[root][<span class="number">0</span>]+=<span class="built_in">max</span>(f[j][<span class="number">0</span>],f[j][<span class="number">1</span>]);</span><br><span class="line">        f[root][<span class="number">1</span>]+=f[j][<span class="number">0</span>];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> n;cin&gt;&gt;n;<span class="type">int</span> sum=<span class="number">0</span>;</span><br><span class="line">    <span class="built_in">memset</span>(h,<span class="number">-1</span>,<span class="keyword">sizeof</span> h);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++) cin&gt;&gt;happy[i];</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;n;i++)&#123;</span><br><span class="line">        <span class="type">int</span> a,b;cin&gt;&gt;a&gt;&gt;b;</span><br><span class="line">        <span class="built_in">add</span>(b,a);</span><br><span class="line">        is_child[a]=<span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> root=<span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span>(is_child[root]) root++;</span><br><span class="line">    <span class="built_in">dfs</span>(root);</span><br><span class="line">    cout&lt;&lt;<span class="built_in">max</span>(f[root][<span class="number">0</span>],f[root][<span class="number">1</span>]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="记忆化搜索"><a href="#记忆化搜索" class="headerlink" title="记忆化搜索"></a>记忆化搜索</h3><p>滑雪</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;cstring&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N=<span class="number">310</span>;</span><br><span class="line"><span class="type">int</span> h[N][N],f[N][N];</span><br><span class="line"><span class="type">int</span> n,m;</span><br><span class="line"><span class="type">int</span> dx[<span class="number">4</span>]=&#123;<span class="number">-1</span>,<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>&#125;,dy[<span class="number">4</span>]=&#123;<span class="number">0</span>,<span class="number">1</span>,<span class="number">0</span>,<span class="number">-1</span>&#125;;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">dp</span><span class="params">(<span class="type">int</span> i,<span class="type">int</span> j)</span></span>&#123;</span><br><span class="line">    <span class="type">int</span> &amp;v=f[i][j];</span><br><span class="line">    <span class="keyword">if</span>(v==<span class="number">-1</span>)&#123;</span><br><span class="line">        v=<span class="number">1</span>;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> k=<span class="number">0</span>;k&lt;<span class="number">4</span>;k++)&#123;</span><br><span class="line">            <span class="type">int</span> a=i+dx[k],b=j+dy[k];</span><br><span class="line">            <span class="keyword">if</span>(h[i][j]&gt;h[a][b]&amp;&amp;a&gt;=<span class="number">1</span>&amp;&amp;a&lt;=n&amp;&amp;b&gt;=<span class="number">1</span>&amp;&amp;b&lt;=m) v=<span class="built_in">max</span>(v,<span class="built_in">dp</span>(a,b)+<span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> v;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    cin&gt;&gt;n&gt;&gt;m;</span><br><span class="line">    <span class="built_in">memset</span>(f,<span class="number">-1</span>,<span class="keyword">sizeof</span> f);</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">1</span>;j&lt;=m;j++)&#123;</span><br><span class="line">            cin&gt;&gt;h[i][j];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">int</span> res=<span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span>(<span class="type">int</span> i=<span class="number">1</span>;i&lt;=n;i++)&#123;</span><br><span class="line">        <span class="keyword">for</span>(<span class="type">int</span> j=<span class="number">1</span>;j&lt;=m;j++)&#123;</span><br><span class="line">            res=<span class="built_in">max</span>(res,<span class="built_in">dp</span>(i,j));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    cout&lt;&lt;res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-
-<h2 id="贪心"><a href="#贪心" class="headerlink" title="贪心"></a>贪心</h2>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">算法</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/算法//" class="article-tag-list-link color3">算法</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/22/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/">展开全文 >></a>
         </p>
       
 
