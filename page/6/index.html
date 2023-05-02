@@ -138,6 +138,162 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-网络编程/Linux高性能服务器编程/第5章 Linux网络编程基础API/主机字节序和网络字节序" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/12/22/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC5%E7%AB%A0%20Linux%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80API/%E4%B8%BB%E6%9C%BA%E5%AD%97%E8%8A%82%E5%BA%8F%E5%92%8C%E7%BD%91%E7%BB%9C%E5%AD%97%E8%8A%82%E5%BA%8F/">主机字节序和网络字节序</a>
+    </h1>
+  
+
+        
+        <a href="/2022/12/22/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC5%E7%AB%A0%20Linux%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80API/%E4%B8%BB%E6%9C%BA%E5%AD%97%E8%8A%82%E5%BA%8F%E5%92%8C%E7%BD%91%E7%BB%9C%E5%AD%97%E8%8A%82%E5%BA%8F/" class="archive-article-date">
+  	<time datetime="2022-12-22T12:39:34.801Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-12-22</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>注：考虑32位机，一个整数至少4个字节<br>字节序：大端字节序（big endian）和小端字节序（little endian）<br>大端字节序（网络字节序）：一个整数的高位字节（23<del>31bit）存储在内存的低地址处，低位字节（0</del>7bit）存储在内存的高地址处<br>小端字节序（主机字节序）：一个整数的高位字节存储在内存的高地址处，低位字节存储在内存的低地址处</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;netinet/in.h&gt;</span></span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> <span class="title function_">htonl</span><span class="params">( <span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> hostlong )</span>;</span><br><span class="line"><span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> <span class="title function_">htons</span><span class="params">( <span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> hostshort )</span>;</span><br><span class="line"><span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> <span class="title function_">ntohl</span><span class="params">( <span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> netlong )</span>;</span><br><span class="line"><span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> <span class="title function_">ntohs</span><span class="params">( <span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> netshort )</span>;</span><br></pre></td></tr></table></figure>
+<p>#vim<br>tips:可以输入tabe+file 查看其他文件 </p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2022/12/22/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC5%E7%AB%A0%20Linux%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80API/%E4%B8%BB%E6%9C%BA%E5%AD%97%E8%8A%82%E5%BA%8F%E5%92%8C%E7%BD%91%E7%BB%9C%E5%AD%97%E8%8A%82%E5%BA%8F/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-linux基础/2.tmux和vim" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/2.tmux%E5%92%8Cvim/">tmux and vim</a>
+    </h1>
+  
+
+        
+        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/2.tmux%E5%92%8Cvim/" class="archive-article-date">
+  	<time datetime="2022-10-29T14:53:26.443Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="tmux"><a href="#tmux" class="headerlink" title="tmux"></a>tmux</h2><blockquote>
+<p> 使tmux配置文件生效<br>在<strong>tmux</strong>窗口中，先按下 Ctrl+b 指令前缀，然后按下系统指令 : ，进入到命令模式后输入 source-file ~&#x2F;.<strong>tmux</strong>.conf ，回车后<strong>生效</strong>。</p>
+</blockquote>
+<h2 id="vim"><a href="#vim" class="headerlink" title="vim"></a>vim</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">#win和linux换行符转换</span><br><span class="line">:set ff=unix</span><br></pre></td></tr></table></figure>
+
+<h3 id="vim全局搜索并跳转"><a href="#vim全局搜索并跳转" class="headerlink" title="vim全局搜索并跳转"></a>vim全局搜索并跳转</h3><hr>
+<p>vimgrep，简写vim</p>
+<p>1、只搜索当前文件</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim/pattern/% | copen</span><br></pre></td></tr></table></figure>
+
+<p>2、只搜索当前目录</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim/pattern<span class="comment">/* | copen</span></span><br></pre></td></tr></table></figure>
+
+<p>3、搜索上级目录下，并递归</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim /pattern/ ..<span class="comment">/** | copen</span></span><br></pre></td></tr></table></figure>
+
+<p>4、多个路径搜索</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:vim /pattern/ path1<span class="comment">/** path1/** | copen</span></span><br></pre></td></tr></table></figure>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">Linux</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/2.tmux%E5%92%8Cvim/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-linux基础/5.git" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -861,6 +1017,10 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">硬件结构</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">c</a>
               </li>
             
             <div class="clearfix"></div>
