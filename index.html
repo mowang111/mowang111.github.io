@@ -138,6 +138,100 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-算法/二分" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/05/02/%E7%AE%97%E6%B3%95/%E4%BA%8C%E5%88%86/">二分</a>
+    </h1>
+  
+
+        
+        <a href="/2023/05/02/%E7%AE%97%E6%B3%95/%E4%BA%8C%E5%88%86/" class="archive-article-date">
+  	<time datetime="2023-05-02T15:46:18.787Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-05-02</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="二分"><a href="#二分" class="headerlink" title="二分"></a>二分</h1><p>手撕二分在算法大纲里写了</p>
+<p>下面讲一讲c++的库函数</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;algorithm&gt;</span></span></span><br><span class="line">vector&lt;<span class="type">int</span>&gt; nums;<span class="comment">//假设里面push_back了很多数</span></span><br><span class="line"><span class="built_in">sort</span>(nums.<span class="built_in">begin</span>(), nums.<span class="built_in">end</span>());</span><br><span class="line"><span class="type">int</span> pos1 = <span class="built_in">lower_bound</span>(nums.<span class="built_in">begin</span>(), nums.<span class="built_in">end</span>(), target) - nums.<span class="built_in">begin</span>();</span><br><span class="line"><span class="type">int</span> pos2 = <span class="built_in">upper_bound</span>(nums.<span class="built_in">begin</span>(), nums.<span class="built_in">end</span>(), target) - nums.<span class="built_in">begin</span>();</span><br></pre></td></tr></table></figure>
+
+<p>lower_bound和upper_bound都是返回target可以插入的位置，保证不影响原有排序<br>lower_bound返回的是不影响排序的最小位置，也就是大于等于target的最小位置<br>upper_bound返回的是不影响排序的最大位置，也就是大于target的最小位置</p>
+<p>如果求小于target的最大位置，用lower_bound的返回值 pos1 - 1;<br>如果求小于等于target的最大位置，用upper_bound返回值pos2 - 1;</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">算法</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">c++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/算法//" class="article-tag-list-link color3">算法</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/05/02/%E7%AE%97%E6%B3%95/%E4%BA%8C%E5%88%86/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp/C语言的整数溢出机制" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -945,83 +1039,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2023/04/17/c#/c#%E8%AF%AD%E6%B3%95/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-数据库/锁/实验" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/04/15/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/">锁</a>
-    </h1>
-  
-
-        
-        <a href="/2023/04/15/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/" class="archive-article-date">
-  	<time datetime="2023-04-15T14:37:01.877Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-15</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id=""><a href="#" class="headerlink" title=""></a></h1><h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `<span class="keyword">user</span>` (</span><br><span class="line">  `id` <span class="type">bigint</span> <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">  `name` <span class="type">varchar</span>(<span class="number">30</span>) <span class="keyword">COLLATE</span> utf8mb4_unicode_ci <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `age` <span class="type">int</span> <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY (`id`),</span><br><span class="line">  KEY `index_age` (`age`) <span class="keyword">USING</span> BTREE</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB  <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8mb4 <span class="keyword">COLLATE</span><span class="operator">=</span>utf8mb4_unicode_ci;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">1</span>,<span class="string">&#x27;路飞&#x27;</span>, <span class="number">19</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">5</span>,<span class="string">&#x27;索隆&#x27;</span>, <span class="number">21</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">10</span>,<span class="string">&#x27;山治&#x27;</span>, <span class="number">22</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">15</span>,<span class="string">&#x27;乌索普&#x27;</span>, <span class="number">20</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">20</span>,<span class="string">&#x27;香克斯&#x27;</span>, <span class="number">39</span>);</span><br></pre></td></tr></table></figure>
-
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/04/15/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/">展开全文 >></a>
         </p>
       
 

@@ -138,6 +138,83 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-数据库/锁/实验" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/04/15/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/">锁</a>
+    </h1>
+  
+
+        
+        <a href="/2023/04/15/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/" class="archive-article-date">
+  	<time datetime="2023-04-15T14:37:01.877Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id=""><a href="#" class="headerlink" title=""></a></h1><h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `<span class="keyword">user</span>` (</span><br><span class="line">  `id` <span class="type">bigint</span> <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">  `name` <span class="type">varchar</span>(<span class="number">30</span>) <span class="keyword">COLLATE</span> utf8mb4_unicode_ci <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `age` <span class="type">int</span> <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY (`id`),</span><br><span class="line">  KEY `index_age` (`age`) <span class="keyword">USING</span> BTREE</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB  <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8mb4 <span class="keyword">COLLATE</span><span class="operator">=</span>utf8mb4_unicode_ci;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">1</span>,<span class="string">&#x27;路飞&#x27;</span>, <span class="number">19</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">5</span>,<span class="string">&#x27;索隆&#x27;</span>, <span class="number">21</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">10</span>,<span class="string">&#x27;山治&#x27;</span>, <span class="number">22</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">15</span>,<span class="string">&#x27;乌索普&#x27;</span>, <span class="number">20</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">20</span>,<span class="string">&#x27;香克斯&#x27;</span>, <span class="number">39</span>);</span><br></pre></td></tr></table></figure>
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/04/15/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-cpp/左值引用和右值引用" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -1494,103 +1571,6 @@
       
         <p class="article-more-link">
           <a class="article-more-a" href="/2023/03/29/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/%E6%95%B4%E7%90%86/%E5%A4%A7%E5%B0%8F%E7%AB%AF%E5%AD%97%E8%8A%82%E5%BA%8F/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-操作系统/3264位操作系统区别" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/3264%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8C%BA%E5%88%AB/">32位操作系统和64位操作系统区别</a>
-    </h1>
-  
-
-        
-        <a href="/2023/03/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/3264%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8C%BA%E5%88%AB/" class="archive-article-date">
-  	<time datetime="2023-03-28T03:33:58.542Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-28</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="32位操作系统和64位操作系统区别"><a href="#32位操作系统和64位操作系统区别" class="headerlink" title="32位操作系统和64位操作系统区别"></a>32位操作系统和64位操作系统区别</h1><p>操作系统只是硬件和应用软件中间的一个平台。</p>
-<p>32位操作系统针对的32位的CPU设计。<br>64位操作系统针对的64位的CPU设计。</p>
-<p>我们的CPU从原来的8位，16位，到现在的32位和64位。</p>
-<p>cpu处理计算的时候“数据”和“指令”是不同对待的。</p>
-<p>8位的CPU,一次只能处理一个8位的“数据”或者一个8位的”指令”。比如’00001101’.<br>又比如：“+1”这个运算，你要先指示CPU做“+”，完成后再输入“1”数据给CPU。<br>8位的CPU优点是设计简单，处理速度比较快。<br>缺点就是：软件设计复杂，繁琐。不利于计算机的发展。</p>
-<p>后来推出了16位的CPU，我们就可以一次处理两个字节（16位）的数据了，比如“加1”这个命令。“加”是一个指令，占用8个位，余下的8位我们可以存放数据“1”了。</p>
-<p>32位的CPU就更加方便了，我们就可以一次处理一个a&#x3D;a+b这样的命令了。</p>
-<p>优点：简化了软件设计的复杂度<br>缺点：硬件设计更加复杂，计算速度下降。</p>
-<p>一般来讲32位的CPU对于我们来讲是最理性的CPU，对于软件开发来讲足够了。</p>
-<p>但是2的32次方 &#x3D; 4294967296bit &#x3D; 4G左右<br>很显然<strong>32位CPU只有4G左右的内存寻址空间</strong>，对于一些服务器来讲4G的内存的远远不够的了。我们需要更加大的内存寻址空间的话就需要对CPU进升级。64位CPU就这样诞生了。64位CPU的内存寻址空间是2的64次方（理论上）。</p>
-<p>但是现在的AMD和Inter的64位CPU并不是真正意义上的64CPU，只是进行了部分64位的改进，比如64位的内存寻址等。<br>要是真的全部都是64位的了，那么现在市场上的软件将全部被淘汰不能使用了~呵呵，想像一下会是什么样子。</p>
-<p>64位的操作系统针对64位CPU设计的，增加了一些64位的指令，但还是和32兼容的。对于我们普通用户来讲64位系统意义不大。</p>
-<h3 id="32位电脑与64位电脑有什么不同？"><a href="#32位电脑与64位电脑有什么不同？" class="headerlink" title="32位电脑与64位电脑有什么不同？"></a>32位电脑与64位电脑有什么不同？</h3><p>我们通常说的64位技术是相对于32位而言的，<strong>这个位数指的是CPU GPRs(General-Purpose Registers，通用寄存器)的数据宽度为64位</strong>，64位指令集就是运行64位数据的指令，也就是说处理器一次可以运行64bit数据。</p>
-<p>64位平台不管是在性能上，还是在功能上，都要领先于目前的32位平台，目前主流的32位处理器在性能执行模式方面存在一个严重的缺陷：当面临大量的数据流时，32位的寄存器和指令集不能及时进行相应的处理运算。32位处理器一次只能处理32位，也就是4个字节的数据；而64位处理器一次就能处理64位，即8个字节的数据。如果将总长128位的指令分别按16位、32位、64位为单位进行编辑的话：32位的处理器需要4个指令，而64位处理器则只要两个指令。显然，在工作频率相同的情况下，64位处理器的处理速度比32位的更快。除了运算能力之外，与32位处理器相比，64位处理器的优势还体现在系统对内存的控制上。由于地址使用的是特殊的整数，而64位处理器的一个ALU（算术逻辑运算器）和寄存器可以处理更大的整数，也就是更大的地址。传统32位处理器的寻址空间最大为4GB，而64位的处理器在理论上则可以达到1800万个TB（1TB&#x3D;1024GB）。</p>
-<p>从32位到64位，表面上好象只是CPU字长增大了一倍，实际上它使寻址范围、最大内存容量、数据传输和处理速度、数值精度等指标也成倍增加，带来的结果就是CPU的处理能力得到大幅提升，尤其是对强烈依赖数值运算、存在巨量数据吞吐和需要超大并发处理的应用提升效果非常明显，如科学计算、人工智能、平面设计、视频处理、3D动画和游戏、数据库以及各种网络服务器等</p>
-<h2 id="使用C-区别不同位数的操作系统"><a href="#使用C-区别不同位数的操作系统" class="headerlink" title="使用C++区别不同位数的操作系统"></a>使用C++区别不同位数的操作系统</h2><p>在C++中，不同位数的操作系统会影响可用的数据类型和函数调用规则等方面。以下是一些常见的区别：</p>
-<ol>
-<li>数据类型：<strong>在32位操作系统中，int、long和指针等数据类型通常占用4个字节（32位），而在64位操作系统中，这些数据类型通常占用8个字节（64位）</strong>。因此，在编写跨平台代码时，需要特别注意数据类型的大小。</li>
-<li>内存管理：由于64位操作系统支持更大的内存地址空间，因此可以在更大的内存范围内分配和管理内存。此外，64位操作系统可以利用更多的寄存器来传递参数和执行函数调用，从而提高程序的性能。</li>
-<li>函数调用规则：在32位操作系统中，函数参数通常是通过堆栈来传递的，而在64位操作系统中，函数参数通常是通过寄存器来传递的。这意味着在64位操作系统上，函数调用的开销可能会更小，从而提高程序的性能。</li>
-<li>第三方库：在编写跨平台代码时，需要考虑使用的第三方库是否支持不同位数的操作系统。某些库可能只支持特定的操作系统或处理器架构，因此需要进行测试和兼容性调整。</li>
-</ol>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">    <span class="keyword">if</span>(<span class="built_in">sizeof</span>(<span class="type">void</span>*) == <span class="number">2</span>)&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;16-bit operating system&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;<span class="keyword">else</span> <span class="keyword">if</span>(<span class="built_in">sizeof</span>(<span class="type">void</span>*) == <span class="number">4</span>)&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;32-bit operating system&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;<span class="keyword">else</span> <span class="keyword">if</span>(<span class="built_in">sizeof</span>(<span class="type">void</span>*) == <span class="number">8</span>)&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;64-bit operator system&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        cout &lt;&lt; <span class="string">&quot;Unknown operating system&quot;</span> &lt;&lt; endl;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">操作系统</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/28/%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/3264%E4%BD%8D%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%8C%BA%E5%88%AB/">展开全文 >></a>
         </p>
       
 
