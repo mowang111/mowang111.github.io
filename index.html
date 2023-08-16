@@ -138,6 +138,507 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-Chrome/CDP/简单Chrome的CDP调试插件" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/08/16/Chrome/CDP/%E7%AE%80%E5%8D%95Chrome%E7%9A%84CDP%E8%B0%83%E8%AF%95%E6%8F%92%E4%BB%B6/">简单Chrome的CDP调试插件</a>
+    </h1>
+  
+
+        
+        <a href="/2023/08/16/Chrome/CDP/%E7%AE%80%E5%8D%95Chrome%E7%9A%84CDP%E8%B0%83%E8%AF%95%E6%8F%92%E4%BB%B6/" class="archive-article-date">
+  	<time datetime="2023-08-16T06:28:00.288Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-08-16</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="简单Chrome的CDP调试插件"><a href="#简单Chrome的CDP调试插件" class="headerlink" title="简单Chrome的CDP调试插件"></a>简单Chrome的CDP调试插件</h1><p>文件结构：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">-icons</span><br><span class="line">--icon16.png</span><br><span class="line">--icon48.png</span><br><span class="line">--icon128.png</span><br><span class="line">-background.js</span><br><span class="line">-mainfest.json</span><br><span class="line">-popup.html</span><br><span class="line">-popup.js</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/img/image-20230816142432655.png" alt="image-20230816142432655"></p>
+<p>background.js</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">chrome.<span class="property">runtime</span>.<span class="property">onMessage</span>.<span class="title function_">addListener</span>(<span class="keyword">function</span>(<span class="params">request, sender, sendResponse</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (request.<span class="property">action</span> == <span class="string">&quot;getTitles&quot;</span>) &#123;</span><br><span class="line">        chrome.<span class="property">debugger</span>.<span class="title function_">getTargets</span>(<span class="function">(<span class="params">targets</span>) =&gt;</span> &#123;</span><br><span class="line">            <span class="keyword">let</span> titles = targets.<span class="title function_">filter</span>(<span class="function"><span class="params">t</span> =&gt;</span> t.<span class="property">type</span> === <span class="string">&#x27;page&#x27;</span>).<span class="title function_">map</span>(<span class="function"><span class="params">t</span> =&gt;</span> t.<span class="property">title</span>);</span><br><span class="line">            <span class="title function_">sendResponse</span>(&#123; <span class="attr">titles</span>: titles &#125;);</span><br><span class="line">        &#125;);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>; <span class="comment">// indicates the response is sent asynchronously</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>manifest.json</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;manifest_version&quot;</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;CDP Debugger&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;version&quot;</span><span class="punctuation">:</span> <span class="string">&quot;1.0&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;description&quot;</span><span class="punctuation">:</span> <span class="string">&quot;Simple extension to debug using CDP&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;background&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;service_worker&quot;</span><span class="punctuation">:</span> <span class="string">&quot;background.js&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;permissions&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">&quot;debugger&quot;</span><span class="punctuation">,</span> <span class="string">&quot;activeTab&quot;</span><span class="punctuation">,</span> <span class="string">&quot;scripting&quot;</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;action&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;default_popup&quot;</span><span class="punctuation">:</span> <span class="string">&quot;popup.html&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;default_icon&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">      <span class="attr">&quot;16&quot;</span><span class="punctuation">:</span> <span class="string">&quot;icons/icon16.png&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;48&quot;</span><span class="punctuation">:</span> <span class="string">&quot;icons/icon48.png&quot;</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">&quot;128&quot;</span><span class="punctuation">:</span> <span class="string">&quot;icons/icon128.png&quot;</span></span><br><span class="line">    <span class="punctuation">&#125;</span></span><br><span class="line">  <span class="punctuation">&#125;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;icons&quot;</span><span class="punctuation">:</span> <span class="punctuation">&#123;</span></span><br><span class="line">    <span class="attr">&quot;16&quot;</span><span class="punctuation">:</span> <span class="string">&quot;icons/icon16.png&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;48&quot;</span><span class="punctuation">:</span> <span class="string">&quot;icons/icon48.png&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">&quot;128&quot;</span><span class="punctuation">:</span> <span class="string">&quot;icons/icon128.png&quot;</span></span><br><span class="line">  <span class="punctuation">&#125;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+
+<p>popup.html</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;!DOCTYPE <span class="keyword">html</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">html</span> <span class="attr">lang</span>=<span class="string">&quot;en&quot;</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">head</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">charset</span>=<span class="string">&quot;UTF-8&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">meta</span> <span class="attr">name</span>=<span class="string">&quot;viewport&quot;</span> <span class="attr">content</span>=<span class="string">&quot;width=device-width, initial-scale=1.0&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">title</span>&gt;</span>CDP Debugger<span class="tag">&lt;/<span class="name">title</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">head</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">body</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">id</span>=<span class="string">&quot;getTitles&quot;</span>&gt;</span>Get Tab Titles<span class="tag">&lt;/<span class="name">button</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">ul</span> <span class="attr">id</span>=<span class="string">&quot;titlesList&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">&quot;popup.js&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">html</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>popup.js</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;getTitles&#x27;</span>).<span class="title function_">addEventListener</span>(<span class="string">&#x27;click&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">  chrome.<span class="property">runtime</span>.<span class="title function_">sendMessage</span>(&#123; <span class="attr">action</span>: <span class="string">&quot;getTitles&quot;</span> &#125;, <span class="keyword">function</span>(<span class="params">response</span>) &#123;</span><br><span class="line">      <span class="keyword">const</span> ul = <span class="variable language_">document</span>.<span class="title function_">getElementById</span>(<span class="string">&#x27;titlesList&#x27;</span>);</span><br><span class="line">      <span class="keyword">if</span> (!ul) &#123;</span><br><span class="line">          <span class="variable language_">console</span>.<span class="title function_">error</span>(<span class="string">&quot;Element with ID &#x27;titlesList&#x27; not found&quot;</span>);</span><br><span class="line">          <span class="keyword">return</span>;</span><br><span class="line">      &#125;</span><br><span class="line">      ul.<span class="property">innerHTML</span> = <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">      response.<span class="property">titles</span>.<span class="title function_">forEach</span>(<span class="function"><span class="params">title</span> =&gt;</span> &#123;</span><br><span class="line">          <span class="keyword">let</span> li = <span class="variable language_">document</span>.<span class="title function_">createElement</span>(<span class="string">&#x27;li&#x27;</span>);</span><br><span class="line">          li.<span class="property">textContent</span> = title;</span><br><span class="line">          ul.<span class="title function_">appendChild</span>(li);</span><br><span class="line">      &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color2">Chrome</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">CDP</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/08/16/Chrome/CDP/%E7%AE%80%E5%8D%95Chrome%E7%9A%84CDP%E8%B0%83%E8%AF%95%E6%8F%92%E4%BB%B6/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-日常配置/代理" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/08/15/%E6%97%A5%E5%B8%B8%E9%85%8D%E7%BD%AE/%E4%BB%A3%E7%90%86/">window shell中使用代理</a>
+    </h1>
+  
+
+        
+        <a href="/2023/08/15/%E6%97%A5%E5%B8%B8%E9%85%8D%E7%BD%AE/%E4%BB%A3%E7%90%86/" class="archive-article-date">
+  	<time datetime="2023-08-15T07:28:29.276Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-08-15</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="window-shell中使用代理"><a href="#window-shell中使用代理" class="headerlink" title="window shell中使用代理"></a>window shell中使用代理</h1><p>如果你想在 Windows 的命令行界面（Command Prompt 或 PowerShell）中使用代理，那么确实可以使用 Clash 为其提供代理支持。这样可以确保命令行中的请求（例如 <code>curl</code>、<code>git</code> 等）都通过 Clash 代理进行。</p>
+<p>以下是在 Windows 的命令行中设置代理的方法：</p>
+<ol>
+<li><p><strong>启动 Clash</strong><br>首先，确保你的 Clash 客户端已经启动并且正确配置。</p>
+</li>
+<li><p><strong>设置命令行代理</strong><br>打开你想设置的命令行界面（Command Prompt 或 PowerShell）。使用以下命令来设置代理：</p>
+<ul>
+<li><p><strong>HTTP 代理</strong><br>如果 Clash 为你提供了一个 HTTP 代理（通常默认的端口是 7890），则可以设置：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">set http_proxy=http://127.0.0.1:7890</span><br><span class="line">set https_proxy=http://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
+
+<p>在 PowerShell 中，你可以使用以下命令：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$env:http_proxy</span>=<span class="string">&quot;http://127.0.0.1:7890&quot;</span></span><br><span class="line"><span class="variable">$env:https_proxy</span>=<span class="string">&quot;http://127.0.0.1:7890&quot;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p><strong>SOCKS 代理</strong><br>如果 Clash 为你提供了一个 SOCKS 代理（通常默认的端口是 7891），则可以设置：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">set socks_proxy=socks5://127.0.0.1:7891</span><br></pre></td></tr></table></figure>
+
+<p>在 PowerShell 中：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$env:socks_proxy</span>=<span class="string">&quot;socks5://127.0.0.1:7891&quot;</span></span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ol>
+<p>请注意，这些设置只在当前的命令行会话中有效。当你关闭命令行窗口时，代理设置会失效。如果你每次都想使用这些设置，你可能需要在启动命令行时自动运行这些命令，或者使用批处理脚本来实现。</p>
+<p>另外，不是所有的命令行工具都会遵循这些环境变量来使用代理，所以对于某些特定工具（如 <code>git</code>），你可能还需要单独配置其代理设置。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/08/15/%E6%97%A5%E5%B8%B8%E9%85%8D%E7%BD%AE/%E4%BB%A3%E7%90%86/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-计算机网络/wireshark/子网掩码&amp;wireshark小实验" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/08/12/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/wireshark/%E5%AD%90%E7%BD%91%E6%8E%A9%E7%A0%81&wireshark%E5%B0%8F%E5%AE%9E%E9%AA%8C/">子网掩码&amp;wireshark小实验</a>
+    </h1>
+  
+
+        
+        <a href="/2023/08/12/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/wireshark/%E5%AD%90%E7%BD%91%E6%8E%A9%E7%A0%81&wireshark%E5%B0%8F%E5%AE%9E%E9%AA%8C/" class="archive-article-date">
+  	<time datetime="2023-08-12T06:33:52.449Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-08-12</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="子网掩码-amp-wireshark小实验"><a href="#子网掩码-amp-wireshark小实验" class="headerlink" title="子网掩码&amp;wireshark小实验"></a>子网掩码&amp;wireshark小实验</h1><h2 id="实验环境搭建"><a href="#实验环境搭建" class="headerlink" title="实验环境搭建"></a>实验环境搭建</h2><p>主机是win11，虚拟机ubuntu（使用桥接模式）</p>
+<p>参考<a target="_blank" rel="noopener" href="https://www.cnblogs.com/heruiguo/p/11132887.html%E5%AE%89%E8%A3%85%E5%9B%9E%E7%8E%AF%E9%80%82%E9%85%8D%E5%99%A8%EF%BC%8C%E5%B0%86%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A1%A5%E6%8E%A5%E5%88%B0%E8%BF%99%E4%B8%AA%E9%80%82%E9%85%8D%E5%99%A8">https://www.cnblogs.com/heruiguo/p/11132887.html安装回环适配器，将虚拟机桥接到这个适配器</a></p>
+<p>虚拟机的ip地址设置为192.168.1.100，子网掩码配置成255.255.255.0，主机回环适配器的ip地址设置为192.168.1.137，子网掩码配置成255.255.255.224</p>
+<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230812165521573.png" alt="image-20230812165521573"></p>
+<p>备注：Ubuntu22配置ip</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">sudo vim /etc/netplan/01-network-manager-all.yaml</span><br><span class="line">sudo netplan apply</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Let NetworkManager manage all devices on this system</span></span><br><span class="line"><span class="comment"># network:</span></span><br><span class="line">  <span class="comment">#version: 2</span></span><br><span class="line">  <span class="comment"># renderer: NetworkManager</span></span><br><span class="line">  <span class="comment">#</span></span><br><span class="line">network:</span><br><span class="line">  ethernets:</span><br><span class="line">    enp0s3:</span><br><span class="line">      dhcp4: no</span><br><span class="line">      dhcp6: no</span><br><span class="line">      addresses:</span><br><span class="line">        - 192.168.1.100/24</span><br><span class="line">      routes:</span><br><span class="line">        - to: default</span><br><span class="line">          via: 192.168.1.137</span><br><span class="line">      nameservers:</span><br><span class="line">        addresses:</span><br><span class="line">          - 114.114.114.114</span><br><span class="line">  version: 2</span><br><span class="line">  renderer: networkd</span><br></pre></td></tr></table></figure>
+
+
+
+<h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><p>主机ping虚拟机</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230812165611865.png" alt="image-20230812165611865"></p>
+<p>虚拟机ping主机</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">计算机网络</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color5">wireshark</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/08/12/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/wireshark/%E5%AD%90%E7%BD%91%E6%8E%A9%E7%A0%81&wireshark%E5%B0%8F%E5%AE%9E%E9%AA%8C/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-Win32API/SendMessage和PostMessage区别" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/07/10/Win32API/SendMessage%E5%92%8CPostMessage%E5%8C%BA%E5%88%AB/">SendMessage和PostMessage区别</a>
+    </h1>
+  
+
+        
+        <a href="/2023/07/10/Win32API/SendMessage%E5%92%8CPostMessage%E5%8C%BA%E5%88%AB/" class="archive-article-date">
+  	<time datetime="2023-07-10T03:50:01.236Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-07-10</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="SendMessage和PostMessage区别"><a href="#SendMessage和PostMessage区别" class="headerlink" title="SendMessage和PostMessage区别"></a>SendMessage和PostMessage区别</h2><ol>
+<li><strong>同步与异步</strong>：<code>SendMessage</code>是同步的，<code>PostMessage</code>是异步的。当你调用<code>SendMessage</code>时，系统会等待处理完消息后再返回。而<code>PostMessage</code>则不同，它只是把消息投递到消息队列中，然后立即返回，不会等待消息被处理。</li>
+<li><strong>消息处理的优先级</strong>：<code>SendMessage</code>发送的消息会被立即处理，即使在接收窗口的消息队列中已经有其他的消息在等待处理。相反，<code>PostMessage</code>发送的消息会被添加到消息队列的末尾，只有当消息队列中的其他消息都被处理完后，这个消息才会被处理。</li>
+<li><strong>返回值</strong>：<code>SendMessage</code>会返回消息处理的结果，而<code>PostMessage</code>则总是返回非零值，表示消息已成功投递到消息队列中。</li>
+<li><strong>消息投递的成功与否</strong>：<code>SendMessage</code>总是成功地把消息送达到目标窗口，而<code>PostMessage</code>可能会失败。例如，如果消息队列已满，<code>PostMessage</code>就会失败。</li>
+</ol>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/win32//" class="article-tag-list-link color1">win32</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/07/10/Win32API/SendMessage%E5%92%8CPostMessage%E5%8C%BA%E5%88%AB/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-c#/IDisposable接口" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/05/11/c#/IDisposable%E6%8E%A5%E5%8F%A3/">IDisposable接口</a>
+    </h1>
+  
+
+        
+        <a href="/2023/05/11/c#/IDisposable%E6%8E%A5%E5%8F%A3/" class="archive-article-date">
+  	<time datetime="2023-05-10T17:03:12.569Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-05-11</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="IDisposable接口"><a href="#IDisposable接口" class="headerlink" title="IDisposable接口"></a>IDisposable接口</h1><p>IDisposable是C#中的接口（interface），用于实现对象资源的释放。在C#中，当一个对象不再被使用时，它可能持有一些非托管资源，如文件、数据库连接、网络连接等。为了确保这些资源能够及时被释放，开发人员可以实现IDisposable接口，并在其中编写对象资源释放的代码。</p>
+<p>IDisposable接口定义了一个Dispose()方法，用于释放对象资源。开发人员可以在Dispose()方法中编写自己的释放代码，如关闭文件句柄、关闭数据库连接、关闭网络连接等。当对象不再被使用时，可以调用Dispose()方法来释放资源。</p>
+<p>在C#中，还可以使用using语句来自动调用Dispose()方法，以确保资源被及时释放。例如：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> (FileStream fileStream = <span class="keyword">new</span> FileStream(<span class="string">&quot;filename.txt&quot;</span>, FileMode.Open))</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 使用文件流进行读取操作</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在上述代码中，使用了using语句来创建FileStream对象，并在结束using代码块时自动调用Dispose()方法来释放文件流的资源。</p>
+<p>实现IDisposable接口是一种良好的编程实践，可以确保对象的资源被及时释放，避免资源泄漏和系统性能下降等问题。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">c#</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/05/11/c#/IDisposable%E6%8E%A5%E5%8F%A3/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-COM组件/COM组件" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2023/05/06/COM%E7%BB%84%E4%BB%B6/COM%E7%BB%84%E4%BB%B6/">COM组件</a>
+    </h1>
+  
+
+        
+        <a href="/2023/05/06/COM%E7%BB%84%E4%BB%B6/COM%E7%BB%84%E4%BB%B6/" class="archive-article-date">
+  	<time datetime="2023-05-06T15:40:56.410Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-05-06</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="COM组件"><a href="#COM组件" class="headerlink" title="COM组件"></a>COM组件</h1>
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">c++</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2023/05/06/COM%E7%BB%84%E4%BB%B6/COM%E7%BB%84%E4%BB%B6/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-算法/二分" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -563,514 +1064,9 @@
 
 
   
-    <article id="post-算法/滑动窗口" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/04/30/%E7%AE%97%E6%B3%95/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/">滑动窗口</a>
-    </h1>
-  
-
-        
-        <a href="/2023/04/30/%E7%AE%97%E6%B3%95/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/" class="archive-article-date">
-  	<time datetime="2023-04-30T12:29:31.356Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-30</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="滑动窗口"><a href="#滑动窗口" class="headerlink" title="滑动窗口"></a>滑动窗口</h2><p>模板</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>, j = <span class="number">0</span>; i &lt; length &amp;&amp; j &lt; length;)&#123;</span><br><span class="line">    <span class="keyword">while</span>(i &lt; length &amp;&amp; 条件)&#123;</span><br><span class="line">        i++;</span><br><span class="line">    &#125;</span><br><span class="line">   	<span class="comment">//需要鉴别一下是i &lt; length跳出的，还是不符合条件跳出的</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">while</span>(j &lt; length &amp;&amp; !条件) j++; <span class="comment">//j++使得[j, i)符合条件</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/longest-substring-with-at-most-two-distinct-characters/description/?envType=study-plan-v2&id=premium-algo-100&orderBy=most_votes">至多包含两个不同字符的最长子串</a></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">算法</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/算法//" class="article-tag-list-link color3">算法</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/04/30/%E7%AE%97%E6%B3%95/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-Win32API/挂钩" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/04/26/Win32API/%E6%8C%82%E9%92%A9/">挂钩</a>
-    </h1>
-  
-
-        
-        <a href="/2023/04/26/Win32API/%E6%8C%82%E9%92%A9/" class="archive-article-date">
-  	<time datetime="2023-04-26T12:33:55.091Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="实现全局的键盘钩子，用于监视和捕获用户按键事件"><a href="#实现全局的键盘钩子，用于监视和捕获用户按键事件" class="headerlink" title="实现全局的键盘钩子，用于监视和捕获用户按键事件"></a>实现全局的键盘钩子，用于监视和捕获用户按键事件</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;Windows.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 全局的键盘钩子处理函数</span></span><br><span class="line"><span class="function">LRESULT CALLBACK <span class="title">KeyboardHookProc</span><span class="params">(<span class="type">int</span> nCode, WPARAM wParam, LPARAM lParam)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (nCode &gt;= <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 提取键盘事件的信息</span></span><br><span class="line">        KBDLLHOOKSTRUCT* pKeyInfo = (KBDLLHOOKSTRUCT*)lParam;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 检查按下的按键是否是我们要监视的特定按键，例如VK_F1表示F1键</span></span><br><span class="line">        <span class="keyword">if</span> (pKeyInfo-&gt;vkCode == VK_F1 &amp;&amp; wParam == WM_KEYDOWN)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="comment">// 在这里执行特定的操作，例如弹出消息框</span></span><br><span class="line">            <span class="built_in">MessageBox</span>(<span class="literal">NULL</span>, <span class="string">L&quot;F1键被按下了！&quot;</span>, <span class="string">L&quot;键盘钩子示例&quot;</span>, MB_OK);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 传递消息给下一个钩子或目标窗口</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">CallNextHookEx</span>(<span class="literal">NULL</span>, nCode, wParam, lParam);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 安装全局键盘钩子</span></span><br><span class="line">    HHOOK hKeyboardHook = <span class="built_in">SetWindowsHookEx</span>(WH_KEYBOARD_LL, KeyboardHookProc, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">if</span> (hKeyboardHook == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        std::cerr &lt;&lt; <span class="string">&quot;无法安装键盘钩子！错误代码：&quot;</span> &lt;&lt; <span class="built_in">GetLastError</span>() &lt;&lt; std::endl;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 消息循环，等待消息</span></span><br><span class="line">    MSG msg;</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">GetMessage</span>(&amp;msg, <span class="literal">NULL</span>, <span class="number">0</span>, <span class="number">0</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">TranslateMessage</span>(&amp;msg);</span><br><span class="line">        <span class="built_in">DispatchMessage</span>(&amp;msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 卸载键盘钩子</span></span><br><span class="line">    <span class="built_in">UnhookWindowsHookEx</span>(hKeyboardHook);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/win32//" class="article-tag-list-link color1">win32</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/04/26/Win32API/%E6%8C%82%E9%92%A9/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-UIA/UI自动化" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/04/26/UIA/UI%E8%87%AA%E5%8A%A8%E5%8C%96/">UI自动化</a>
-    </h1>
-  
-
-        
-        <a href="/2023/04/26/UIA/UI%E8%87%AA%E5%8A%A8%E5%8C%96/" class="archive-article-date">
-  	<time datetime="2023-04-26T09:41:26.991Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="UI自动化"><a href="#UI自动化" class="headerlink" title="UI自动化"></a>UI自动化</h1><h2 id="UI自动化组件"><a href="#UI自动化组件" class="headerlink" title="UI自动化组件"></a>UI自动化组件</h2><ul>
-<li>Provider API</li>
-<li>Client API</li>
-<li>UIAutomationCore.dll</li>
-<li>Oeacc.dll</li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/Linux//" class="article-tag-list-link color1">Linux</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/04/26/UIA/UI%E8%87%AA%E5%8A%A8%E5%8C%96/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-c#/c#调用c++" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/04/26/c#/c#%E8%B0%83%E7%94%A8c++/">c#调用c++</a>
-    </h1>
-  
-
-        
-        <a href="/2023/04/26/c#/c#%E8%B0%83%E7%94%A8c++/" class="archive-article-date">
-  	<time datetime="2023-04-26T07:17:58.571Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="c-调用c"><a href="#c-调用c" class="headerlink" title="c#调用c++"></a>c#调用c++</h1>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">c#</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/04/26/c#/c#%E8%B0%83%E7%94%A8c++/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-Win32API/窗口" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/04/26/Win32API/%E7%AA%97%E5%8F%A3/">创建窗口</a>
-    </h1>
-  
-
-        
-        <a href="/2023/04/26/Win32API/%E7%AA%97%E5%8F%A3/" class="archive-article-date">
-  	<time datetime="2023-04-26T07:10:04.427Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-26</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h2 id="创建窗口"><a href="#创建窗口" class="headerlink" title="创建窗口"></a>创建窗口</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;Windows.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function">LRESULT CALLBACK <span class="title">WndProc</span><span class="params">(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 窗口过程处理逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">DefWindowProc</span>(hwnd, uMsg, wParam, lParam);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> WINAPI <span class="title">WinMain</span><span class="params">(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, <span class="type">int</span> nCmdShow)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">// 注册窗口类</span></span><br><span class="line">    WNDCLASSEX wcex;</span><br><span class="line">    wcex.cbSize = <span class="built_in">sizeof</span>(WNDCLASSEX);</span><br><span class="line">    wcex.style = CS_HREDRAW | CS_VREDRAW;</span><br><span class="line">    wcex.lpfnWndProc = WndProc;</span><br><span class="line">    wcex.cbClsExtra = <span class="number">0</span>;</span><br><span class="line">    wcex.cbWndExtra = <span class="number">0</span>;</span><br><span class="line">    wcex.hInstance = hInstance;  <span class="comment">// 初始化hinst</span></span><br><span class="line">    wcex.hIcon = <span class="built_in">LoadIcon</span>(<span class="literal">NULL</span>, IDI_APPLICATION);</span><br><span class="line">    wcex.hCursor = <span class="built_in">LoadCursor</span>(<span class="literal">NULL</span>, IDC_ARROW);</span><br><span class="line">    wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + <span class="number">1</span>);</span><br><span class="line">    wcex.lpszMenuName = <span class="literal">NULL</span>;</span><br><span class="line">    wcex.lpszClassName = <span class="built_in">TEXT</span>(<span class="string">&quot;MainWClass&quot;</span>); <span class="comment">// 窗口类名</span></span><br><span class="line">    wcex.hIconSm = <span class="built_in">LoadIcon</span>(<span class="literal">NULL</span>, IDI_APPLICATION);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">RegisterClassEx</span>(&amp;wcex))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">MessageBox</span>(<span class="literal">NULL</span>, <span class="built_in">TEXT</span>(<span class="string">&quot;窗口类注册失败！&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;错误&quot;</span>), MB_ICONERROR);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 创建窗口</span></span><br><span class="line">    HWND hwndMain = <span class="built_in">CreateWindowEx</span>(</span><br><span class="line">        <span class="number">0</span>,                      <span class="comment">// no extended styles           </span></span><br><span class="line">        <span class="built_in">TEXT</span>(<span class="string">&quot;MainWClass&quot;</span>),     <span class="comment">// class name                   </span></span><br><span class="line">        <span class="built_in">TEXT</span>(<span class="string">&quot;Main Window&quot;</span>),    <span class="comment">// window name                  </span></span><br><span class="line">        WS_OVERLAPPEDWINDOW |   <span class="comment">// overlapped window            </span></span><br><span class="line">        WS_HSCROLL |            <span class="comment">// horizontal scroll bar        </span></span><br><span class="line">        WS_VSCROLL,             <span class="comment">// vertical scroll bar          </span></span><br><span class="line">        CW_USEDEFAULT,          <span class="comment">// default horizontal position  </span></span><br><span class="line">        CW_USEDEFAULT,          <span class="comment">// default vertical position    </span></span><br><span class="line">        CW_USEDEFAULT,          <span class="comment">// default width                </span></span><br><span class="line">        CW_USEDEFAULT,          <span class="comment">// default height               </span></span><br><span class="line">        <span class="literal">NULL</span>,                   <span class="comment">// no parent or owner window    </span></span><br><span class="line">        <span class="literal">NULL</span>,                   <span class="comment">// class menu used              </span></span><br><span class="line">        hInstance,              <span class="comment">// 实例句柄</span></span><br><span class="line">        <span class="literal">NULL</span>);                  <span class="comment">// no window creation data   </span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!hwndMain)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">MessageBox</span>(<span class="literal">NULL</span>, <span class="built_in">TEXT</span>(<span class="string">&quot;窗口创建失败！&quot;</span>), <span class="built_in">TEXT</span>(<span class="string">&quot;错误&quot;</span>), MB_ICONERROR);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 显示窗口</span></span><br><span class="line">    <span class="built_in">ShowWindow</span>(hwndMain, nCmdShow);</span><br><span class="line">    <span class="built_in">UpdateWindow</span>(hwndMain);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 消息循环</span></span><br><span class="line">    MSG msg;</span><br><span class="line">    <span class="keyword">while</span> (<span class="built_in">GetMessage</span>(&amp;msg, <span class="literal">NULL</span>, <span class="number">0</span>, <span class="number">0</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">TranslateMessage</span>(&amp;msg);</span><br><span class="line">        <span class="built_in">DispatchMessage</span>(&amp;msg);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> (<span class="type">int</span>)msg.wParam;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-      
-	<div class="article-category tagcloud">
-		<i class="icon-book icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="/categories/win32//" class="article-tag-list-link color1">win32</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/04/26/Win32API/%E7%AA%97%E5%8F%A3/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-c#/c#语法" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/04/17/c#/c#%E8%AF%AD%E6%B3%95/">c#语法</a>
-    </h1>
-  
-
-        
-        <a href="/2023/04/17/c#/c#%E8%AF%AD%E6%B3%95/" class="archive-article-date">
-  	<time datetime="2023-04-17T02:31:53.083Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-04-17</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="c-语法"><a href="#c-语法" class="headerlink" title="c#语法"></a>c#语法</h1><h2 id="c-可空类型"><a href="#c-可空类型" class="headerlink" title="c#可空类型"></a>c#可空类型</h2><h3 id="C-nullable：可空类型"><a href="#C-nullable：可空类型" class="headerlink" title="C# nullable：可空类型"></a>C# nullable：可空类型</h3><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">data_type? variable_name = <span class="literal">null</span>;</span><br></pre></td></tr></table></figure>
-
-<p>其中，data_type 为要声明的数据类型，后面紧跟一个问号；variable_name 则为变量的名称。</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span>? num1;</span><br><span class="line">            <span class="built_in">int</span>? num2 = <span class="number">123</span>;</span><br><span class="line">            num1 = <span class="literal">null</span>;</span><br><span class="line">        </span><br><span class="line">            <span class="built_in">double</span>? num3 = <span class="keyword">new</span> <span class="built_in">double</span>?();</span><br><span class="line">            <span class="built_in">double</span>? num4 = <span class="number">3.1415926</span>;</span><br><span class="line">            <span class="built_in">bool</span>? boolval = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 输出这些值</span></span><br><span class="line">            Console.WriteLine(<span class="string">&quot;num1 = &#123;0&#125; \r\n num2 = &#123;1&#125; \r\n num3 = &#123;2&#125; \r\n num4 = &#123;3&#125; \r\n boolval = &#123;4&#125;&quot;</span>, num1, num2, num3, num4, boolval);</span><br><span class="line">            Console.ReadLine();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">num1 =</span><br><span class="line">num2 = <span class="number">123</span></span><br><span class="line">num3 =</span><br><span class="line">num4 = <span class="number">3.1415926</span></span><br><span class="line">boolval =</span><br></pre></td></tr></table></figure>
-
-<h3 id="Null合并运算符（？？）"><a href="#Null合并运算符（？？）" class="headerlink" title="Null合并运算符（？？）"></a>Null合并运算符（？？）</h3><p>在 C# 中 Null 合并运算符用于定义可空类型和引用类型的默认值。如果此运算符的左操作数不为 null，那么运算符将返回左操作数，否则返回右操作数。例如表达式<code>a??b</code>中，如果 a 不为空，那么表达式的值则为 a，反之则为 b。</p>
-<p>需要注意的是，Null 合并运算符左右两边操作数的类型必须相同，或者右操作数的类型可以隐式的转换为左操作数的类型，否则将编译错误。</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span>? num1 = <span class="literal">null</span>;</span><br><span class="line">            <span class="built_in">int</span>? num2 = <span class="number">123</span>;</span><br><span class="line">            <span class="built_in">int</span> num3;</span><br><span class="line">        </span><br><span class="line">            num3 = num1 ?? <span class="number">321</span>;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;num3 = &#123;0&#125;&quot;</span>, num3);</span><br><span class="line"></span><br><span class="line">            num3 = num2 ?? <span class="number">321</span>;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;num3 = &#123;0&#125;&quot;</span>, num3);</span><br><span class="line">            Console.ReadLine();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">num3 = <span class="number">321</span></span><br><span class="line">num3 = <span class="number">123</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h2><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">double</span>[] arr1 = &#123;<span class="number">96.5</span>, <span class="number">98.0</span>, <span class="number">99.5</span>, <span class="number">90.0</span>&#125;;</span><br><span class="line"><span class="built_in">int</span>[] arr2 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">10</span>]&#123;<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span>[] arr = <span class="keyword">new</span> <span class="built_in">int</span>[]&#123;<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;;</span><br><span class="line">            <span class="keyword">foreach</span>(<span class="built_in">int</span> i <span class="keyword">in</span> arr)&#123;</span><br><span class="line">                Console.WriteLine(<span class="string">&quot;&#123;1&#125;&quot;</span>, i);</span><br><span class="line">            &#125;</span><br><span class="line">            Console.ReadLine();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="二维数组"><a href="#二维数组" class="headerlink" title="二维数组"></a>二维数组</h3><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[,] arr = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>,<span class="number">4</span>]&#123;</span><br><span class="line">    &#123;<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;,</span><br><span class="line">    &#123;<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>&#125;,</span><br><span class="line">    &#123;<span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span> a = arr[<span class="number">1</span>, <span class="number">0</span>];</span><br></pre></td></tr></table></figure>
-
-<h3 id="交错数组"><a href="#交错数组" class="headerlink" title="交错数组"></a>交错数组</h3><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[][] jaggedArray1 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>][]; <span class="comment">// 定义一个交错数组</span></span><br><span class="line">jaggedArray1[<span class="number">0</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">5</span>];        <span class="comment">// 对数组的第一个元素初始化</span></span><br><span class="line">jaggedArray1[<span class="number">1</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">4</span>];        <span class="comment">// 对数组的第二个元素初始化</span></span><br><span class="line">jaggedArray1[<span class="number">2</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">2</span>];        <span class="comment">// 对数组的第三个元素初始化</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span>[][] jaggedArray2 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>][]; <span class="comment">// 定义一个交错数组</span></span><br><span class="line">jaggedArray2[<span class="number">0</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>&#125;;</span><br><span class="line">jaggedArray2[<span class="number">1</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;;</span><br><span class="line">jaggedArray2[<span class="number">2</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">10</span>, <span class="number">11</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span>[][] jaggedArray3 = <span class="keyword">new</span> <span class="built_in">int</span>[][]&#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">10</span>, <span class="number">11</span>&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span>[][] jaggedArray4 = &#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">10</span>, <span class="number">11</span>&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[][,] jaggedArray = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>][,]</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[,] &#123;</span><br><span class="line">        &#123;<span class="number">1</span>, <span class="number">1</span>&#125;,</span><br><span class="line">        &#123;<span class="number">2</span>, <span class="number">3</span>&#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[,] &#123;</span><br><span class="line">        &#123;<span class="number">5</span>, <span class="number">8</span>&#125;,</span><br><span class="line">        &#123;<span class="number">13</span>, <span class="number">21</span>&#125;,</span><br><span class="line">        &#123;<span class="number">34</span>, <span class="number">55</span>&#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[,] &#123;</span><br><span class="line">        &#123;<span class="number">89</span>, <span class="number">144</span>&#125;,</span><br><span class="line">        &#123;<span class="number">233</span>, <span class="number">377</span>&#125;,</span><br><span class="line">        &#123;<span class="number">610</span>, <span class="number">987</span>&#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span> a = jaggedArray[<span class="number">1</span>][<span class="number">1</span>,<span class="number">1</span>]     <span class="comment">// 变量 a 的值为 21</span></span><br><span class="line"><span class="built_in">int</span> b = jaggedArray[<span class="number">2</span>][<span class="number">0</span>,<span class="number">0</span>]     <span class="comment">// 变量 b 的值为 89</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="参数数组"><a href="#参数数组" class="headerlink" title="参数数组"></a>参数数组</h3><p>某些情况下，我们在定义函数时可能并不能提前确定参数的数量，这时可以使用 C# 提供的参数数组，参数数组通常用于为函数传递未知数量的参数。</p>
-<p>若要使用参数数组，则需要利用 params 关键字，语法格式如下：</p>
-<p>访问权限修饰符 返回值类型 函数名(params 类型名称[] 数组名称)</p>
-<p>提示：使用参数数组时，既可以直接为函数传递一个数组作为参数，也可以使用<code>函数名(参数1, 参数2, ..., 参数n)</code>的形式传递若干个具体的值作为参数。</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            Demo Obj = <span class="keyword">new</span> Demo();</span><br><span class="line">            <span class="built_in">string</span> str = Obj.getSum(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>);</span><br><span class="line">            Console.WriteLine(str);</span><br><span class="line">            <span class="built_in">int</span>[] arr = &#123;<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>, <span class="number">10</span>&#125;;</span><br><span class="line">            <span class="built_in">string</span> str2 = Obj.getSum(arr);</span><br><span class="line">            Console.WriteLine(str2);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="built_in">string</span> <span class="title">getSum</span>(<span class="params"><span class="keyword">params</span> <span class="built_in">int</span>[] arr</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span> sum = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">string</span> str = <span class="string">&quot;&quot;</span>;</span><br><span class="line">            <span class="keyword">foreach</span>(<span class="built_in">int</span> i <span class="keyword">in</span> arr)&#123;</span><br><span class="line">                sum += i;</span><br><span class="line">                str += <span class="string">&quot;+ &quot;</span> + i + <span class="string">&quot; &quot;</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            str = str.Trim(<span class="string">&#x27;+&#x27;</span>);</span><br><span class="line">            str += <span class="string">&quot;= &quot;</span>+sum;</span><br><span class="line">            <span class="keyword">return</span> str;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="Array类"><a href="#Array类" class="headerlink" title="Array类"></a>Array类</h2><p>Array 类是 C# 中所有数组的基类，其中提供了一系列用来处理数组的操作，例如对数组元素进行排序、搜索数组中指定的元素等。</p>
-<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123; </span><br><span class="line">            <span class="comment">// 创建一个数组并赋值 </span></span><br><span class="line">            <span class="built_in">int</span>[] arr = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">6</span>] &#123;<span class="number">15</span>, <span class="number">33</span>, <span class="number">29</span>, <span class="number">55</span>, <span class="number">10</span>, <span class="number">11</span> &#125;; </span><br><span class="line">            <span class="comment">// 创建一个空数组</span></span><br><span class="line">            <span class="built_in">int</span>[] arr2 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">6</span>]; </span><br><span class="line">            <span class="comment">// 获取数组的长度</span></span><br><span class="line">            Console.WriteLine(<span class="string">&quot;数组 arr 的长度为：&quot;</span>+arr.Length); </span><br><span class="line">            <span class="comment">// 为数组排序</span></span><br><span class="line">            Array.Sort(arr); </span><br><span class="line">            Console.Write(<span class="string">&quot;排序后的数组 arr 为：&quot;</span>); </span><br><span class="line">            <span class="comment">// 打印排序后的 arr</span></span><br><span class="line">            PrintArray(arr); </span><br><span class="line">            <span class="comment">// 查找数组元素的索引</span></span><br><span class="line">            Console.WriteLine(<span class="string">&quot;\n数组 arr 中值为 29 的元素的索引为：&quot;</span>+Array.IndexOf(arr,<span class="number">29</span>)); </span><br><span class="line">            <span class="comment">// 拷贝 arr 到 arr2 </span></span><br><span class="line">            Array.Copy(arr, arr2, arr.Length); </span><br><span class="line">            Console.Write(<span class="string">&quot;打印数组 arr2：&quot;</span>); </span><br><span class="line">            <span class="comment">// 打印数组 arr2 </span></span><br><span class="line">            PrintArray(arr2); </span><br><span class="line">            Array.Reverse(arr); </span><br><span class="line">            Console.Write(<span class="string">&quot;\n反序排列数组 arr： &quot;</span>); </span><br><span class="line">            PrintArray(arr); </span><br><span class="line">        &#125; </span><br><span class="line">        <span class="comment">// 遍历数组元素</span></span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">PrintArray</span>(<span class="params"><span class="built_in">int</span>[] arr</span>)</span> </span><br><span class="line">        &#123; </span><br><span class="line">            <span class="keyword">foreach</span> (Object elem <span class="keyword">in</span> arr) </span><br><span class="line">            &#123; </span><br><span class="line">                Console.Write(elem+<span class="string">&quot; &quot;</span>); </span><br><span class="line">            &#125; </span><br><span class="line">        &#125; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h2><h3 id="this关键字"><a href="#this关键字" class="headerlink" title="this关键字"></a>this关键字</h3><h4 id="1-使用-this-表示当前类的对象"><a href="#1-使用-this-表示当前类的对象" class="headerlink" title="1) 使用 this 表示当前类的对象"></a>1) 使用 this 表示当前类的对象</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            Website site = <span class="keyword">new</span> Website(<span class="string">&quot;C语言中文网&quot;</span>,<span class="string">&quot;http://c.biancheng.net/&quot;</span>);</span><br><span class="line">            site.Display();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Website</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="built_in">string</span> name;</span><br><span class="line">        <span class="keyword">private</span> <span class="built_in">string</span> url;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Website</span>(<span class="params"><span class="built_in">string</span> n, <span class="built_in">string</span> u</span>)</span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.name = n;</span><br><span class="line">            <span class="keyword">this</span>.url = u;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Display</span>()</span>&#123;</span><br><span class="line">            Console.WriteLine(name +<span class="string">&quot; &quot;</span>+ url);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="2-使用-this-关键字串联构造函数"><a href="#2-使用-this-关键字串联构造函数" class="headerlink" title="2) 使用 this 关键字串联构造函数"></a>2) 使用 this 关键字串联构造函数</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            Test test = <span class="keyword">new</span> Test(<span class="string">&quot;C语言中文网&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Test</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Test</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;无参构造函数&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 这里的 this()代表无参构造函数 Test()</span></span><br><span class="line">　　      <span class="comment">// 先执行 Test()，后执行 Test(string text)</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Test</span>(<span class="params"><span class="built_in">string</span> text</span>) : <span class="title">this</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Console.WriteLine(text);</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;实例构造函数&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="3-使用-this-关键字作为类的索引器"><a href="#3-使用-this-关键字作为类的索引器" class="headerlink" title="3) 使用 this 关键字作为类的索引器"></a>3) 使用 this 关键字作为类的索引器</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            Test a = <span class="keyword">new</span> Test();</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;Temp0:&#123;0&#125;, Temp1:&#123;1&#125;&quot;</span>, a[<span class="number">0</span>], a[<span class="number">1</span>]);</span><br><span class="line">            a[<span class="number">0</span>] = <span class="number">15</span>;</span><br><span class="line">            a[<span class="number">1</span>] = <span class="number">20</span>;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;Temp0:&#123;0&#125;, Temp1:&#123;1&#125;&quot;</span>, a[<span class="number">0</span>], a[<span class="number">1</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Test</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">int</span> Temp0;</span><br><span class="line">        <span class="built_in">int</span> Temp1;</span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">int</span> <span class="keyword">this</span>[<span class="built_in">int</span> index]</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">get</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">return</span> (<span class="number">0</span> == index) ? Temp0 : Temp1;</span><br><span class="line">            &#125;</span><br><span class="line">    </span><br><span class="line">            <span class="keyword">set</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">if</span> (<span class="number">0</span>==index)</span><br><span class="line">                    Temp0 = <span class="keyword">value</span>;</span><br><span class="line">                <span class="keyword">else</span></span><br><span class="line">                    Temp1 = <span class="keyword">value</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="4-使用-this-关键字作为原始类型的扩展方法"><a href="#4-使用-this-关键字作为原始类型的扩展方法" class="headerlink" title="4) 使用 this 关键字作为原始类型的扩展方法"></a>4) 使用 this 关键字作为原始类型的扩展方法</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">string</span> str = <span class="string">&quot;C语言中文网&quot;</span>;</span><br><span class="line">            <span class="built_in">string</span> newstr = str.ExpandString();</span><br><span class="line">            Console.WriteLine(newstr);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title">Test</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">string</span> <span class="title">ExpandString</span>(<span class="params"><span class="keyword">this</span> <span class="built_in">string</span> name</span>)</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> name+<span class="string">&quot; http://c.biancheng.net/&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h2 id="C-特性（Attribute）"><a href="#C-特性（Attribute）" class="headerlink" title="C#特性（Attribute）"></a>C#特性（Attribute）</h2><h2 id="C-反射（Reflection）"><a href="#C-反射（Reflection）" class="headerlink" title="C#反射（Reflection）"></a>C#反射（Reflection）</h2><h2 id="C-委托（Delegate）"><a href="#C-委托（Delegate）" class="headerlink" title="C#委托（Delegate）"></a>C#委托（Delegate）</h2><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="built_in">delegate</span> <span class="built_in">double</span> <span class="title">Function</span>(<span class="params"><span class="built_in">double</span> x</span>)</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">Multiplier</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">double</span> _factor;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Multiplier</span>(<span class="params"><span class="built_in">double</span> factor</span>)</span> =&gt; _factor = factor;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">double</span> <span class="title">Multiply</span>(<span class="params"><span class="built_in">double</span> x</span>)</span> =&gt; x * _factor;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">DelegateExample</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="built_in">double</span>[] <span class="title">Apply</span>(<span class="params"><span class="built_in">double</span>[] a, Function f</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">var</span> result = <span class="keyword">new</span> <span class="built_in">double</span>[a.Length];</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; a.Length; i++) result[i] = f(a[i]);</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">double</span>[] a = &#123; <span class="number">0.0</span>, <span class="number">0.5</span>, <span class="number">1.0</span> &#125;;</span><br><span class="line">        <span class="built_in">double</span>[] squares = Apply(a, (x) =&gt; x * x);</span><br><span class="line">        <span class="built_in">double</span>[] sines = Apply(a, Math.Sin);</span><br><span class="line">        Multiplier m = <span class="keyword">new</span> Multiplier(<span class="number">2.0</span>);</span><br><span class="line">        <span class="built_in">double</span>[] doubles = Apply(a, m.Multiply);</span><br><span class="line">        <span class="keyword">for</span>(<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; doubles.Length; i++) &#123; Console.WriteLine(doubles[i]); &#125;</span><br><span class="line">        Console.ReadLine();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">c#</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/04/17/c#/c#%E8%AF%AD%E6%B3%95/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
   
     <nav id="page-nav">
-      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/6/">6</a><a class="extend next" rel="next" href="/page/2/">Next &amp;raquo;</a>
+      <span class="page-number current">1</span><a class="page-number" href="/page/2/">2</a><a class="page-number" href="/page/3/">3</a><span class="space">&hellip;</span><a class="page-number" href="/page/7/">7</a><a class="extend next" rel="next" href="/page/2/">Next &amp;raquo;</a>
     </nav>
   
 
@@ -1259,6 +1255,22 @@ MathJax.Hub.Queue(function() {
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color2">c</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">计算机网络</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">wireshark</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Chrome</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">CDP</a>
               </li>
             
             <div class="clearfix"></div>
