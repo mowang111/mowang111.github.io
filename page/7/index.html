@@ -138,27 +138,40 @@
           <div id="js-content" class="content-ll">
             
   
-    <article id="post-linux基础/1.基础常用命令" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-linux基础/4.ssh" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">Linux基础常用命令</a>
+      <a class="article-title" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/4.ssh/">ssh</a>
     </h1>
   
 
         
-        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:53:26.438Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+        <a href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/4.ssh/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.762Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="用户组管理"><a href="#用户组管理" class="headerlink" title="用户组管理"></a>用户组管理</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">adduser <span class="variable">$username</span></span><br><span class="line">passwd <span class="variable">$username</span></span><br><span class="line">sudo usermod -aG sudo <span class="variable">$username</span> <span class="comment">#添加sudo权限</span></span><br><span class="line"> <span class="comment">#-a 代表 append， 也就是 将自己添加到 用户组groupA 中，而不必离开 其他用户组</span></span><br></pre></td></tr></table></figure>
+        <h2 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vim ~/.ssh/config</span><br><span class="line"></span><br><span class="line">Host myserver1</span><br><span class="line">    HostName IP地址或域名</span><br><span class="line">    User 用户名</span><br><span class="line"></span><br><span class="line">Host myserver2</span><br><span class="line">    HostName IP地址或域名</span><br><span class="line">    User 用户名</span><br></pre></td></tr></table></figure>
+
+<h2 id="密钥登录"><a href="#密钥登录" class="headerlink" title="密钥登录"></a>密钥登录</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id</span><br><span class="line"><span class="comment">#或者将公钥id_rsa.pub复制到myservr的~/.ssh/authorized_keys文件中</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="执行命令"><a href="#执行命令" class="headerlink" title="执行命令"></a>执行命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh user@hostname <span class="built_in">command</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ssh user@hostname <span class="built_in">ls</span> -a</span><br><span class="line"><span class="comment"># 单引号中的$i可以求值</span></span><br><span class="line">ssh myserver <span class="string">&#x27;for ((i = 0; i &lt; 10; i ++ )) do echo $i; done&#x27;</span></span><br><span class="line"><span class="comment"># 双引号中的$i不可以求值</span></span><br><span class="line">ssh myserver <span class="string">&quot;for ((i = 0; i &lt; 10; i ++ )) do echo <span class="variable">$i</span>; done&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>另外不加单引号或双引号 后面的命令的相对路径是相对于本地而言的，加上单引号或双引号，则是相对于服务器而言的</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ssh myserver <span class="built_in">mkdir</span> -p ~/homeworklesson_4/homework_1</span><br><span class="line">ssh myserver <span class="string">&quot;mkdir -p ~/homeworklesson_4/homework_1&quot;</span></span><br><span class="line">ssh myserver <span class="string">&#x27;mkdir -p ~/homework/lesson_4/homework_1&#x27;</span></span><br><span class="line"></span><br><span class="line">name=<span class="string">&quot;1 2 3&quot;</span></span><br><span class="line">ssh myserver <span class="built_in">mkdir</span> <span class="string">&quot;~&quot;</span>/homework/lesson_4/\&quot;<span class="variable">$name</span>\&quot;</span><br><span class="line"><span class="comment">#前面一个引号处理~,表明~是相对于服务器而言，后面转义&quot;表明&quot;不要预处理掉，需要在服务器执行命令时带上</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="复制文件"><a href="#复制文件" class="headerlink" title="复制文件"></a>复制文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">scp <span class="built_in">source</span> dist</span><br><span class="line"></span><br><span class="line">scp ~/main.cpp myserver:homework</span><br><span class="line"></span><br><span class="line">scp -r ./dir myserver:homework<span class="comment">#该操作是将dir文件夹整个复制到homework文件夹下，包括dir文件夹本身</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scp -r -P 6000 ./datacollect-III/ mowang@116.62.45.53:</span><br></pre></td></tr></table></figure>
 
 
       
@@ -183,7 +196,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/1.%E5%9F%BA%E7%A1%80%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">展开全文 >></a>
+          <a class="article-more-a" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/4.ssh/">展开全文 >></a>
         </p>
       
 
@@ -213,27 +226,46 @@
 
 
   
-    <article id="post-linux基础/7.管道、环境变量与常用命令" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-linux基础/6.thrift简易项目" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">管道、环境变量与常用命令</a>
+      <a class="article-title" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/">thrift在线匹配系统</a>
     </h1>
   
 
         
-        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:53:26.438Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+        <a href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.762Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        
+        <h1 id="thrift在线匹配系统"><a href="#thrift在线匹配系统" class="headerlink" title="thrift在线匹配系统"></a>thrift在线匹配系统</h1><h2 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h2><p>有三个文件夹</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">match_system game thrift</span><br></pre></td></tr></table></figure>
+<p>match_system为服务端的代码<br>game为客户端的代码<br>thrift定义接口</p>
+<h2 id="thrift接口生成"><a href="#thrift接口生成" class="headerlink" title="thrift接口生成"></a>thrift接口生成</h2><p>thrift接口<br>通过thrift接口生成服务端和用户端代码</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">thrift -r --gen &lt;language&gt; &lt;Thrift filename&gt;</span><br></pre></td></tr></table></figure>
+<p>编译thrift生成的代码</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -c main.cpp match_server/*.cpp</span><br></pre></td></tr></table></figure>
+<p>链接.o文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ *.o -o main -lthrift</span><br></pre></td></tr></table></figure>
+
+<h2 id="python代码"><a href="#python代码" class="headerlink" title="python代码"></a>python代码</h2><p>输入输出</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sys <span class="keyword">import</span> stdin</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> stdin:</span><br></pre></td></tr></table></figure>
+
+<h2 id="服务器c-代码"><a href="#服务器c-代码" class="headerlink" title="服务器c++代码"></a>服务器c++代码</h2><p>生产者&#x2F;消费者模型</p>
+<h2 id="将匹配结果存储在存储的服务端"><a href="#将匹配结果存储在存储的服务端" class="headerlink" title="将匹配结果存储在存储的服务端"></a>将匹配结果存储在存储的服务端</h2><p>求字符串的md5值</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">md5sum</span></span><br></pre></td></tr></table></figure>
+<p>输入字符串+回车+crtl+D<br>md5值的前八位</p>
+<h3 id="vim中粘贴代码"><a href="#vim中粘贴代码" class="headerlink" title="vim中粘贴代码"></a>vim中粘贴代码</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set paste</span><br><span class="line">shift ins</span><br><span class="line">set nopaste</span><br><span class="line">gg=G</span><br></pre></td></tr></table></figure>
+<h3 id="vim-全局替换"><a href="#vim-全局替换" class="headerlink" title="vim 全局替换"></a>vim 全局替换</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:1,$s/Calculator/Match/</span><br></pre></td></tr></table></figure>
+
       
 
       
@@ -256,7 +288,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">展开全文 >></a>
+          <a class="article-more-a" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/">展开全文 >></a>
         </p>
       
 
@@ -293,13 +325,13 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/">docker</a>
+      <a class="article-title" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/">docker</a>
     </h1>
   
 
         
-        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:53:26.438Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+        <a href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.762Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
 </a>
         
       </header>
@@ -383,7 +415,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/">展开全文 >></a>
+          <a class="article-more-a" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/8.docker%E6%95%99%E7%A8%8B/">展开全文 >></a>
         </p>
       
 
@@ -413,42 +445,27 @@
 
 
   
-    <article id="post-linux基础/4.ssh" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-linux基础/7.管道、环境变量与常用命令" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/">ssh</a>
+      <a class="article-title" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">管道、环境变量与常用命令</a>
     </h1>
   
 
         
-        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:52:12.995Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+        <a href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.762Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h2 id="配置文件"><a href="#配置文件" class="headerlink" title="配置文件"></a>配置文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">vim ~/.ssh/config</span><br><span class="line"></span><br><span class="line">Host myserver1</span><br><span class="line">    HostName IP地址或域名</span><br><span class="line">    User 用户名</span><br><span class="line"></span><br><span class="line">Host myserver2</span><br><span class="line">    HostName IP地址或域名</span><br><span class="line">    User 用户名</span><br></pre></td></tr></table></figure>
-
-<h2 id="密钥登录"><a href="#密钥登录" class="headerlink" title="密钥登录"></a>密钥登录</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ssh-keygen</span><br><span class="line">ssh-copy-id</span><br><span class="line"><span class="comment">#或者将公钥id_rsa.pub复制到myservr的~/.ssh/authorized_keys文件中</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="执行命令"><a href="#执行命令" class="headerlink" title="执行命令"></a>执行命令</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ssh user@hostname <span class="built_in">command</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ssh user@hostname <span class="built_in">ls</span> -a</span><br><span class="line"><span class="comment"># 单引号中的$i可以求值</span></span><br><span class="line">ssh myserver <span class="string">&#x27;for ((i = 0; i &lt; 10; i ++ )) do echo $i; done&#x27;</span></span><br><span class="line"><span class="comment"># 双引号中的$i不可以求值</span></span><br><span class="line">ssh myserver <span class="string">&quot;for ((i = 0; i &lt; 10; i ++ )) do echo <span class="variable">$i</span>; done&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>另外不加单引号或双引号 后面的命令的相对路径是相对于本地而言的，加上单引号或双引号，则是相对于服务器而言的</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ssh myserver <span class="built_in">mkdir</span> -p ~/homeworklesson_4/homework_1</span><br><span class="line">ssh myserver <span class="string">&quot;mkdir -p ~/homeworklesson_4/homework_1&quot;</span></span><br><span class="line">ssh myserver <span class="string">&#x27;mkdir -p ~/homework/lesson_4/homework_1&#x27;</span></span><br><span class="line"></span><br><span class="line">name=<span class="string">&quot;1 2 3&quot;</span></span><br><span class="line">ssh myserver <span class="built_in">mkdir</span> <span class="string">&quot;~&quot;</span>/homework/lesson_4/\&quot;<span class="variable">$name</span>\&quot;</span><br><span class="line"><span class="comment">#前面一个引号处理~,表明~是相对于服务器而言，后面转义&quot;表明&quot;不要预处理掉，需要在服务器执行命令时带上</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="复制文件"><a href="#复制文件" class="headerlink" title="复制文件"></a>复制文件</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">scp <span class="built_in">source</span> dist</span><br><span class="line"></span><br><span class="line">scp ~/main.cpp myserver:homework</span><br><span class="line"></span><br><span class="line">scp -r ./dir myserver:homework<span class="comment">#该操作是将dir文件夹整个复制到homework文件夹下，包括dir文件夹本身</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">scp -r -P 6000 ./datacollect-III/ mowang@116.62.45.53:</span><br></pre></td></tr></table></figure>
-
-
+        
       
 
       
@@ -471,7 +488,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/4.ssh/">展开全文 >></a>
+          <a class="article-more-a" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/7.%E7%AE%A1%E9%81%93%E3%80%81%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E4%B8%8E%E5%B8%B8%E7%94%A8%E5%91%BD%E4%BB%A4/">展开全文 >></a>
         </p>
       
 
@@ -501,45 +518,34 @@
 
 
   
-    <article id="post-linux基础/6.thrift简易项目" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+    <article id="post-linux基础/5.git" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/">thrift在线匹配系统</a>
+      <a class="article-title" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/5.git/">git</a>
     </h1>
   
 
         
-        <a href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/" class="archive-article-date">
-  	<time datetime="2022-10-29T14:52:12.995Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2022-10-29</time>
+        <a href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/5.git/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.761Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
 </a>
         
       </header>
     
     <div class="article-entry" itemprop="articleBody">
       
-        <h1 id="thrift在线匹配系统"><a href="#thrift在线匹配系统" class="headerlink" title="thrift在线匹配系统"></a>thrift在线匹配系统</h1><h2 id="代码结构"><a href="#代码结构" class="headerlink" title="代码结构"></a>代码结构</h2><p>有三个文件夹</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">match_system game thrift</span><br></pre></td></tr></table></figure>
-<p>match_system为服务端的代码<br>game为客户端的代码<br>thrift定义接口</p>
-<h2 id="thrift接口生成"><a href="#thrift接口生成" class="headerlink" title="thrift接口生成"></a>thrift接口生成</h2><p>thrift接口<br>通过thrift接口生成服务端和用户端代码</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">thrift -r --gen &lt;language&gt; &lt;Thrift filename&gt;</span><br></pre></td></tr></table></figure>
-<p>编译thrift生成的代码</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ -c main.cpp match_server/*.cpp</span><br></pre></td></tr></table></figure>
-<p>链接.o文件</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">g++ *.o -o main -lthrift</span><br></pre></td></tr></table></figure>
+        <p><a target="_blank" rel="noopener" href="https://www.acwing.com/file_system/file/content/whole/index/content/2932078/">https://www.acwing.com/file_system/file/content/whole/index/content/2932078/</a></p>
+<h2 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git init</span><br><span class="line">git remote add origin git@git.acwing.com:xxx/XXX.git</span><br></pre></td></tr></table></figure>
 
-<h2 id="python代码"><a href="#python代码" class="headerlink" title="python代码"></a>python代码</h2><p>输入输出</p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> sys <span class="keyword">import</span> stdin</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> line <span class="keyword">in</span> stdin:</span><br></pre></td></tr></table></figure>
+<p>强制覆盖远程仓库</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push origin master --force</span><br></pre></td></tr></table></figure>
 
-<h2 id="服务器c-代码"><a href="#服务器c-代码" class="headerlink" title="服务器c++代码"></a>服务器c++代码</h2><p>生产者&#x2F;消费者模型</p>
-<h2 id="将匹配结果存储在存储的服务端"><a href="#将匹配结果存储在存储的服务端" class="headerlink" title="将匹配结果存储在存储的服务端"></a>将匹配结果存储在存储的服务端</h2><p>求字符串的md5值</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">md5sum</span></span><br></pre></td></tr></table></figure>
-<p>输入字符串+回车+crtl+D<br>md5值的前八位</p>
-<h3 id="vim中粘贴代码"><a href="#vim中粘贴代码" class="headerlink" title="vim中粘贴代码"></a>vim中粘贴代码</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">set paste</span><br><span class="line">shift ins</span><br><span class="line">set nopaste</span><br><span class="line">gg=G</span><br></pre></td></tr></table></figure>
-<h3 id="vim-全局替换"><a href="#vim-全局替换" class="headerlink" title="vim 全局替换"></a>vim 全局替换</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">:1,$s/Calculator/Match/</span><br></pre></td></tr></table></figure>
+<h1 id="Git忽略规则-gitignore不生效"><a href="#Git忽略规则-gitignore不生效" class="headerlink" title="Git忽略规则.gitignore不生效"></a>Git忽略规则.gitignore不生效</h1><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">git rm -r --cached .</span><br><span class="line"></span><br><span class="line">git add .</span><br><span class="line"></span><br><span class="line">git commit -m &#x27;update .gitignore&#x27;</span><br></pre></td></tr></table></figure>
+
 
       
 
@@ -563,7 +569,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2022/10/29/linux%E5%9F%BA%E7%A1%80/6.thrift%E7%AE%80%E6%98%93%E9%A1%B9%E7%9B%AE/">展开全文 >></a>
+          <a class="article-more-a" href="/2024/04/27/linux%E5%9F%BA%E7%A1%80/5.git/">展开全文 >></a>
         </p>
       
 
@@ -711,43 +717,19 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+                <a href="javascript:void(0)" class="js-tag color2">c</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+                <a href="javascript:void(0)" class="js-tag color4">c++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">c#</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">操作系统</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">内存管理</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">进程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">算法</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">索引</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -759,23 +741,43 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">算法</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Chrome</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">CDP</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">mysql</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">c++</a>
+                <a href="javascript:void(0)" class="js-tag color3">索引</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">日志</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">网络编程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">c#</a>
+                <a href="javascript:void(0)" class="js-tag color5">内存管理</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -783,7 +785,11 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">c</a>
+                <a href="javascript:void(0)" class="js-tag color3">进程</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">网络编程</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -795,11 +801,11 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Chrome</a>
+                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">CDP</a>
+                <a href="javascript:void(0)" class="js-tag color3">日志</a>
               </li>
             
             <div class="clearfix"></div>

@@ -138,6 +138,1071 @@
           <div id="js-content" class="content-ll">
             
   
+    <article id="post-数据库/索引/索引" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95/">索引</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.770Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文引用自<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/index/index_interview.html#%E6%80%BB%E7%BB%93">小林索引常见面试题</a></p>
+<h1 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h1><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230323223445161.png" alt="image-20230323223445161"></p>
+<h2 id="什么是索引？"><a href="#什么是索引？" class="headerlink" title="什么是索引？"></a>什么是索引？</h2><p><strong>索引是数据的目录</strong></p>
+<h2 id="索引的分类"><a href="#索引的分类" class="headerlink" title="索引的分类"></a>索引的分类</h2><p>按照四个角度来分类索引</p>
+<ul>
+<li>【数据结构】：B+tree索引、Hash索引、Full-text索引</li>
+<li>【物理存储】：聚簇索引（主键索引）、二级索引（辅助索引）</li>
+<li>【字段特性】：主键索引、唯一索引、普通索引、前缀索引</li>
+<li>【字段个数】：单列索引、联合索引</li>
+</ul>
+<h3 id="按数据结构分类"><a href="#按数据结构分类" class="headerlink" title="按数据结构分类"></a>按数据结构分类</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230323223840042.png" alt="image-20230323223840042"></p>
+<p>在创建表时，InnoDB存储引擎会根据不同的场景选择不同的列作为索引：</p>
+<ul>
+<li>如果有主键，默认会使用主键作为聚簇索引的索引键（key）;</li>
+<li>如果没有主键，就选择第一个不包含NULL值的唯一列作为聚簇索引的索引键（key）;</li>
+<li>在上面两个都没有的情况下，InnoDB将自动生成一个隐式自增id列作为聚簇索引的索引键（key）;</li>
+</ul>
+<p>其他索引都属于辅助索引（Secondary Index），也被称为二级索引或非聚簇索引。创建的主键索引和二级索引默认使用的是B+Tree索引。</p>
+<h3 id="按照物理存储分类"><a href="#按照物理存储分类" class="headerlink" title="按照物理存储分类"></a>按照物理存储分类</h3><ul>
+<li>主键索引的 B+Tree 的叶子节点存放的是实际数据，所有完整的用户记录都存放在主键索引的 B+Tree 的叶子节点里；</li>
+<li>二级索引的 B+Tree 的叶子节点存放的是主键值，而不是实际数据。</li>
+</ul>
+<p>所以，在查询时使用了二级索引，如果查询的数据能在二级索引中查询到，那么就不需要回表，这个过程就是<strong>覆盖索引</strong>。如果查询的数据不在二级索引里，就会先检索二级索引，找到对应的叶子节点，获取到主键值后，然后再检索主键索引，就能查询到数据了，这个过程就是<strong>回表</strong>。</p>
+<h3 id="按照字段特性分类"><a href="#按照字段特性分类" class="headerlink" title="按照字段特性分类"></a>按照字段特性分类</h3><p>从字段特性的角度来看，索引分为主键索引、唯一索引、普通索引、前缀索引</p>
+<h4 id="主键索引"><a href="#主键索引" class="headerlink" title="主键索引"></a>主键索引</h4><p>主键索引就是建立在主键字段上的索引，通常在创建表的时候一起创建，一张表最多只有一个主键索引，索引列的值不允许有空值。</p>
+<p>在创建表时，创建主键索引的方式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> table_name  (</span><br><span class="line">  ....</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY (index_column_1) <span class="keyword">USING</span> BTREE</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<h4 id="唯一索引"><a href="#唯一索引" class="headerlink" title="唯一索引"></a>唯一索引</h4><p>唯一索引建立在 UNIQUE 字段上的索引，一张表可以有多个唯一索引，索引列的值必须唯一，但是允许有空值。</p>
+<p>在创建表时，创建唯一索引的方式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> table_name  (</span><br><span class="line">  ....</span><br><span class="line">  <span class="keyword">UNIQUE</span> KEY(index_column_1,index_column_2,...) </span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>建表后，如果要创建唯一索引，可以使用下面这条命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">UNIQUE</span> INDEX index_name</span><br><span class="line"><span class="keyword">ON</span> table_name(index_column_1,index_column_2,...); </span><br></pre></td></tr></table></figure>
+
+<h4 id="普通索引"><a href="#普通索引" class="headerlink" title="普通索引"></a>普通索引</h4><p>普通索引就是建立在普通字段上的索引，既不要求字段为主键，也不要求字段为 UNIQUE。</p>
+<p>在创建表时，创建普通索引的方式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> table_name  (</span><br><span class="line">  ....</span><br><span class="line">  INDEX(index_column_1,index_column_2,...) </span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>建表后，如果要创建普通索引，可以使用这面这条命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> INDEX index_name</span><br><span class="line"><span class="keyword">ON</span> table_name(index_column_1,index_column_2,...); </span><br></pre></td></tr></table></figure>
+
+<h4 id="前缀索引"><a href="#前缀索引" class="headerlink" title="前缀索引"></a>前缀索引</h4><p>前缀索引是指对字符类型字段的前几个字符建立的索引，而不是在整个字段上建立的索引，前缀索引可以建立在字段类型为 char、 varchar、binary、varbinary 的列上。</p>
+<p>使用前缀索引的目的是为了减少索引占用的存储空间，提升查询效率。</p>
+<p>在创建表时，创建前缀索引的方式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> table_name(</span><br><span class="line">    column_list,</span><br><span class="line">    INDEX(column_name(length))</span><br><span class="line">); </span><br></pre></td></tr></table></figure>
+
+<p>建表后，如果要创建前缀索引，可以使用这面这条命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> INDEX index_name</span><br><span class="line"><span class="keyword">ON</span> table_name(column_name(length)); </span><br></pre></td></tr></table></figure>
+
+
+
+<h4 id="按照字段个数分类"><a href="#按照字段个数分类" class="headerlink" title="按照字段个数分类"></a>按照字段个数分类</h4><p>从字段个数的角度来看，索引分为单列索引、联合索引（符合索引）</p>
+<ul>
+<li>建立再单列上的索引称为单列索引，比如主键索引。</li>
+<li>建立再多列上的索引称为联合索引。</li>
+</ul>
+<h5 id="联合索引"><a href="#联合索引" class="headerlink" title="联合索引"></a>联合索引</h5><p>通过将多个字段组合成一个索引，该索引就被称为联合索引。</p>
+<p>比如，将商品表中的 product_no 和 name 字段组合成联合索引<code>(product_no, name)</code>，创建联合索引的方式如下：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> INDEX index_product_no_name <span class="keyword">ON</span> product(product_no, name);</span><br></pre></td></tr></table></figure>
+
+<p>上述联合索引的非叶子节点用两个字段的值作为B+Tree的key值。当再联合索引查询数据时，先按product_no字段比较，在product_no相同的情况下再按name字段比较。</p>
+<p>因此，使用联合索引时，存在<strong>最左匹配原则</strong>，也就是按照最左优先的方式进行索引的匹配。<strong>在使用联合索引进行查询时，如果不遵循最左匹配原则，联合索引就会失效，这样就无法利用到索引的快速查询特性了</strong></p>
+<blockquote>
+<p> 比如，如果创建了一个 <code>(a, b, c)</code> 联合索引，如果查询条件是以下这几种，就可以匹配上联合索引：</p>
+<ul>
+<li>where a&#x3D;1；</li>
+<li>where a&#x3D;1 and b&#x3D;2 and c&#x3D;3；</li>
+<li>where a&#x3D;1 and b&#x3D;2；</li>
+</ul>
+<p>需要注意的是，因为有查询优化器，所以 a 字段在 where 子句的顺序并不重要。</p>
+<p>但是，如果查询条件是以下这几种，因为不符合最左匹配原则，所以就无法匹配上联合索引，联合索引就会失效:</p>
+<ul>
+<li>where b&#x3D;2；</li>
+<li>where c&#x3D;3；</li>
+<li>where b&#x3D;2 and c&#x3D;3；</li>
+</ul>
+<p>上面这些查询条件之所以会失效，是因为<code>(a, b, c)</code> 联合索引，是先按 a 排序，在 a 相同的情况再按 b 排序，在 b 相同的情况再按 c 排序。所以，<strong>b 和 c 是全局无序，局部相对有序的</strong>，这样在没有遵循最左匹配原则的情况下，是无法利用到索引的。</p>
+</blockquote>
+<h6 id="联合索引的范围查询"><a href="#联合索引的范围查询" class="headerlink" title="联合索引的范围查询"></a>联合索引的范围查询</h6><p>联合索引有一些特殊情况，<strong>并不是查询过程使用了联合索引查询，就代表联合索引中所有字段都用到了联合索引进行索引查询，也就是可能存在部分字段用到联合索引的B+Tree，部分字段没有用到联合索引的B+tree的情况。</strong></p>
+<p>这种特殊情况就发生在范围查询。联合索引的最左匹配原则会一直向右匹配直到遇到范围查询就会停止匹配。也就是<strong>范围查询的字段可以用到联合索引，但是在查询字段的后面的字段无法用到联合索引。</strong></p>
+<h6 id="范围查询部分不能用联合索引的例子"><a href="#范围查询部分不能用联合索引的例子" class="headerlink" title="范围查询部分不能用联合索引的例子"></a>范围查询部分不能用联合索引的例子</h6><blockquote>
+<p>Q1: <code>select * from t_table where a &gt; 1 and b = 2</code>，联合索引（a, b）哪一个字段用到了联合索引的 B+Tree？</p>
+</blockquote>
+<p>由于联合索引（二级索引）是先按照 a 字段的值排序的，所以符合 a &gt; 1 条件的二级索引记录肯定是相邻，于是在进行索引扫描的时候，可以定位到符合 a &gt; 1 条件的第一条记录，然后沿着记录所在的链表向后扫描，直到某条记录不符合 a &gt; 1 条件位置。所以 a 字段可以在联合索引的 B+Tree 中进行索引查询。</p>
+<p><strong>但是在符合 a &gt; 1 条件的二级索引记录的范围里，b 字段的值是无序的</strong>。</p>
+<p><strong>Q1 这条查询语句只有 a 字段用到了联合索引进行索引查询，而 b 字段并没有使用到联合索引。</strong></p>
+<blockquote>
+<p>Q2: <code>select * from t_table where a &gt;= 1 and b = 2</code>，联合索引（a, b）哪一个字段用到了联合索引的 B+Tree？</p>
+</blockquote>
+<p>由于联合索引（二级索引）是先按照 a 字段的值排序的，所以符合 &gt;&#x3D; 1 条件的二级索引记录肯定是相邻，于是在进行索引扫描的时候，可以定位到符合 &gt;&#x3D; 1 条件的第一条记录，然后沿着记录所在的链表向后扫描，直到某条记录不符合 a&gt;&#x3D; 1 条件位置。所以 a 字段可以在联合索引的 B+Tree 中进行索引查询。</p>
+<p>虽然在符合 a&gt;&#x3D; 1 条件的二级索引记录的范围里，b 字段的值是「无序」的，<strong>但是对于符合 a &#x3D; 1 的二级索引记录的范围里，b 字段的值是「有序」的</strong>（因为对于联合索引，是先按照 a 字段的值排序，然后在 a 字段的值相同的情况下，再按照 b 字段的值进行排序）。</p>
+<p>于是，在确定需要扫描的二级索引的范围时，当二级索引记录的 a 字段值为 1 时，可以通过 b &#x3D; 2 条件减少需要扫描的二级索引记录范围（b 字段可以利用联合索引进行索引查询的意思）。也就是说，从符合 a &#x3D; 1 and b &#x3D; 2 条件的第一条记录开始扫描，而不需要从第一个 a 字段值为 1 的记录开始扫描。</p>
+<p>所以，<strong>Q2 这条查询语句 a 和 b 字段都用到了联合索引进行索引查询</strong>。</p>
+<blockquote>
+<p>Q3: <code>SELECT * FROM t_table WHERE a BETWEEN 2 AND 8 AND b = 2</code>，联合索引（a, b）哪一个字段用到了联合索引的 B+Tree？</p>
+</blockquote>
+<p>Q3 查询条件中 <code>a BETWEEN 2 AND 8</code> 的意思是查询 a 字段的值在 2 和 8 之间的记录。不同的数据库对 BETWEEN … AND 处理方式是有差异的。在 MySQL 中，BETWEEN 包含了 value1 和 value2 边界值，类似于 &gt;&#x3D; and &#x3D;&lt;。而有的数据库则不包含 value1 和 value2 边界值（类似于 &gt; and &lt;）。</p>
+<p>这里我们只讨论 MySQL。由于 MySQL 的 BETWEEN 包含 value1 和 value2 边界值，所以类似于 Q2 查询语句，因此 <strong>Q3 这条查询语句 a 和 b 字段都用到了联合索引进行索引查询</strong>。</p>
+<blockquote>
+<p>Q4: <code>SELECT * FROM t_user WHERE name like &#39;j%&#39; and age = 22</code>，联合索引（name, age）哪一个字段用到了联合索引的 B+Tree？</p>
+</blockquote>
+<p>由于联合索引（二级索引）是先按照 name 字段的值排序的，所以前缀为 ‘j’ 的 name 字段的二级索引记录都是相邻的， 于是在进行索引扫描的时候，可以定位到符合前缀为 ‘j’ 的 name 字段的第一条记录，然后沿着记录所在的链表向后扫描，直到某条记录的 name 前缀不为 ‘j’ 为止。</p>
+<p>所以 a 字段可以在联合索引的 B+Tree 中进行索引查询，形成的扫描区间是[‘j’,’k’)。注意， j 是闭区间。如下图：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230323231621609.png" alt="image-20230323231621609"></p>
+<p>虽然在符合前缀为 ‘j’ 的 name 字段的二级索引记录的范围里，age 字段的值是「无序」的，<strong>但是对于符合 name &#x3D; j 的二级索引记录的范围里，age字段的值是「有序」的</strong>（因为对于联合索引，是先按照 name 字段的值排序，然后在 name 字段的值相同的情况下，再按照 age 字段的值进行排序）。</p>
+<p>于是，在确定需要扫描的二级索引的范围时，当二级索引记录的 name 字段值为 ‘j’ 时，可以通过 age &#x3D; 22 条件减少需要扫描的二级索引记录范围（age 字段可以利用联合索引进行索引查询的意思）。也就是说，从符合 <code>name = &#39;j&#39; and age = 22</code> 条件的第一条记录时开始扫描，而不需要从第一个 name 为 j 的记录开始扫描 。如下图的右边：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230323231634921.png" alt="image-20230323231634921"></p>
+<p>所以，<strong>Q4 这条查询语句 a 和 b 字段都用到了联合索引进行索引查询</strong>。</p>
+<p><strong>联合索引的最左匹配原则，在遇到范围查询（如 &gt;、&lt;）的时候，就会停止匹配，也就是范围查询的字段可以用到联合索引，但是在范围查询字段的后面的字段无法用到联合索引。注意，对于 &gt;&#x3D;、&lt;&#x3D;、BETWEEN、like 前缀匹配的范围查询，并不会停止匹配，前面我也用了四个例子说明了</strong>。</p>
+<h6 id="索引下推"><a href="#索引下推" class="headerlink" title="索引下推"></a>索引下推</h6><p>现在我们知道，对于联合索引（a, b），在执行 <code>select * from table where a &gt; 1 and b = 2</code> 语句的时候，只有 a 字段能用到索引，那在联合索引的 B+Tree 找到第一个满足条件的主键值（ID 为 2）后，还需要判断其他条件是否满足（看 b 是否等于 2），那是在联合索引里判断？还是回主键索引去判断呢？</p>
+<ul>
+<li>在 MySQL 5.6 之前，只能从 ID2 （主键值）开始一个个回表，到「主键索引」上找出数据行，再对比 b 字段值。</li>
+<li>而 MySQL 5.6 引入的<strong>索引下推优化</strong>（index condition pushdown)， <strong>可以在联合索引遍历过程中，对联合索引中包含的字段先做判断，直接过滤掉不满足条件的记录，减少回表次数</strong>。</li>
+</ul>
+<p>当你的查询语句的执行计划里，出现了 Extra 为 <code>Using index condition</code>，那么说明使用了索引下推的优化。</p>
+<h6 id="索引区分度"><a href="#索引区分度" class="headerlink" title="索引区分度"></a>索引区分度</h6><p>另外，建立联合索引时的字段顺序，对索引效率也有很大影响。越靠前的字段被用于索引过滤的概率越高，实际开发工作中<strong>建立联合索引时，要把区分度大的字段排在前面，这样区分度大的字段越有可能被更多的 SQL 使用到</strong>。</p>
+<p>区分度就是某个字段 column 不同值的个数「除以」表的总行数，计算公式如下：</p>
+<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230323232141005.png" alt="image-20230323232141005"></p>
+<h6 id="联合索引进行排序"><a href="#联合索引进行排序" class="headerlink" title="联合索引进行排序"></a>联合索引进行排序</h6><p>针对下面这条 SQL，你怎么通过索引来提高查询效率呢？</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> <span class="keyword">order</span> <span class="keyword">where</span> status <span class="operator">=</span> <span class="number">1</span> <span class="keyword">order</span> <span class="keyword">by</span> create_time <span class="keyword">asc</span></span><br></pre></td></tr></table></figure>
+
+<p>有的同学会认为，单独给 status 建立一个索引就可以了。</p>
+<p>但是更好的方式给 status 和 create_time 列建立一个联合索引，因为这样可以避免 MySQL 数据库发生文件排序。</p>
+<p>因为在查询时，如果只用到 status 的索引，但是这条语句还要对 create_time 排序，这时就要用文件排序 filesort，也就是在 SQL 执行计划中，Extra 列会出现 Using filesort。</p>
+<p>所以，要利用索引的有序性，在 status 和 create_time 列建立联合索引，这样根据 status 筛选后的数据就是按照 create_time 排好序的，避免在文件排序，提高了查询效率。</p>
+<h2 id="什么时候需要-x2F-不需要创建索引？"><a href="#什么时候需要-x2F-不需要创建索引？" class="headerlink" title="什么时候需要&#x2F;不需要创建索引？"></a>什么时候需要&#x2F;不需要创建索引？</h2><p>索引的好处时提高查询速度，但是也有缺点：</p>
+<ul>
+<li>需要占用物理空间，数量越大，占用空间越大</li>
+<li>创建索引和维护索引需要耗费时间，这种时间随着数据量的增大而增大</li>
+<li>会降低表的增删改的效率，因为每次增删改索引，B+树为了维护索引的有序性，都需要进行动态维护</li>
+</ul>
+<h3 id="什么时候合适索引？"><a href="#什么时候合适索引？" class="headerlink" title="什么时候合适索引？"></a>什么时候合适索引？</h3><ul>
+<li>字段有唯一性限制，比如商品编码</li>
+<li>经常用于<code>WHERE</code>查询条件的字段，这样能够提高整个表的查询速度，如果查询条件不是一个字段，可以建立联合索引</li>
+<li>经常用户<code>GROUP BY</code>和<code>ORDER BY</code>的字段，这样在查询的时候就不需要再去做一次排序了。</li>
+</ul>
+<h3 id="什么时候不需要建立索引？"><a href="#什么时候不需要建立索引？" class="headerlink" title="什么时候不需要建立索引？"></a>什么时候不需要建立索引？</h3><ul>
+<li><code>WHERE</code>条件，<code>GROUP BY</code>，<code>ORDER BY</code>里用不到的字段</li>
+<li>字段中存在大量重复数据，比如性别字段</li>
+<li>表数据太少的情况下</li>
+<li>经常更新的字段不需要创建索引</li>
+</ul>
+<h2 id="优化索引的方法？"><a href="#优化索引的方法？" class="headerlink" title="优化索引的方法？"></a>优化索引的方法？</h2><ul>
+<li>前缀索引优化</li>
+<li>覆盖索引优化</li>
+<li>主键索引最好是自增的</li>
+<li>防止索引失效</li>
+</ul>
+<h3 id="前缀索引优化"><a href="#前缀索引优化" class="headerlink" title="前缀索引优化"></a>前缀索引优化</h3><p>前缀索引顾名思义就是使用某个字段中字符串的前几个字符建立索引。</p>
+<p>使用前缀索引是为了减小索引字段大小，可以增加一个索引页中存储的索引值，有效提高索引的查询速度。在一些大字符串的字段作为索引时，使用前缀索引可以帮助我们减小索引项的大小。</p>
+<p>不过，前缀索引有一定的局限性，例如：</p>
+<ul>
+<li>order by 就无法使用前缀索引；</li>
+<li>无法把前缀索引用作覆盖索引；</li>
+</ul>
+<h3 id="覆盖索引优化"><a href="#覆盖索引优化" class="headerlink" title="覆盖索引优化"></a>覆盖索引优化</h3><p>覆盖索引是指 SQL 中 query 的所有字段，在索引 B+Tree 的叶子节点上都能找得到的那些索引，从二级索引中查询得到记录，而不需要通过聚簇索引查询获得，可以避免回表的操作。</p>
+<h3 id="主键索引最好是自增的"><a href="#主键索引最好是自增的" class="headerlink" title="主键索引最好是自增的"></a>主键索引最好是自增的</h3><p>我们在建表的时候，都会默认将主键索引设置为自增的</p>
+<p>InnoDB 创建主键索引默认为聚簇索引，数据被存放在了 B+Tree 的叶子节点上。也就是说，同一个叶子节点内的各个数据是按主键顺序存放的，因此，每当有一条新的数据插入时，数据库会根据主键将其插入到对应的叶子节点中。</p>
+<p><strong>如果我们使用自增主键，那么每次插入的新数据就会按顺序添加到当前索引节点的位置，不需要移动已有的数据</strong>，当页面写满，就会自动开辟一个新页面。因为每次插入一条新记录，都是追加操作，不需要重新移动数据，因此这种插入数据的方法效率非常高。</p>
+<p>如果我们使用非自增主键，由于每次插入主键的索引值都是随机的，因此每次插入新的数据时，就可能会插入到现有数据页中间的某个位置，这将不得不移动其它数据来满足新数据的插入，甚至需要从一个页面复制数据到另外一个页面，我们通常将这种情况称为<strong>页分裂</strong>。<strong>页分裂还有可能会造成大量的内存碎片，导致索引结构不紧凑，从而影响查询效率。</strong></p>
+<p>另外，主键字段的长度不要太大，因为<strong>主键字段长度越小，意味着二级索引的叶子节点越小（二级索引的叶子节点存放的数据是主键值），这样二级索引占用的空间也就越小</strong>。</p>
+<h3 id="索引最好设置为-NOT-NULL"><a href="#索引最好设置为-NOT-NULL" class="headerlink" title="索引最好设置为 NOT NULL"></a>索引最好设置为 NOT NULL</h3><p>为了更好的利用索引，索引列要设置为 NOT NULL 约束。有两个原因：</p>
+<ul>
+<li>第一原因：索引列存在 NULL 就会导致优化器在做索引选择的时候更加复杂，更加难以优化，因为可为 NULL 的列会使索引、索引统计和值比较都更复杂，比如进行索引统计时，count 会省略值为NULL 的行。</li>
+<li>第二个原因：NULL 值是一个没意义的值，但是它会占用物理空间，所以会带来的存储空间的问题，因为 InnoDB 存储记录的时候，如果表中存在允许为 NULL 的字段，那么<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/base/row_format.html#innodb-%E8%A1%8C%E6%A0%BC%E5%BC%8F%E6%9C%89%E5%93%AA%E4%BA%9B">行格式 (opens new window)</a>中<strong>至少会用 1 字节空间存储 NULL 值列表</strong>，如下图的紫色部分：</li>
+</ul>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230323233453787.png" alt="image-20230323233453787"></p>
+<h3 id="防止索引失效"><a href="#防止索引失效" class="headerlink" title="防止索引失效"></a>防止索引失效</h3><ul>
+<li>当我们使用左或者左右模糊匹配的时候，也就是 <code>like %xx</code> 或者 <code>like %xx%</code>这两种方式都会造成索引失效；</li>
+<li>当我们在查询条件中对索引列做了计算、函数、类型转换操作，这些情况下都会造成索引失效；</li>
+<li>联合索引要能正确使用需要遵循最左匹配原则，也就是按照最左优先的方式进行索引的匹配，否则就会导致索引失效。</li>
+<li>在 WHERE 子句中，如果在 OR 前的条件列是索引列，而在 OR 后的条件列不是索引列，那么索引会失效。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230323233701985.png" alt="image-20230323233701985"></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">索引</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/索引//" class="article-tag-list-link color3">索引</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E7%B4%A2%E5%BC%95/%E7%B4%A2%E5%BC%95/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-数据库/内存/Buffer Pool" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/">Buffer pool</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.769Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>引用自(小林揭开 Buffer Pool 的面纱)[<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/buffer_pool/buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool]">https://xiaolincoding.com/mysql/buffer_pool/buffer_pool.html#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%9C%89-buffer-pool]</a></p>
+<h2 id="Buffer-pool"><a href="#Buffer-pool" class="headerlink" title="Buffer pool"></a>Buffer pool</h2><p>虽然说 MySQL 的数据是存储在磁盘里的，但是也不能每次都从磁盘里面读取数据，这样性能是极差的。</p>
+<p>要想提升查询性能，加个缓存就行了嘛。所以，当数据从磁盘中取出后，缓存内存中，下次查询同样的数据的时候，直接从内存中读取。</p>
+<p>为此，Innodb 存储引擎设计了一个<strong>缓冲池（*Buffer Pool*）</strong>，来提高数据库的读写性能。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230326224319547.png" alt="image-20230326224319547"></p>
+<p>有了缓冲池后：</p>
+<ul>
+<li>当读取数据时，如果数据存在于Buffer Pool中，客户端就会直接读取Buffer Pool 中的数据，否则再去磁盘中读取。</li>
+<li>当修改数据时，首先是修改Buffer Pool 中数据所在的页，然后将其页设置为脏页，最后由后台线程将脏页写入到磁盘。</li>
+</ul>
+<h2 id="Buffer-Pool有多大"><a href="#Buffer-Pool有多大" class="headerlink" title="Buffer Pool有多大?"></a>Buffer Pool有多大?</h2><p>Buffer Pool是在MySQL启动的时候，向操作系统申请的一片连续的内存空间，默认配置下Buffer Pool只有128MB。</p>
+<p>可以通过调整<code>innodb_buffer_pool_size</code>参数来设置Buffer Pool的大小，一般建议设置成可用物理内存的60%~80%</p>
+<h2 id="Buffer-Pool-缓存什么？"><a href="#Buffer-Pool-缓存什么？" class="headerlink" title="Buffer Pool 缓存什么？"></a>Buffer Pool 缓存什么？</h2><p>InnoDB会把存储的数据划分为若干个【页】，以页作为磁盘和内存交互的基本单位，一个页的默认大小为16KB。因此，Buffer Pool同样需要按【页】来划分。</p>
+<p>在MySQL启动的时候，<strong>InnoDB会为Buffer Pool申请一篇连续的内存空间，然后按照默认的16KB大小划分成一个个页，Buffer Pool 中的页就叫做缓存页。</strong>此时，这些缓存也都是空闲的，之后随着程序的运行，才会有磁盘上的页被缓存到Buffer Pool中。</p>
+<p>Buffer Pool 中除了缓存【索引页】和【数据页】，还包括了undo页，插入缓存、自适应哈希索引、锁信息等。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142306681.png" alt="image-20230327142306681"></p>
+<p>为了更好的管理这些在Buffer Pool中的缓存页，InnoDB为每一个缓存页都创建了一个<strong>控制块</strong>，控制块信息包括【缓存页的表空间、页号、缓存地址、链表节点】等等。</p>
+<p>控制块也是占用内存空间的，它是放在Buffer Pool的最前面，接着才是缓存页：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327142550106.png" alt="image-20230327142550106"></p>
+<p>上图中，控制块和缓存页中的中间部分称为碎片空间。</p>
+<h3 id="为什么会有碎片空间？"><a href="#为什么会有碎片空间？" class="headerlink" title="为什么会有碎片空间？"></a>为什么会有碎片空间？</h3><p>你想想啊，每一个控制块都对应一个缓存页，那在分配足够多的控制块和缓存页后，可能剩余的那点儿空间不够一对控制块和缓存页的大小，自然就用不到喽，这个用不到的那点儿内存空间就被称为碎片了。</p>
+<p>当然，如果你把 Buffer Pool 的大小设置的刚刚好的话，也可能不会产生碎片。</p>
+<h3 id="查询一条记录，就只需要缓冲一条记录吗？"><a href="#查询一条记录，就只需要缓冲一条记录吗？" class="headerlink" title="查询一条记录，就只需要缓冲一条记录吗？"></a>查询一条记录，就只需要缓冲一条记录吗？</h3><p>不是。当我们查询一条记录的时候，InnoDB是会把整个页的数据加载到Buffer Pool 中，因为通过索引只能定位到磁盘中的页，而不能定位到页中的一条记录，将页加载到Buffer Pool中后，再通过页里的页目录去定位到某条具体的记录。</p>
+<h2 id="如何管理Buffer-Pool"><a href="#如何管理Buffer-Pool" class="headerlink" title="如何管理Buffer Pool?"></a>如何管理Buffer Pool?</h2><h3 id="如何管理空闲页？"><a href="#如何管理空闲页？" class="headerlink" title="如何管理空闲页？"></a>如何管理空闲页？</h3><p>Buffer Pool是一片连续的内存空间，当MySQL运行一段时间后，这片连续的内存空间中的缓存页既有空闲的，也有被使用的。</p>
+<p>当我们从磁盘读取数据的时候，为了快速找到空闲的缓存页，可以使用链表结构，将空闲缓存页的【控制块】作为链表的节点，这个链表称为<strong>Free链表（空闲链表）</strong>。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327143446027.png" alt="image-20230327143446027"></p>
+<p>Free链表上除了控制块，还有一个头节点，该头节点中包含了链表的头节点地址，尾节点地址，以及当前链表中节点的数量等信息。</p>
+<p>Free链表节点是一个一个控制块，而每个控制块包含着对应缓存页的地址，所以相当于Free链表节点都对应一个空闲的缓存页。</p>
+<p>有了Free链表之后，每当需要从磁盘中加载一个页到Buffer Pool中时，就从Free链表中取一个空闲的缓存页，并且把该缓存页对应的控制块的信息填上，然后把该缓存页对应的控制块从Free链表上移除。</p>
+<h3 id="如何管理脏页？"><a href="#如何管理脏页？" class="headerlink" title="如何管理脏页？"></a>如何管理脏页？</h3><p>设计Buffer Pool除了能提高读性能，还能提高写性能，也就是更新数据的时候，不需要每次都要写入磁盘，而是将Buffer Pool对应的缓存页标记为【脏页】,然后再由后台线程将脏页写入到磁盘。</p>
+<p>为了快速知道哪些缓存页是脏的，于是设计出【Flush链表】，和Free链表类似，链表的节点也是控制块，区别在于Flush链表的元素都是脏页。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144101488.png" alt="image-20230327144101488"></p>
+<h3 id="如何提高缓存命中率？"><a href="#如何提高缓存命中率？" class="headerlink" title="如何提高缓存命中率？"></a>如何提高缓存命中率？</h3><p>最容易想到的就是 LRU（Least recently used）算法。</p>
+<p>该算法的思路是，链表头部的节点是最近使用的，而链表末尾的节点是最久没被使用的。那么，当空间不够了，就淘汰最久没被使用的节点，从而腾出空间。</p>
+<p>简单的 LRU 算法的实现思路是这样的：</p>
+<ul>
+<li>当访问的页在 Buffer Pool 里，就直接把该页对应的 LRU 链表节点移动到链表的头部。</li>
+<li>当访问的页不在 Buffer Pool 里，除了要把页放入到 LRU 链表的头部，还要淘汰 LRU 链表末尾的节点。</li>
+</ul>
+<p>到这里我们可以知道，Buffer Pool 里有三种页和链表来管理数据。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327144430307.png" alt="image-20230327144430307"></p>
+<p>图中：</p>
+<ul>
+<li>Free Page（空闲页），表示此页未被使用，位于 Free 链表；</li>
+<li>Clean Page（干净页），表示此页已被使用，但是页面未发生修改，位于LRU 链表。</li>
+<li>Dirty Page（脏页），表示此页「已被使用」且「已经被修改」，其数据和磁盘上的数据已经不一致。当脏页上的数据写入磁盘后，内存数据和磁盘数据一致，那么该页就变成了干净页。脏页同时存在于 LRU 链表和 Flush 链表。</li>
+</ul>
+<p>简单的LRU算法并没有被MySQL使用，因为简单的LRU算法无法避免下面两个问题：</p>
+<ul>
+<li><p>预读失效</p>
+<ul>
+<li><p>MySQL的预读机制。程序是由空间局部性的，靠近当前被访问数据的数据，在未来很大概率会被访问到。所以MySQL在加载数据页时，会提前把它相邻的数据页一并加载进来，目的是为了减少磁盘IO。但<strong>可能这些被提前加载进来的数据页并没有被访问到，相当于这个预读是白做了，这就是预读失效。</strong>如果使用简单的LRU算法，就会把预读页放到LRU链表头部，而当Buffer Pool空间不够的时候，还需要把末尾的页淘汰掉。如果这些预读页一直不被访问到，不会访问的预读页却占用了LRU链表前排的位置，而末尾淘汰的页，可能是频繁访问的页，这样就大大降低了缓存命中率。</p>
+</li>
+<li><p>如何解决预读失效而导致的缓存命中率降低的问题？</p>
+<ul>
+<li><p>最好就是让预读的页停留在Buffer Pool里的时间要尽可能短，让真正被访问的页才能移动到LRU链表的头部，从而保证真正被读取的热数据留在Buffer Pool里的时间尽可能长。</p>
+</li>
+<li><p><strong>MySQL改进了LRU算法，将LRU划分了2个区域：old区域和young区域。</strong>young区域在LRU链表的前半部分，old区域则是在链表的后半部分。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230327145437308.png" alt="image-20230327145437308"></p>
+<p>old 区域占整个 LRU 链表长度的比例可以通过 <code>innodb_old_blocks_pct</code> 参数来设置，默认是 37，代表整个 LRU 链表中 young 区域与 old 区域比例是 63:37。</p>
+<p><strong>划分为两个区域后，预读的页就只需要加入old区域的头部，当页被真正访问的时候，才将页插入young区域的头部。</strong>如果预读的页一直没有被访问，就会从old区域移除，这样就不会影响young区域中的热点数据。</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Buffer Pool污染</p>
+<ul>
+<li><p>当<strong>某个SQL语句扫描了大量的数据</strong>时，在Buffer Pool空间比较有限的情况下，可能会将<strong>Buffer Pool里的所有页都替换出去，导致大量的热数据被淘汰</strong>，等这些热数据又被再次访问的时候，由于缓存未命中，就会产生大量的磁盘IO，MySQL性能就会急剧下降，这个过程被称为<strong>Buffer Pool污染</strong>。</p>
+</li>
+<li><p>注意，Buffer Pool污染并不是查询语句查询出了大量的数据才出现的问题，即使查询出来的结果集很小，也会造成Buffer Pool污染。</p>
+<ul>
+<li><p>比如在一个数据量非常大的表，执行了以下语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">select</span> <span class="operator">*</span> <span class="keyword">from</span> t_user <span class="keyword">where</span> name <span class="keyword">like</span> &quot;%xiaolin%&quot;;</span><br></pre></td></tr></table></figure>
+
+<p>可能这个查询出来的结果就几条记录，但是由于这条语句会发生索引失效，所以这个查询过程是全表扫描的，接着会发生如下过程：</p>
+<ul>
+<li>从磁盘读到的页加入到LRU链表的old区域头部；</li>
+<li>当从页里读取行记录的时候，也就是页被访问的时候，就要将该页放到young区域头部；</li>
+<li>接下来拿行记录的name字段和字符串xiaolin进行模糊匹配，如果符合条件，就加入到结果集里。</li>
+<li>如此往复，直到扫描完表中的所有记录</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>如何解决Buffer Pool污染而导致的缓存命中率下降的问题？</p>
+<ul>
+<li>LRU链表中young区域就是热点数据，只要我们提高进入young区域的门槛，就能有效保证young区域里的热点数据不会被替换掉</li>
+<li>MySQL是这样做的，进入到young区域条件增加了一个停留在old区域的时间判断。<ul>
+<li>具体是这样的，在对某个处在old区域的缓存页进行第一次访问时，就在它对应的控制块中记录下来这个访问的时间<ul>
+<li>如果后续的访问时间与第一次访问的时间在某个时间间隔内，那么该缓存页就不会被从old区域移动到young区域的头部</li>
+<li>如果后续的访问时间与第一次访问的时间不在某个时间间隔内，那么该缓存页移动到young区域的头部。</li>
+<li>这个时间间隔是由<code>innodb_old_blocks_time</code>控制的，默认是1000ms</li>
+</ul>
+</li>
+<li><strong>只有同时满足【被访问】与【在old区域停留时间超过1秒】两个条件，才会被插入到young区域头部。</strong></li>
+</ul>
+</li>
+<li>另外，MySQL对young区域做了一个优化，为了防止young区域节点频繁移动到头部。young区域前面1&#x2F;4被访问不会移动到链表头部，只有后面的3&#x2F;4被访问才会</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="脏页什么时候会被输入磁盘？"><a href="#脏页什么时候会被输入磁盘？" class="headerlink" title="脏页什么时候会被输入磁盘？"></a>脏页什么时候会被输入磁盘？</h3><p>引入了Buffer Pool后，当修改数据时，首先是修改Buffer Pool中数据所在页，然后将其页设置为脏页，但是磁盘中还是原数据。</p>
+<p>因此，脏页需要被刷入到磁盘，保证缓存和磁盘的数据一致，但是若每次修改数都刷入磁盘，则性能会很差，所以一般都会在一定时机进行批量刷盘。</p>
+<p>如果在脏页还没有来得及刷入磁盘时，MySQL宕机了，不就丢失数据了？</p>
+<p>InnoDB的更新操作采用的是Write Ahead Log策略，即先写入日志，再写入磁盘，通过redo log日志让MySQL拥有了崩溃恢复能力。</p>
+<p>下面几种情况会触发脏页的刷新：</p>
+<ul>
+<li>当redo log日志满了的情况下，会主动触发脏页刷新到磁盘；</li>
+<li>Buffer Pool空间不足时，需要将一部分数据页淘汰掉，如果淘汰的是脏页，需要先将脏页同步到磁盘；</li>
+<li>MySQL认为空闲时，后台线程会定期将适量的脏页刷入到磁盘</li>
+<li>MySQL正常关闭之前，会把所有的脏页刷入到磁盘</li>
+</ul>
+<p>在我们开启了慢 SQL 监控后，如果你发现<strong>「偶尔」会出现一些用时稍长的 SQL</strong>，这可能是因为脏页在刷新到磁盘时可能会给数据库带来性能开销，导致数据库操作抖动。</p>
+<p>如果间断出现这种现象，就需要调大 Buffer Pool 空间或 redo log 日志的大小。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>InnoDB存储引擎设置了一个缓冲池（Buffer Pool），来提高数据库的读写性能。</p>
+<p>Buffer Pool以页为单位缓冲数据，可以通过<code>innodb_buffer_pool_size</code>参数调整缓冲池的大小，默认是128M。</p>
+<p>InnoDB通过三种链表来管理缓存页：</p>
+<ul>
+<li>Free List（空闲页链表），管理空闲页</li>
+<li>Flush List（脏页链表），管理脏页</li>
+<li>LRU List，管理脏页+干净页，将最近且经常查询的数据缓存在其中，而不常查询的数据就淘汰出去。</li>
+</ul>
+<p>InnoDB对LRU做了一些优化，我们熟悉的LRU算法通常将最近查询的数据放到LRU链表的头部，而InnoDB做了2点优化：</p>
+<ul>
+<li>将LRU链表分为young和old区域，加入缓冲池的页，优先插入old区域；页被访问时，才会进入young区域，目的是解决预读失效的问题。</li>
+<li>当【页被访问】且【 old 区域停留时间超过 <code>innodb_old_blocks_time</code> 阈值（默认为1秒）】时，才会将页插入到young区域，否则还是插入到old区域，目的是为了解决批量数据访问，大量热数据淘汰的问题。</li>
+</ul>
+<p>可以通过调整 <code>innodb_old_blocks_pct</code> 参数，设置 young 区域和 old 区域比例。</p>
+<p>在开启了慢 SQL 监控后，如果你发现「偶尔」会出现一些用时稍长的 SQL，这可因为脏页在刷新到磁盘时导致数据库性能抖动。如果在很短的时间出现这种现象，就需要调大 Buffer Pool 空间或 redo log 日志的大小。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">mysql</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%86%85%E5%AD%98/Buffer%20Pool/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-数据库/基础/mysql一行记录是如何存储的" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/">mysql一行记录是如何存储的？</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.769Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <p>本文引用自[小林MySQL 一行记录是怎么存储的？](<a target="_blank" rel="noopener" href="https://xiaolincoding.com/mysql/base/row_format.html#%E6%80%BB%E7%BB%93%EF%BC%89">https://xiaolincoding.com/mysql/base/row_format.html#%E6%80%BB%E7%BB%93）</a></p>
+<h1 id="MySql一行记录是如何存储的？"><a href="#MySql一行记录是如何存储的？" class="headerlink" title="MySql一行记录是如何存储的？"></a>MySql一行记录是如何存储的？</h1><p>mysql数据库文件的存放在那个目录？</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">mysql<span class="operator">&gt;</span> <span class="keyword">SHOW</span> VARIABLES <span class="keyword">LIKE</span> <span class="string">&#x27;datadir&#x27;</span>;</span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-----------------+</span></span><br><span class="line"><span class="operator">|</span> Variable_name <span class="operator">|</span> <span class="keyword">Value</span>           <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-----------------+</span></span><br><span class="line"><span class="operator">|</span> datadir       <span class="operator">|</span> <span class="operator">/</span>var<span class="operator">/</span>lib<span class="operator">/</span>mysql<span class="operator">/</span> <span class="operator">|</span></span><br><span class="line"><span class="operator">+</span><span class="comment">---------------+-----------------+</span></span><br><span class="line"><span class="number">1</span> <span class="type">row</span> <span class="keyword">in</span> <span class="keyword">set</span> (<span class="number">0.00</span> sec)</span><br></pre></td></tr></table></figure>
+
+<p>我们每创建一个 database（数据库） 都会在 &#x2F;var&#x2F;lib&#x2F;mysql&#x2F; 目录里面创建一个以 database 为名的目录，然后保存表结构和表数据的文件都会存放在这个目录里。</p>
+<p>假设这里有一个名为 my_test 的 database，该 database 里有一张名为 t_order 数据库表。</p>
+<p>进入 &#x2F;var&#x2F;lib&#x2F;mysql&#x2F;my_test 目录，看看里面有什么文件</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">[root@xiaolin ~]#ls /var/lib/mysql/my_test</span><br><span class="line">db.opt  </span><br><span class="line">t_order.frm  </span><br><span class="line">t_order.ibd</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>db.opt，用来存储当前数据库的默认字符集和字符校验规则</li>
+<li>t_order.frm，t_order的<strong>表结构</strong>会保存在这个文件。在 MySQL 中建立一张表都会生成一个.frm 文件，该文件是用来保存每个表的元数据信息的，主要包含表结构定义。</li>
+<li>t_order.ibd，t_order的<strong>表数据</strong>会保存在这个文件。表数据既可以存在共享表空间文件（文件名：ibdata1）里，也可以存放在独占表空间文件（文件名：表名字.ibd）。这个行为是由参数 innodb_file_per_table 控制的，若设置了参数 innodb_file_per_table 为 1，则会将存储的数据、索引等信息单独存储在一个独占表空间，从 MySQL 5.6.6 版本开始，它的默认值就是 1 了，因此从这个版本之后， MySQL 中每一张表的数据都存放在一个独立的 .ibd 文件。</li>
+</ul>
+<h2 id="表空间的文件结构是怎样的？"><a href="#表空间的文件结构是怎样的？" class="headerlink" title="表空间的文件结构是怎样的？"></a>表空间的文件结构是怎样的？</h2><p>表空间由段（segment）、区（extent）、页（page）、行（row）组成。</p>
+<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/row_format/%E8%A1%A8%E7%A9%BA%E9%97%B4%E7%BB%93%E6%9E%84.drawio.png" alt="img"></p>
+<ul>
+<li>行（row）<ul>
+<li>数据库表中的记录都是按行（row）进行存放的，每行记录根据不同的行格式，有不同的存储结构。</li>
+</ul>
+</li>
+<li>页（page）<ul>
+<li>记录时按照行来存储的，但是数据库的读取并不以【行】为单位，否则一次读取（也就是一次IO操作）只能处理一行数据，效率低</li>
+<li>InnoDB的数据时按照【页】为单位来读写的</li>
+<li>默认每个页的大小为16KB，也就是最多能保证16KB的连续存储空间。</li>
+<li>页的类型有很多，常见的有数据页、undo日志页、溢出页等等。数据表中的行记录使用【数据页】来管理的。</li>
+</ul>
+</li>
+<li>区（extent）<ul>
+<li>InnoDB存储引擎使用B+树来组织数据的，B+树种每一层都是通过双向链表连接起来的，如果是以页为单位来分配存储空间，那么链表种相邻的两个页之间的物理位置并不是连续的，可能离的非常远，那么磁盘查询时就会有大量的随机I&#x2F;O，随机I&#x2F;O是非常慢的。</li>
+<li>在表种数据量大的时候，为某个索引分配空间的时候就不再按照页为单位分配了，而是按照区（extent）为单位进行分配。每个区的大小为1MB，对于16KB的页来说，连续64页会被划为一个区，这样就使得链表种相邻的页的物理位置也相邻，就能用顺序I&#x2F;O了。</li>
+</ul>
+</li>
+<li>段（segment）<ul>
+<li>表空间是由各个段（segment）组成的，段是由多个区（extent）组成的。段一般分为数据段、索引段和回滚段等<ul>
+<li>索引段：存放B+树的非叶子节点的区的集合；</li>
+<li>数据段：存放B+树的叶子节点的区的集合</li>
+<li>回滚段：存放的是回滚数据的区的集合，事务隔离种，有提到MVCC利用回滚段实现了多版本查询数据。</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="InnoDB行格式有哪些？"><a href="#InnoDB行格式有哪些？" class="headerlink" title="InnoDB行格式有哪些？"></a>InnoDB行格式有哪些？</h2><p>行格式（row_format），就是一条记录的存储结构</p>
+<p>InnoDB提供了4种行格式，分别是Redundant、Compact、Dynamic和Compressed行格式</p>
+<ul>
+<li>Redundant 是很古老的行格式了， MySQL 5.0 版本之前用的行格式，现在基本没人用了。</li>
+<li>由于 Redundant 不是一种紧凑的行格式，所以 MySQL 5.0 之后引入了 Compact 行记录存储方式，Compact 是一种紧凑的行格式，设计的初衷就是为了让一个数据页中可以存放更多的行记录，从 MySQL 5.1 版本之后，行格式默认设置成 Compact。</li>
+<li>Dynamic 和 Compressed 两个都是紧凑的行格式，它们的行格式都和 Compact 差不多，因为都是基于 Compact 改进一点东西。从 MySQL5.7 版本之后，默认使用 Dynamic 行格式。</li>
+</ul>
+<p>重点介绍Compact行格式</p>
+<h3 id="COMPACT行格式"><a href="#COMPACT行格式" class="headerlink" title="COMPACT行格式"></a>COMPACT行格式</h3><p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325211542129.png" alt="image-20230325211542129"></p>
+<p>一条完整的记录分为「记录的额外信息」和「记录的真实数据」两个部分。</p>
+<h4 id="记录的额外信息"><a href="#记录的额外信息" class="headerlink" title="记录的额外信息"></a>记录的额外信息</h4><p>记录的额外信息包括3个部分：变长字段长度列表、NULL值列表、记录头信息</p>
+<ol>
+<li><p>变长字段长度列表</p>
+<p>varchar(n)和char(n)的区别就是varchar是变长的，char是定长的，变长字段实际存储的数据长度是不固定的</p>
+<p>所以，在存储数据的时候，也要把数据占用的大小存起来，存到【变长字段长度列表】里，读取数据的时候才能根据这个【变长字段长度列表】去读取对应的长度。其他TEXT、BLOB等变长字段也是这样实现的。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">table</span> `t_user`(</span><br><span class="line">	`id` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">not</span> <span class="keyword">null</span>,</span><br><span class="line">    `name` <span class="type">varchar</span>(<span class="number">20</span>) <span class="keyword">default</span> <span class="keyword">null</span>,</span><br><span class="line">    `phone` <span class="type">varchar</span>(<span class="number">20</span>) <span class="keyword">default</span> <span class="keyword">null</span>,</span><br><span class="line">    `age` <span class="type">int</span>(<span class="number">11</span>) <span class="keyword">default</span> <span class="keyword">null</span>,</span><br><span class="line">    <span class="keyword">primary</span> key(`id`) <span class="keyword">using</span> btree</span><br><span class="line">) engine <span class="operator">=</span> InnoDB <span class="keyword">default</span> <span class="type">character</span> <span class="keyword">set</span> <span class="operator">=</span> ascii row_format <span class="operator">=</span> compact;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/t_test.png" alt="img"></p>
+<ul>
+<li><p>第一条记录</p>
+<ul>
+<li>name列的值为a, 真实数据占用的字节数是1字节，十六进制0x01;</li>
+<li>phone列的值为123，真实占用的字节数是3字节，十六进制0x03;</li>
+<li>age 列和 id 列不是变长字段，所以这里不用管。</li>
+</ul>
+<p>这些变长字段的真实数据占用的字节数会按照列的顺序<strong>逆序存放</strong>（等下会说为什么要这么设计），所以「变长字段长度列表」里的内容是「 03 01」，而不是 「01 03」。</p>
+<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230325212823590.png" alt="image-20230325212823590"></p>
+</li>
+<li><p>同样的道理，我们也可以得出<strong>第二条记录</strong>的行格式中，「变长字段长度列表」里的内容是「 04 02」，如下图：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325212912410.png" alt="image-20230325212912410"></p>
+</li>
+<li><p><strong>第三条记录</strong>中 phone 列的值是 NULL，<strong>NULL 是不会存放在行格式中记录的真实数据部分里的</strong>，所以「变长字段长度列表」里不需要保存值为 NULL 的变长字段的长度。</p>
+<p><img src="https://cdn.xiaolincoding.com/gh/xiaolincoder/mysql/row_format/%E5%8F%98%E9%95%BF%E5%AD%97%E6%AE%B5%E9%95%BF%E5%BA%A6%E5%88%97%E8%A1%A83.png" alt="img"></p>
+</li>
+</ul>
+<blockquote>
+<p>为什么【变长字段长度列表】的信息要按照逆序存放？</p>
+<p>这个设计是有想法的，主要是因为「记录头信息」中指向下一个记录的指针，指向的是下一条记录的「记录头信息」和「真实数据」之间的位置，这样的好处是向左读就是记录头信息，向右读就是真实数据，比较方便。</p>
+<p>「变长字段长度列表」中的信息之所以要逆序存放，是因为这样可以<strong>使得位置靠前的记录的真实数据和数据对应的字段长度信息可以同时在一个 CPU Cache Line 中，这样就可以提高 CPU Cache 的命中率</strong>。</p>
+<p>同样的道理， NULL 值列表的信息也需要逆序存放。</p>
+</blockquote>
+<blockquote>
+<p>变长字段字节数列表不是必须的</p>
+<p>当数据表没有变长字段的时候，比如全部都是int类型的字段，这时候表里的行格式就不会有【变长字段长度列表】了</p>
+</blockquote>
+</li>
+<li><p>NULL值列表</p>
+<p>表中的某些列可能会存储 NULL 值，如果把这些 NULL 值都放到记录的真实数据中会比较浪费空间，所以 Compact 行格式把这些值为 NULL 的列存储到 NULL值列表中。</p>
+<p>如果存在允许 NULL 值的列，则每个列对应一个二进制位（bit），二进制位按照列的顺序逆序排列。</p>
+<ul>
+<li>二进制位的值为1时，代表该列的值为NULL。</li>
+<li>二进制位的值为0时，代表该列的值不为NULL。</li>
+</ul>
+<p>另外，NULL 值列表必须用整数个字节的位表示（1字节8位），如果使用的二进制位个数不足整数个字节，则在字节的高位补 <code>0</code>。</p>
+</li>
+<li><p>记录头信息</p>
+<p>记录头信息包含的内容较多，这里列举几个比较重要的：</p>
+<ul>
+<li>delete_mask ：标识此条数据是否被删除。从这里可以知道，我们执行 detele 删除记录的时候，并不会真正的删除记录，只是将这个记录的 delete_mask 标记为 1。</li>
+<li>next_record：下一条记录的位置。从这里可以知道，记录与记录之间是通过链表组织的。在前面我也提到了，指向的是下一条记录的「记录头信息」和「真实数据」之间的位置，这样的好处是向左读就是记录头信息，向右读就是真实数据，比较方便。</li>
+<li>recore_type: 表示当前记录的类型，0表示普通记录，1表示B+树非叶子节点记录，2表示最小记录，3表示最大记录</li>
+</ul>
+</li>
+</ol>
+<h4 id="记录的真实数据"><a href="#记录的真实数据" class="headerlink" title="记录的真实数据"></a>记录的真实数据</h4><p>记录真实数据部分除了我们自己定义的字段，还有三个隐藏字段，分别是：row_id、trx_id、roll_pointer</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325220045192.png" alt="image-20230325220045192"></p>
+<ul>
+<li><p>row_id</p>
+<p>如果我们建表的时候指定了主键或者唯一约束列，那么就没有row_id隐藏字段了。如果既没有指定主键，又没有唯一约束，那么InnoDB就会为记录添加row_id隐藏字段。row_id不是必需的，占用6个字节。</p>
+</li>
+<li><p>trx_id</p>
+<p>事务id，表示这个数据是由哪个事务生成的。trx_id是必需的，占用6个字节。</p>
+</li>
+<li><p>roll_pointer</p>
+<p>这条记录上一个版本的指针。roll_pointer是必需的，占用7个字节。</p>
+</li>
+</ul>
+<h3 id="varchar-n-中n最大取值是多少？"><a href="#varchar-n-中n最大取值是多少？" class="headerlink" title="varchar(n)中n最大取值是多少？"></a>varchar(n)中n最大取值是多少？</h3><p><strong>MySQL规定除了TEXT、BLOBs这种大对象类型之外，其他所有的列（不包括隐藏列和记录头信息）占用的字节长度加起来不能超过65535个字节。</strong></p>
+<p>也就是说，一行记录除了TEXT、BLOBs类型的列，限制最大为65535字节</p>
+<p>varchar(n) 字段类型的 n 代表的是最多存储的字符数量，并不是字节大小哦。</p>
+<p>要算 varchar(n) 最大能允许存储的字节数，还要看数据库表的字符集，因为字符集代表着，1个字符要占用多少字节，比如 ascii 字符集， 1 个字符占用 1 字节，那么 varchar(100) 意味着最大能允许存储 100 字节的数据。</p>
+<h4 id="单字段情况"><a href="#单字段情况" class="headerlink" title="单字段情况"></a>单字段情况</h4><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> test ( </span><br><span class="line">`name` <span class="type">VARCHAR</span>(<span class="number">65535</span>)  <span class="keyword">NULL</span></span><br><span class="line">) ENGINE <span class="operator">=</span> InnoDB <span class="keyword">DEFAULT</span> <span class="type">CHARACTER</span> <span class="keyword">SET</span> <span class="operator">=</span> ascii ROW_FORMAT <span class="operator">=</span> COMPACT;</span><br></pre></td></tr></table></figure>
+
+<p><img src="C:\Users\11547\AppData\Roaming\Typora\typora-user-images\image-20230325220811376.png" alt="image-20230325220811376"></p>
+<p><strong>一行数据的最大字节数是65535（不包含TEXT、BLOBs这种大对象类型）,其中包含了storage overhead;</strong></p>
+<p>这个 storage overhead 是什么呢？其实就是「变长字段长度列表」和 「NULL 值列表」，也就是说<strong>一行数据的最大字节数 65535，其实是包含「变长字段长度列表」和 「NULL 值列表」所占用的字节数的</strong>。所以， 我们在算 varchar(n) 中 n 最大值时，需要减去 storage overhead 占用的字节数。</p>
+<p>这是因为我们存储字段类型为 varchar(n) 的数据时，其实分成了三个部分来存储：</p>
+<ul>
+<li>真实数据</li>
+<li>真实数据占用的字节数</li>
+<li>NULL 标识，如果不允许为NULL，这部分不需要</li>
+</ul>
+<p>「变长字段长度列表」所占用的字节数 &#x3D; 所有「变长字段长度」占用的字节数之和。</p>
+<p>所以，我们要先知道每个变长字段的「变长字段长度」需要用多少字节表示？具体情况分为：</p>
+<p>条件一：如果变长字段允许存储的最大字节数小于等于 255 字节，就会用 1 字节表示「变长字段长度」；<br>条件二：如果变长字段允许存储的最大字节数大于 255 字节，就会用 2 字节表示「变长字段长度」；<br>我们这里字段类型是 varchar(65535) ，字符集是 ascii，所以代表着变长字段允许存储的最大字节数是 65535，符合条件二，所以会用 2 字节来表示「变长字段长度」。</p>
+<p>因为我们这个案例是只有 1 个变长字段，所以「变长字段长度列表」&#x3D; 1 个「变长字段长度」占用的字节数，也就是 2 字节。</p>
+<p>因为我们在算 varchar(n) 中 n 最大值时，需要减去 「变长字段长度列表」和 「NULL 值列表」所占用的字节数的。所以，在数据库表只有一个 varchar(n) 字段且字符集是 ascii 的情况下，varchar(n) 中 n 最大值 &#x3D; 65535 - 2 - 1 &#x3D; 65532。</p>
+<p>当然，我上面这个例子是针对字符集为 ascii 情况，如果采用的是 UTF-8，varchar(n) 最多能存储的数据计算方式就不一样了：</p>
+<ul>
+<li>在 UTF-8 字符集下，一个字符最多需要三个字节，varchar(n) 的 n 最大取值就是 65532&#x2F;3 &#x3D; 21844。</li>
+</ul>
+<h4 id="多字段情况"><a href="#多字段情况" class="headerlink" title="多字段情况"></a>多字段情况</h4><p><strong>如果有多个字段的话，要保证所有字段的长度 + 变长字段字节数列表所占用的字节数 + NULL值列表所占用的字节数 &lt;&#x3D; 65535</strong>。</p>
+<h3 id="行溢出后，MySQL是怎么处理的？"><a href="#行溢出后，MySQL是怎么处理的？" class="headerlink" title="行溢出后，MySQL是怎么处理的？"></a>行溢出后，MySQL是怎么处理的？</h3><p>MySQL中磁盘和内存交互的基本单位是页，一个页的大小一般是16KB，也就是16384字节，而一个varchar(n)类型的列最多可以存储65532字节，一些大对象如TEXT、BLOB可能存储更多的数据，这时一个页可能就存不了一条记录。这个时候就会发生<strong>行溢出，多的数据就会存到另外的【溢出页】中</strong></p>
+<p>如果一个数据页存不了一条记录，InnoDB 存储引擎会自动将溢出的数据存放到「溢出页」中。在一般情况下，InnoDB 的数据都是存放在 「数据页」中。但是当发生行溢出时，溢出的数据会存放到「溢出页」中。</p>
+<p>当发生行溢出时，在记录的真实数据处只会保存该列的一部分数据，而把剩余的数据放在「溢出页」中，然后真实数据处用 20 字节存储指向溢出页的地址，从而可以找到剩余数据所在的页。大致如下图所示。</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325221530708.png" alt="image-20230325221530708"></p>
+<p>Compressed 和 Dynamic 这两个行格式和 Compact 非常类似，主要的区别在于处理行溢出数据时有些区别。</p>
+<p>这两种格式采用完全的行溢出方式，记录的真实数据处不会存储该列的一部分数据，只存储 20 个字节的指针来指向溢出页。而实际的数据都存储在溢出页中，看起来就像下面这样：</p>
+<p><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/image-20230325221615807.png" alt="image-20230325221615807"></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ol>
+<li><p>MySQL的NULL值是如何存放的？</p>
+<p>MySQL的Compact行格式中会用【NULL值列表】来标记值为NULL的列，NULL值并不会存储在行格式中的真实数据部分</p>
+<p>NULL值列表会占用1字节空间，当表中所有字段都定义成NOT NULL，行格式中就不会有NULL值列表，这样可节省1字节的空间</p>
+</li>
+<li><p>MySQL如何知道varchar(n)实际占用的数据大小？</p>
+<p>MySQL的Compact行格式中会用【变长字段长度列表】存储变长字段实际占用的数据大小</p>
+</li>
+<li><p>varchar(n)中n最大取值为多少？</p>
+<p>一行记录最大能存储65535字节的数据，但是这个是包含【变长字段字节数列表所占用的字节数】和【NULL值列表所占用的字节数】。所以我们在计算varchar(n)的最大值时，需要减去这两个列表所占用的字节数。</p>
+<p>如果一张表只有一个 varchar(n) 字段，且允许为 NULL，字符集为 ascii。varchar(n) 中 n 最大取值为 65532。</p>
+<p>计算公式：65535 - 变长字段字节数列表所占用的字节数 - NULL值列表所占用的字节数 &#x3D; 65535 - 2 - 1 &#x3D; 65532。</p>
+<p>如果有多个字段的话，要保证所有字段的长度 + 变长字段字节数列表所占用的字节数 + NULL值列表所占用的字节数 &lt;&#x3D; 65535。</p>
+</li>
+</ol>
+<p>4.行溢出后，MySQL是如何处理的？</p>
+<p>​	如果一个数据页存不了一条记录，InnoDB 存储引擎会自动将溢出的数据存放到「溢出页」中。</p>
+<p>​	Compact 行格式针对行溢出的处理是这样的：当发生行溢出时，在记录的真实数据处只会保存该列的一部分数	据，而把剩余的数据放在「溢出页」中，然后真实数据处用 20 字节存储指向溢出页的地址，从而可以找到剩余	数据所在的页。</p>
+<p>​	Compressed 和 Dynamic 这两种格式采用完全的行溢出方式，记录的真实数据处不会存储该列的一部分数据，	只存储 20 个字节的指针来指向溢出页。而实际的数据都存储在溢出页中。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color1">mysql</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E5%9F%BA%E7%A1%80/mysql%E4%B8%80%E8%A1%8C%E8%AE%B0%E5%BD%95%E6%98%AF%E5%A6%82%E4%BD%95%E5%AD%98%E5%82%A8%E7%9A%84/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-c#/IDisposable接口" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/c#/IDisposable%E6%8E%A5%E5%8F%A3/">IDisposable接口</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/c#/IDisposable%E6%8E%A5%E5%8F%A3/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.768Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="IDisposable接口"><a href="#IDisposable接口" class="headerlink" title="IDisposable接口"></a>IDisposable接口</h1><p>IDisposable是C#中的接口（interface），用于实现对象资源的释放。在C#中，当一个对象不再被使用时，它可能持有一些非托管资源，如文件、数据库连接、网络连接等。为了确保这些资源能够及时被释放，开发人员可以实现IDisposable接口，并在其中编写对象资源释放的代码。</p>
+<p>IDisposable接口定义了一个Dispose()方法，用于释放对象资源。开发人员可以在Dispose()方法中编写自己的释放代码，如关闭文件句柄、关闭数据库连接、关闭网络连接等。当对象不再被使用时，可以调用Dispose()方法来释放资源。</p>
+<p>在C#中，还可以使用using语句来自动调用Dispose()方法，以确保资源被及时释放。例如：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> (FileStream fileStream = <span class="keyword">new</span> FileStream(<span class="string">&quot;filename.txt&quot;</span>, FileMode.Open))</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 使用文件流进行读取操作</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在上述代码中，使用了using语句来创建FileStream对象，并在结束using代码块时自动调用Dispose()方法来释放文件流的资源。</p>
+<p>实现IDisposable接口是一种良好的编程实践，可以确保对象的资源被及时释放，避免资源泄漏和系统性能下降等问题。</p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">c#</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/c#/IDisposable%E6%8E%A5%E5%8F%A3/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-c#/c#调用c++" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/c#/c#%E8%B0%83%E7%94%A8c++/">c#调用c++</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/c#/c#%E8%B0%83%E7%94%A8c++/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.768Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="c-调用c"><a href="#c-调用c" class="headerlink" title="c#调用c++"></a>c#调用c++</h1>
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">c#</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/c#/c#%E8%B0%83%E7%94%A8c++/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-数据库/锁/实验" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/">锁</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.768Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id=""><a href="#" class="headerlink" title=""></a></h1><h1 id="锁"><a href="#锁" class="headerlink" title="锁"></a>锁</h1><h2 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> <span class="keyword">TABLE</span> `<span class="keyword">user</span>` (</span><br><span class="line">  `id` <span class="type">bigint</span> <span class="keyword">NOT</span> <span class="keyword">NULL</span> AUTO_INCREMENT,</span><br><span class="line">  `name` <span class="type">varchar</span>(<span class="number">30</span>) <span class="keyword">COLLATE</span> utf8mb4_unicode_ci <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  `age` <span class="type">int</span> <span class="keyword">NOT</span> <span class="keyword">NULL</span>,</span><br><span class="line">  <span class="keyword">PRIMARY</span> KEY (`id`),</span><br><span class="line">  KEY `index_age` (`age`) <span class="keyword">USING</span> BTREE</span><br><span class="line">) ENGINE<span class="operator">=</span>InnoDB  <span class="keyword">DEFAULT</span> CHARSET<span class="operator">=</span>utf8mb4 <span class="keyword">COLLATE</span><span class="operator">=</span>utf8mb4_unicode_ci;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">1</span>,<span class="string">&#x27;路飞&#x27;</span>, <span class="number">19</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">5</span>,<span class="string">&#x27;索隆&#x27;</span>, <span class="number">21</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">10</span>,<span class="string">&#x27;山治&#x27;</span>, <span class="number">22</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">15</span>,<span class="string">&#x27;乌索普&#x27;</span>, <span class="number">20</span>);</span><br><span class="line"><span class="keyword">INSERT</span> <span class="keyword">INTO</span> <span class="keyword">user</span> <span class="keyword">VALUES</span>(<span class="number">20</span>,<span class="string">&#x27;香克斯&#x27;</span>, <span class="number">39</span>);</span><br></pre></td></tr></table></figure>
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/%E6%95%B0%E6%8D%AE%E5%BA%93/%E9%94%81/%E5%AE%9E%E9%AA%8C/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-c#/c#语法" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/c#/c#%E8%AF%AD%E6%B3%95/">c#语法</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/c#/c#%E8%AF%AD%E6%B3%95/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.767Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h1 id="c-语法"><a href="#c-语法" class="headerlink" title="c#语法"></a>c#语法</h1><h2 id="c-可空类型"><a href="#c-可空类型" class="headerlink" title="c#可空类型"></a>c#可空类型</h2><h3 id="C-nullable：可空类型"><a href="#C-nullable：可空类型" class="headerlink" title="C# nullable：可空类型"></a>C# nullable：可空类型</h3><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">data_type? variable_name = <span class="literal">null</span>;</span><br></pre></td></tr></table></figure>
+
+<p>其中，data_type 为要声明的数据类型，后面紧跟一个问号；variable_name 则为变量的名称。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span>? num1;</span><br><span class="line">            <span class="built_in">int</span>? num2 = <span class="number">123</span>;</span><br><span class="line">            num1 = <span class="literal">null</span>;</span><br><span class="line">        </span><br><span class="line">            <span class="built_in">double</span>? num3 = <span class="keyword">new</span> <span class="built_in">double</span>?();</span><br><span class="line">            <span class="built_in">double</span>? num4 = <span class="number">3.1415926</span>;</span><br><span class="line">            <span class="built_in">bool</span>? boolval = <span class="literal">null</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 输出这些值</span></span><br><span class="line">            Console.WriteLine(<span class="string">&quot;num1 = &#123;0&#125; \r\n num2 = &#123;1&#125; \r\n num3 = &#123;2&#125; \r\n num4 = &#123;3&#125; \r\n boolval = &#123;4&#125;&quot;</span>, num1, num2, num3, num4, boolval);</span><br><span class="line">            Console.ReadLine();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">num1 =</span><br><span class="line">num2 = <span class="number">123</span></span><br><span class="line">num3 =</span><br><span class="line">num4 = <span class="number">3.1415926</span></span><br><span class="line">boolval =</span><br></pre></td></tr></table></figure>
+
+<h3 id="Null合并运算符（？？）"><a href="#Null合并运算符（？？）" class="headerlink" title="Null合并运算符（？？）"></a>Null合并运算符（？？）</h3><p>在 C# 中 Null 合并运算符用于定义可空类型和引用类型的默认值。如果此运算符的左操作数不为 null，那么运算符将返回左操作数，否则返回右操作数。例如表达式<code>a??b</code>中，如果 a 不为空，那么表达式的值则为 a，反之则为 b。</p>
+<p>需要注意的是，Null 合并运算符左右两边操作数的类型必须相同，或者右操作数的类型可以隐式的转换为左操作数的类型，否则将编译错误。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span>? num1 = <span class="literal">null</span>;</span><br><span class="line">            <span class="built_in">int</span>? num2 = <span class="number">123</span>;</span><br><span class="line">            <span class="built_in">int</span> num3;</span><br><span class="line">        </span><br><span class="line">            num3 = num1 ?? <span class="number">321</span>;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;num3 = &#123;0&#125;&quot;</span>, num3);</span><br><span class="line"></span><br><span class="line">            num3 = num2 ?? <span class="number">321</span>;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;num3 = &#123;0&#125;&quot;</span>, num3);</span><br><span class="line">            Console.ReadLine();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">num3 = <span class="number">321</span></span><br><span class="line">num3 = <span class="number">123</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="数组"><a href="#数组" class="headerlink" title="数组"></a>数组</h2><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">double</span>[] arr1 = &#123;<span class="number">96.5</span>, <span class="number">98.0</span>, <span class="number">99.5</span>, <span class="number">90.0</span>&#125;;</span><br><span class="line"><span class="built_in">int</span>[] arr2 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">10</span>]&#123;<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span>[] arr = <span class="keyword">new</span> <span class="built_in">int</span>[]&#123;<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;;</span><br><span class="line">            <span class="keyword">foreach</span>(<span class="built_in">int</span> i <span class="keyword">in</span> arr)&#123;</span><br><span class="line">                Console.WriteLine(<span class="string">&quot;&#123;1&#125;&quot;</span>, i);</span><br><span class="line">            &#125;</span><br><span class="line">            Console.ReadLine();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="二维数组"><a href="#二维数组" class="headerlink" title="二维数组"></a>二维数组</h3><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[,] arr = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>,<span class="number">4</span>]&#123;</span><br><span class="line">    &#123;<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>&#125;,</span><br><span class="line">    &#123;<span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>&#125;,</span><br><span class="line">    &#123;<span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span> a = arr[<span class="number">1</span>, <span class="number">0</span>];</span><br></pre></td></tr></table></figure>
+
+<h3 id="交错数组"><a href="#交错数组" class="headerlink" title="交错数组"></a>交错数组</h3><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[][] jaggedArray1 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>][]; <span class="comment">// 定义一个交错数组</span></span><br><span class="line">jaggedArray1[<span class="number">0</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">5</span>];        <span class="comment">// 对数组的第一个元素初始化</span></span><br><span class="line">jaggedArray1[<span class="number">1</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">4</span>];        <span class="comment">// 对数组的第二个元素初始化</span></span><br><span class="line">jaggedArray1[<span class="number">2</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">2</span>];        <span class="comment">// 对数组的第三个元素初始化</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span>[][] jaggedArray2 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>][]; <span class="comment">// 定义一个交错数组</span></span><br><span class="line">jaggedArray2[<span class="number">0</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>&#125;;</span><br><span class="line">jaggedArray2[<span class="number">1</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;;</span><br><span class="line">jaggedArray2[<span class="number">2</span>] = <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">10</span>, <span class="number">11</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span>[][] jaggedArray3 = <span class="keyword">new</span> <span class="built_in">int</span>[][]&#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">10</span>, <span class="number">11</span>&#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span>[][] jaggedArray4 = &#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>&#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[] &#123;<span class="number">10</span>, <span class="number">11</span>&#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">int</span>[][,] jaggedArray = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">3</span>][,]</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[,] &#123;</span><br><span class="line">        &#123;<span class="number">1</span>, <span class="number">1</span>&#125;,</span><br><span class="line">        &#123;<span class="number">2</span>, <span class="number">3</span>&#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[,] &#123;</span><br><span class="line">        &#123;<span class="number">5</span>, <span class="number">8</span>&#125;,</span><br><span class="line">        &#123;<span class="number">13</span>, <span class="number">21</span>&#125;,</span><br><span class="line">        &#123;<span class="number">34</span>, <span class="number">55</span>&#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="keyword">new</span> <span class="built_in">int</span>[,] &#123;</span><br><span class="line">        &#123;<span class="number">89</span>, <span class="number">144</span>&#125;,</span><br><span class="line">        &#123;<span class="number">233</span>, <span class="number">377</span>&#125;,</span><br><span class="line">        &#123;<span class="number">610</span>, <span class="number">987</span>&#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="built_in">int</span> a = jaggedArray[<span class="number">1</span>][<span class="number">1</span>,<span class="number">1</span>]     <span class="comment">// 变量 a 的值为 21</span></span><br><span class="line"><span class="built_in">int</span> b = jaggedArray[<span class="number">2</span>][<span class="number">0</span>,<span class="number">0</span>]     <span class="comment">// 变量 b 的值为 89</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="参数数组"><a href="#参数数组" class="headerlink" title="参数数组"></a>参数数组</h3><p>某些情况下，我们在定义函数时可能并不能提前确定参数的数量，这时可以使用 C# 提供的参数数组，参数数组通常用于为函数传递未知数量的参数。</p>
+<p>若要使用参数数组，则需要利用 params 关键字，语法格式如下：</p>
+<p>访问权限修饰符 返回值类型 函数名(params 类型名称[] 数组名称)</p>
+<p>提示：使用参数数组时，既可以直接为函数传递一个数组作为参数，也可以使用<code>函数名(参数1, 参数2, ..., 参数n)</code>的形式传递若干个具体的值作为参数。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span>&#123;</span><br><span class="line">            Demo Obj = <span class="keyword">new</span> Demo();</span><br><span class="line">            <span class="built_in">string</span> str = Obj.getSum(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>);</span><br><span class="line">            Console.WriteLine(str);</span><br><span class="line">            <span class="built_in">int</span>[] arr = &#123;<span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>, <span class="number">10</span>&#125;;</span><br><span class="line">            <span class="built_in">string</span> str2 = Obj.getSum(arr);</span><br><span class="line">            Console.WriteLine(str2);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="built_in">string</span> <span class="title">getSum</span>(<span class="params"><span class="keyword">params</span> <span class="built_in">int</span>[] arr</span>)</span>&#123;</span><br><span class="line">            <span class="built_in">int</span> sum = <span class="number">0</span>;</span><br><span class="line">            <span class="built_in">string</span> str = <span class="string">&quot;&quot;</span>;</span><br><span class="line">            <span class="keyword">foreach</span>(<span class="built_in">int</span> i <span class="keyword">in</span> arr)&#123;</span><br><span class="line">                sum += i;</span><br><span class="line">                str += <span class="string">&quot;+ &quot;</span> + i + <span class="string">&quot; &quot;</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            str = str.Trim(<span class="string">&#x27;+&#x27;</span>);</span><br><span class="line">            str += <span class="string">&quot;= &quot;</span>+sum;</span><br><span class="line">            <span class="keyword">return</span> str;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Array类"><a href="#Array类" class="headerlink" title="Array类"></a>Array类</h2><p>Array 类是 C# 中所有数组的基类，其中提供了一系列用来处理数组的操作，例如对数组元素进行排序、搜索数组中指定的元素等。</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123; </span><br><span class="line">            <span class="comment">// 创建一个数组并赋值 </span></span><br><span class="line">            <span class="built_in">int</span>[] arr = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">6</span>] &#123;<span class="number">15</span>, <span class="number">33</span>, <span class="number">29</span>, <span class="number">55</span>, <span class="number">10</span>, <span class="number">11</span> &#125;; </span><br><span class="line">            <span class="comment">// 创建一个空数组</span></span><br><span class="line">            <span class="built_in">int</span>[] arr2 = <span class="keyword">new</span> <span class="built_in">int</span>[<span class="number">6</span>]; </span><br><span class="line">            <span class="comment">// 获取数组的长度</span></span><br><span class="line">            Console.WriteLine(<span class="string">&quot;数组 arr 的长度为：&quot;</span>+arr.Length); </span><br><span class="line">            <span class="comment">// 为数组排序</span></span><br><span class="line">            Array.Sort(arr); </span><br><span class="line">            Console.Write(<span class="string">&quot;排序后的数组 arr 为：&quot;</span>); </span><br><span class="line">            <span class="comment">// 打印排序后的 arr</span></span><br><span class="line">            PrintArray(arr); </span><br><span class="line">            <span class="comment">// 查找数组元素的索引</span></span><br><span class="line">            Console.WriteLine(<span class="string">&quot;\n数组 arr 中值为 29 的元素的索引为：&quot;</span>+Array.IndexOf(arr,<span class="number">29</span>)); </span><br><span class="line">            <span class="comment">// 拷贝 arr 到 arr2 </span></span><br><span class="line">            Array.Copy(arr, arr2, arr.Length); </span><br><span class="line">            Console.Write(<span class="string">&quot;打印数组 arr2：&quot;</span>); </span><br><span class="line">            <span class="comment">// 打印数组 arr2 </span></span><br><span class="line">            PrintArray(arr2); </span><br><span class="line">            Array.Reverse(arr); </span><br><span class="line">            Console.Write(<span class="string">&quot;\n反序排列数组 arr： &quot;</span>); </span><br><span class="line">            PrintArray(arr); </span><br><span class="line">        &#125; </span><br><span class="line">        <span class="comment">// 遍历数组元素</span></span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">PrintArray</span>(<span class="params"><span class="built_in">int</span>[] arr</span>)</span> </span><br><span class="line">        &#123; </span><br><span class="line">            <span class="keyword">foreach</span> (Object elem <span class="keyword">in</span> arr) </span><br><span class="line">            &#123; </span><br><span class="line">                Console.Write(elem+<span class="string">&quot; &quot;</span>); </span><br><span class="line">            &#125; </span><br><span class="line">        &#125; </span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="字符串"><a href="#字符串" class="headerlink" title="字符串"></a>字符串</h2><h3 id="this关键字"><a href="#this关键字" class="headerlink" title="this关键字"></a>this关键字</h3><h4 id="1-使用-this-表示当前类的对象"><a href="#1-使用-this-表示当前类的对象" class="headerlink" title="1) 使用 this 表示当前类的对象"></a>1) 使用 this 表示当前类的对象</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            Website site = <span class="keyword">new</span> Website(<span class="string">&quot;C语言中文网&quot;</span>,<span class="string">&quot;http://c.biancheng.net/&quot;</span>);</span><br><span class="line">            site.Display();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Website</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="built_in">string</span> name;</span><br><span class="line">        <span class="keyword">private</span> <span class="built_in">string</span> url;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Website</span>(<span class="params"><span class="built_in">string</span> n, <span class="built_in">string</span> u</span>)</span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.name = n;</span><br><span class="line">            <span class="keyword">this</span>.url = u;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Display</span>()</span>&#123;</span><br><span class="line">            Console.WriteLine(name +<span class="string">&quot; &quot;</span>+ url);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-使用-this-关键字串联构造函数"><a href="#2-使用-this-关键字串联构造函数" class="headerlink" title="2) 使用 this 关键字串联构造函数"></a>2) 使用 this 关键字串联构造函数</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            Test test = <span class="keyword">new</span> Test(<span class="string">&quot;C语言中文网&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Test</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Test</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;无参构造函数&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 这里的 this()代表无参构造函数 Test()</span></span><br><span class="line">　　      <span class="comment">// 先执行 Test()，后执行 Test(string text)</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Test</span>(<span class="params"><span class="built_in">string</span> text</span>) : <span class="title">this</span>()</span></span><br><span class="line">        &#123;</span><br><span class="line">            Console.WriteLine(text);</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;实例构造函数&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-使用-this-关键字作为类的索引器"><a href="#3-使用-this-关键字作为类的索引器" class="headerlink" title="3) 使用 this 关键字作为类的索引器"></a>3) 使用 this 关键字作为类的索引器</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            Test a = <span class="keyword">new</span> Test();</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;Temp0:&#123;0&#125;, Temp1:&#123;1&#125;&quot;</span>, a[<span class="number">0</span>], a[<span class="number">1</span>]);</span><br><span class="line">            a[<span class="number">0</span>] = <span class="number">15</span>;</span><br><span class="line">            a[<span class="number">1</span>] = <span class="number">20</span>;</span><br><span class="line">            Console.WriteLine(<span class="string">&quot;Temp0:&#123;0&#125;, Temp1:&#123;1&#125;&quot;</span>, a[<span class="number">0</span>], a[<span class="number">1</span>]);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Test</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">int</span> Temp0;</span><br><span class="line">        <span class="built_in">int</span> Temp1;</span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">int</span> <span class="keyword">this</span>[<span class="built_in">int</span> index]</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">get</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">return</span> (<span class="number">0</span> == index) ? Temp0 : Temp1;</span><br><span class="line">            &#125;</span><br><span class="line">    </span><br><span class="line">            <span class="keyword">set</span></span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">if</span> (<span class="number">0</span>==index)</span><br><span class="line">                    Temp0 = <span class="keyword">value</span>;</span><br><span class="line">                <span class="keyword">else</span></span><br><span class="line">                    Temp1 = <span class="keyword">value</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="4-使用-this-关键字作为原始类型的扩展方法"><a href="#4-使用-this-关键字作为原始类型的扩展方法" class="headerlink" title="4) 使用 this 关键字作为原始类型的扩展方法"></a>4) 使用 this 关键字作为原始类型的扩展方法</h4><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">namespace</span> <span class="title">c.biancheng.net</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">class</span> <span class="title">Demo</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span> </span><br><span class="line">        &#123;</span><br><span class="line">            <span class="built_in">string</span> str = <span class="string">&quot;C语言中文网&quot;</span>;</span><br><span class="line">            <span class="built_in">string</span> newstr = str.ExpandString();</span><br><span class="line">            Console.WriteLine(newstr);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title">Test</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">string</span> <span class="title">ExpandString</span>(<span class="params"><span class="keyword">this</span> <span class="built_in">string</span> name</span>)</span></span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> name+<span class="string">&quot; http://c.biancheng.net/&quot;</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="C-特性（Attribute）"><a href="#C-特性（Attribute）" class="headerlink" title="C#特性（Attribute）"></a>C#特性（Attribute）</h2><h2 id="C-反射（Reflection）"><a href="#C-反射（Reflection）" class="headerlink" title="C#反射（Reflection）"></a>C#反射（Reflection）</h2><h2 id="C-委托（Delegate）"><a href="#C-委托（Delegate）" class="headerlink" title="C#委托（Delegate）"></a>C#委托（Delegate）</h2><figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="built_in">delegate</span> <span class="built_in">double</span> <span class="title">Function</span>(<span class="params"><span class="built_in">double</span> x</span>)</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">Multiplier</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">double</span> _factor;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Multiplier</span>(<span class="params"><span class="built_in">double</span> factor</span>)</span> =&gt; _factor = factor;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">double</span> <span class="title">Multiply</span>(<span class="params"><span class="built_in">double</span> x</span>)</span> =&gt; x * _factor;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">DelegateExample</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="built_in">double</span>[] <span class="title">Apply</span>(<span class="params"><span class="built_in">double</span>[] a, Function f</span>)</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">var</span> result = <span class="keyword">new</span> <span class="built_in">double</span>[a.Length];</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; a.Length; i++) result[i] = f(a[i]);</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">double</span>[] a = &#123; <span class="number">0.0</span>, <span class="number">0.5</span>, <span class="number">1.0</span> &#125;;</span><br><span class="line">        <span class="built_in">double</span>[] squares = Apply(a, (x) =&gt; x * x);</span><br><span class="line">        <span class="built_in">double</span>[] sines = Apply(a, Math.Sin);</span><br><span class="line">        Multiplier m = <span class="keyword">new</span> Multiplier(<span class="number">2.0</span>);</span><br><span class="line">        <span class="built_in">double</span>[] doubles = Apply(a, m.Multiply);</span><br><span class="line">        <span class="keyword">for</span>(<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; doubles.Length; i++) &#123; Console.WriteLine(doubles[i]); &#125;</span><br><span class="line">        Console.ReadLine();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">c#</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/c#/c#%E8%AF%AD%E6%B3%95/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
     <article id="post-算法/博弈论" class="article article-type-post  article-index" itemscope itemprop="blogPost">
   <div class="article-inner">
     
@@ -145,13 +1210,13 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/22/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/">NIM游戏</a>
+      <a class="article-title" href="/2024/04/27/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/">NIM游戏</a>
     </h1>
   
 
         
-        <a href="/2023/03/22/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/" class="archive-article-date">
-  	<time datetime="2023-03-22T08:30:26.703Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-22</time>
+        <a href="/2024/04/27/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.767Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
 </a>
         
       </header>
@@ -228,7 +1293,95 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/22/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/">展开全文 >></a>
+          <a class="article-more-a" href="/2024/04/27/%E7%AE%97%E6%B3%95/%E5%8D%9A%E5%BC%88%E8%AE%BA/">展开全文 >></a>
+        </p>
+      
+
+      
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</article>
+
+<aside class="wrap-side-operation">
+    <div class="mod-side-operation">
+        
+        <div class="jump-container" id="js-jump-container" style="display:none;">
+            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
+                <i class="icon-font icon-back"></i>
+            </a>
+            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
+                <i class="icon-font icon-plane jump-plane"></i>
+            </div>
+        </div>
+        
+        
+    </div>
+</aside>
+
+
+
+
+  
+    <article id="post-算法/滑动窗口" class="article article-type-post  article-index" itemscope itemprop="blogPost">
+  <div class="article-inner">
+    
+      <header class="article-header">
+        
+  
+    <h1 itemprop="name">
+      <a class="article-title" href="/2024/04/27/%E7%AE%97%E6%B3%95/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/">滑动窗口</a>
+    </h1>
+  
+
+        
+        <a href="/2024/04/27/%E7%AE%97%E6%B3%95/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.767Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
+</a>
+        
+      </header>
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+        <h2 id="滑动窗口"><a href="#滑动窗口" class="headerlink" title="滑动窗口"></a>滑动窗口</h2><p>模板</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">for</span>(<span class="type">int</span> i = <span class="number">0</span>, j = <span class="number">0</span>; i &lt; length &amp;&amp; j &lt; length;)&#123;</span><br><span class="line">    <span class="keyword">while</span>(i &lt; length &amp;&amp; 条件)&#123;</span><br><span class="line">        i++;</span><br><span class="line">    &#125;</span><br><span class="line">   	<span class="comment">//需要鉴别一下是i &lt; length跳出的，还是不符合条件跳出的</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">while</span>(j &lt; length &amp;&amp; !条件) j++; <span class="comment">//j++使得[j, i)符合条件</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/longest-substring-with-at-most-two-distinct-characters/description/?envType=study-plan-v2&id=premium-algo-100&orderBy=most_votes">至多包含两个不同字符的最长子串</a></p>
+
+      
+
+      
+    </div>
+    <div class="article-info article-info-index">
+      
+      
+	<div class="article-tag tagcloud">
+		<i class="icon-price-tags icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color3">算法</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+      
+	<div class="article-category tagcloud">
+		<i class="icon-book icon"></i>
+		<ul class="article-tag-list">
+			 
+        		<li class="article-tag-list-item">
+        			<a href="/categories/算法//" class="article-tag-list-link color3">算法</a>
+        		</li>
+      		
+		</ul>
+	</div>
+
+
+      
+        <p class="article-more-link">
+          <a class="article-more-a" href="/2024/04/27/%E7%AE%97%E6%B3%95/%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3/">展开全文 >></a>
         </p>
       
 
@@ -265,13 +1418,13 @@
         
   
     <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/22/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/">算法笔记</a>
+      <a class="article-title" href="/2024/04/27/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/">算法笔记</a>
     </h1>
   
 
         
-        <a href="/2023/03/22/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/" class="archive-article-date">
-  	<time datetime="2023-03-22T08:30:26.698Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-22</time>
+        <a href="/2024/04/27/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/" class="archive-article-date">
+  	<time datetime="2024-04-27T07:49:11.766Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-04-27</time>
 </a>
         
       </header>
@@ -439,761 +1592,7 @@
 
       
         <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/22/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-数据库/SQL语法/SQL窗口函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/">SQL窗口函数</a>
-    </h1>
-  
-
-        
-        <a href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/" class="archive-article-date">
-  	<time datetime="2023-03-21T11:01:51.383Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-03-21</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="SQL窗口函数"><a href="#SQL窗口函数" class="headerlink" title="SQL窗口函数"></a>SQL窗口函数</h1><p>SQL窗口函数（Window Functions）是一种高级SQL技术，它可以对结果集中的行进行聚合计算，同时保留原始结果集中的行。窗口函数可以在SELECT语句中使用，使用OVER子句定义窗口（Window），并使用PARTITION BY子句对结果集进行分许，以便在每个分组内进行聚合计算。</p>
-<p>窗口函数可以用于执行许多复杂的查询和分析操作，如计算移动平均值、累计总和、排名和百分位数等。窗口函数与GROUP BY子句不同，它不会对结果进行聚合，而是对每个行进行计算，并将计算结果添加到结果集的每个行中。</p>
-<p>常见的SQL窗口函数包括：</p>
-<ul>
-<li>ROW_NUMBER()：为每一行返回一个唯一的整数值</li>
-<li>RANK()：计算每一行在分组中的排名</li>
-<li>DENSE_RANK()：与RANK()类似，但是不会跳过相同的排名。</li>
-<li>SUM()、AVG()、MAX()、MIN()：计算指定列在每个窗口中的聚合值。</li>
-</ul>
-<p>示例：使用窗口函数计算每个城市的平均工资和排名：</p>
-<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> </span><br><span class="line">	city, <span class="built_in">AVG</span>(salary) <span class="keyword">OVER</span> (<span class="keyword">PARTITION</span> <span class="keyword">BY</span> city) <span class="keyword">AS</span> avg_salary,</span><br><span class="line">	<span class="built_in">RANK</span>() <span class="keyword">OVER</span> (<span class="keyword">PARTITION</span> <span class="keyword">BY</span> city <span class="keyword">ORDER</span> <span class="keyword">BY</span> <span class="built_in">AVG</span>(salary) <span class="keyword">DESC</span>) <span class="keyword">AS</span> rank</span><br><span class="line"><span class="keyword">FROM</span></span><br><span class="line">	employee;</span><br></pre></td></tr></table></figure>
-
-<p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/game-play-analysis-ii/description/">https://leetcode.cn/problems/game-play-analysis-ii/description/</a></p>
-<p><a target="_blank" rel="noopener" href="https://leetcode.cn/problems/investments-in-2016/description/?favorite=qgq7m9e">https://leetcode.cn/problems/investments-in-2016/description/?favorite=qgq7m9e</a></p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">数据库</a>
-        		</li>
-      		 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">SQL</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/03/21/%E6%95%B0%E6%8D%AE%E5%BA%93/SQL%E8%AF%AD%E6%B3%95/SQL%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第14章 多线程编程/多线程编程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/25/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/">多线程编程</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/25/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/" class="archive-article-date">
-  	<time datetime="2023-01-25T01:18:28.062Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-25</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="多线程编程"><a href="#多线程编程" class="headerlink" title="多线程编程"></a>多线程编程</h1><p>POSIX线程（pthread）标准</p>
-<ul>
-<li>创建线程和结束线程</li>
-<li>读取和设置线程属性</li>
-<li>POSIX线程同步方式：POSIX信号量、互斥锁和条件变量</li>
-</ul>
-<h2 id="线程模型"><a href="#线程模型" class="headerlink" title="线程模型"></a>线程模型</h2><p>线程是程序中完成一个独立任务的完整执行序列，即一个可调度的实体。</p>
-<p>根据运行环境和调度者身份，线程可分为内核线程和用户线程。</p>
-<p>内核线程，在有的系统上也称为LWP( Light Weight Process,轻量级进程)，运行在内核空间，由内核来调度。<br>用户线程运行在用户空间，由线程库来调度。</p>
-<p>一个进程的所有执行线程共享该进程的时间片，它们对外表现出相同的优先级。</p>
-<h2 id="Linux线程库"><a href="#Linux线程库" class="headerlink" title="Linux线程库"></a>Linux线程库</h2><p>Linux中定义在pthread.h头文件中</p>
-<h2 id="创建线程和结束线程"><a href="#创建线程和结束线程" class="headerlink" title="创建线程和结束线程"></a>创建线程和结束线程</h2><h3 id="pthread-create"><a href="#pthread-create" class="headerlink" title="pthread_create"></a>pthread_create</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_create</span><span class="params">( <span class="type">pthread_t</span>* thread, <span class="type">const</span> <span class="type">pthread_attr_t</span>* attr, <span class="type">void</span>* ( *start_routine )( <span class="type">void</span>* ), <span class="type">void</span>* arg )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/pthreadtypes.h&gt;</span></span></span><br><span class="line"><span class="keyword">typedef</span> <span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> <span class="type">pthread_t</span>;</span><br></pre></td></tr></table></figure>
-
-<p>一个用户可以打开的线程数量不能超过RLIMIT_NPROC软资源限制，此外，系统上所有用户能创建的线程总数也不得超过&#x2F;proc&#x2F;sys&#x2F;kernel&#x2F;threads-max内核参数所定义的值</p>
-<h3 id="pthread-exit"><a href="#pthread-exit" class="headerlink" title="pthread_exit"></a>pthread_exit</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">pthread_exit</span><span class="params">( <span class="type">void</span>* retval )</span></span>;</span><br></pre></td></tr></table></figure>
-
-
-<h3 id="pthread-join"><a href="#pthread-join" class="headerlink" title="pthread_join"></a>pthread_join</h3><h3 id="pthread-cancel"><a href="#pthread-cancel" class="headerlink" title="pthread_cancel"></a>pthread_cancel</h3><h2 id="条件变量"><a href="#条件变量" class="headerlink" title="条件变量"></a>条件变量</h2><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_init</span><span class="params">( <span class="type">pthread_cond_t</span>* cond, <span class="type">const</span> <span class="type">pthread_condattr_t</span>* cond_attr )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_destroy</span><span class="params">( <span class="type">pthread_cond_t</span>* cond )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_broadcast</span><span class="params">( <span class="type">pthread_cond_t</span>* cond )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_signal</span><span class="params">( <span class="type">pthread_cond_t</span>* cond )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">pthread_cond_wait</span><span class="params">( <span class="type">pthread_cond_t</span>* cond, <span class="type">pthread_mutex_t</span>* mutex )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h2 id="多线程环境"><a href="#多线程环境" class="headerlink" title="多线程环境"></a>多线程环境</h2><h3 id="可重入函数"><a href="#可重入函数" class="headerlink" title="可重入函数"></a>可重入函数</h3><p>如果一个函数能被多个线程同时调用且不发生竞态条件，则我们称它是线程安全的（thread safe）, 或者说它是可重入函数。</p>
-<h3 id="线程和进程"><a href="#线程和进程" class="headerlink" title="线程和进程"></a>线程和进程</h3><h3 id="线程和信号"><a href="#线程和信号" class="headerlink" title="线程和信号"></a>线程和信号</h3>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/25/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC14%E7%AB%A0%20%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BC%96%E7%A8%8B/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第6章 高级IO函数/6.5 mmap函数和munmap函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/24/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/">mmap函数和munmap函数</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/24/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/" class="archive-article-date">
-  	<time datetime="2023-01-24T03:26:54.278Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-24</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <p>mmap函数用于申请一段内存空间。我们可以将这段内存作为进程间通信的共享内存，也可以将文件直接映射到其中。munmap函数则释放由mmap创建的这段内存空间。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">mmap</span><span class="params">( <span class="type">void</span>* start, <span class="type">size_t</span> length, <span class="type">int</span> prot, <span class="type">int</span> flags, <span class="type">int</span> fd, <span class="type">off_t</span> offset )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">munmap</span><span class="params">( <span class="type">void</span>* start, <span class="type">size_t</span> length )</span></span>;</span><br></pre></td></tr></table></figure>
-<p>start参数用于指定某个特定地址作为这段内存的起始地址，如果设置为NULL，则由系统自动分配。<br>prot用于设置内存段的访问权限<br>flags参数控制内存段内容被修改后程序的行为。</p>
-<ul>
-<li>MAP_SHARED: 在进程间共享这段内存。对该内存段的修改将反映到被映射的文件中。它提供了进程间共享内存的POSIX方法。</li>
-</ul>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/24/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC6%E7%AB%A0%20%E9%AB%98%E7%BA%A7IO%E5%87%BD%E6%95%B0/6.5%20mmap%E5%87%BD%E6%95%B0%E5%92%8Cmunmap%E5%87%BD%E6%95%B0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第13章 多进程编程/多进程编程" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/18/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/">多进程编程</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/18/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/" class="archive-article-date">
-  	<time datetime="2023-01-18T07:23:46.017Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-18</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="多进程编程"><a href="#多进程编程" class="headerlink" title="多进程编程"></a>多进程编程</h1><ul>
-<li>复制进程映像的fork系列系统调用和替换进程映像的exec系统调用</li>
-<li>僵尸进程以及如何避免僵尸进程</li>
-<li>进程间通信（Inter-Process Communication, IPC）最简单的方式：管道。</li>
-<li>3种System V进程间的通信方式：信号量、消息队列和共享内存。它们都是由AT&amp;T System V2版本的UNIX引入的，所以统称为System V IPC</li>
-<li>在进程间传递文件描述符的通用方法：通过UNIX本地域socket传递特殊的辅助数据。</li>
-</ul>
-<h2 id="fork系统调用"><a href="#fork系统调用" class="headerlink" title="fork系统调用"></a>fork系统调用</h2><p>Linux下创建新进程的系统调用时fock：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">fork</span><span class="params">( <span class="type">void</span> )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>该函数的每次调用都返回两次，在父进程中返回的是子进程的PID，在子进程中则返回的是0。该返回值是后续代码判断当前进程是父进程还是子进程的依据。</p>
-<p>fork函数复制当前进程，在内核进程表中创建一个新的进程表项。新的进程表项由很大属性和原进程相同，比如堆指针、栈指针和标志寄存器的值。但也有许多属性被赋予了新的值，比如该进程的PPID被设置为原进程的PID,信号位图被清除（原进程设置的信号处理函数不再对新的进程起作用）。</p>
-<p>子进程的代码与父进程完全相同，同时还会复制父进程的数据（堆数据、栈数据和静态数据）。数据的复制采用的是所谓的写时复制（copy on write),即只有在任一进程（父进程或子进程）对数据执行了写操作时，复制才会发生（先时缺页中断，然后操作系统给子进程分配内存并复制父进程的数据）。即便如此，如果我们在程序中分配了大量的内存，那么使用fork时也应当十分进程，避免没必要的内存分配和数据复制。</p>
-<p>创建子进程后，父进程中打开的文件描述符默认在子进程中也是打开的，且文件描述符的引用计数加1。不仅如此，父进程的用户根目录、当前工作目录等变量的引用计数均会加1。</p>
-<h2 id="exec系列系统调用"><a href="#exec系列系统调用" class="headerlink" title="exec系列系统调用"></a>exec系列系统调用</h2><p>有时我们需要在子进程中执行其他程序，即替换当前进程映像，这就需要使用如下exec系列函数之一：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="keyword">extern</span> <span class="type">char</span>** environ;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execl</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path, <span class="type">const</span> <span class="type">char</span>* arg, ... )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execlp</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* file, <span class="type">const</span> <span class="type">char</span>* arg, ... )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execle</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path , <span class="type">const</span> <span class="type">char</span>* arg, ..., <span class="type">char</span>* <span class="type">const</span> envp[] )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execv</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path, <span class="type">char</span>* <span class="type">const</span> argv[] )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execvp</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* file, <span class="type">char</span>* <span class="type">const</span> argv[] )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">execve</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* path, <span class="type">char</span>* <span class="type">const</span> argv[], <span class="type">char</span>* <span class="type">const</span> envp[] )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>path参数指定可执行文件的完整路径，fIle参数可以接受文件名，该文件的具体位置则在环境变量PATH中搜寻。arg接受可变参数，argv则接受参数数组，它们都会被传递给新的的程序（path或file指定的程序）的main函数。envp参数用于设置新程序的环境变量。如果为设置它，则新程序将使用全局变量environ指定的环境变量。</p>
-<p>一般情况下，exec是不返回的，除非出错。如果没出错，则原程序exec调用之后的代码都不会执行，因为此时原程序已经被exec的参数指定的程序完全替换。<br>exec函数不会关闭原程序打开的文件描述符，除非该文件描述符被设置了类似SOCK_CLOEXEC的属性。</p>
-<h2 id="处理僵尸进程"><a href="#处理僵尸进程" class="headerlink" title="处理僵尸进程"></a>处理僵尸进程</h2><p>对于多进程程序而言，父进程一般需要跟踪子进程的退出状态。因此，当子进程结束运行时，内核不会立刻释放该进程的进程表表项，以满足父进程后续对该子进程退出信息的查询（如果父进程还在运行）。在子进程结束运行之后，父进程读取其退出状态之前，我们称该子进程处于僵尸态。<br>另外一种使子进程进入僵尸态的情况是：父进程结束或异常终止，而子进程继续运行。此时子进程的PPID将被操作系统设置为1，即init进程。init进程接管了该子进程，并等待它结束。在父进程退出之后，子进程退出之前，该子进程处于僵尸态。</p>
-<p>无论哪种情况，如果父进程没有正确地处理子进程的返回信息，子进程都将停留在僵尸态，并占据着内核资源。<br>下面这对函数在父进程中调用，以等待子进程的结束，并获取子进程的返回信息，从而避免了僵尸进程的产生，或者使子进程的僵尸态立即结束：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">wait</span><span class="params">( <span class="type">int</span>* stat_loc )</span></span>;</span><br><span class="line"><span class="function"><span class="type">pid_t</span> <span class="title">waitpid</span><span class="params">( <span class="type">pid_t</span> pid, <span class="type">int</span>* stat_loc, <span class="type">int</span> options )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>wait函数将阻塞进程，直到该进程的某个子进程结束运行为止。它返回结束运行的子进程的PID,并将该子进程的退出状态信息存储于stat_loc参数指向的内存中。sys&#x2F;wait.h头文件中定义了几个宏来帮助解释子进程的退出状态信息<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230118161515.png" alt="image.png"></p>
-<p>waitpid 由pid参数指定子进程。option的参数为WNOHANG时，waitpid的调用时非阻塞的。</p>
-<p>要在事件已经发生了的情况下执行非阻塞调用才能提高程序的效率。对于waitpid函数而言，我们最好在某个子进程退出之后再调用它，父进程通过SIGCHLD信号得知子进程结束。当一个进程结束时，它将给其父进程发送一个SIGCHLD信号。</p>
-<h2 id="管道"><a href="#管道" class="headerlink" title="管道"></a>管道</h2><p>创建管道的系统调用pipe,可以用其实现进程内部的通信。<br>管道能再父、子进程间传力数据，利用的时fork调用之后两个管道文件描述符（fd[0]和fd[1]）都保持打开。一对这样的文件描述符只能保证父、子进程间的一个方向的数据传输，父进程和子进程必须有一个关闭fd[0],另一个关闭fd[1]。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230118162613.png" alt="image.png"></p>
-<h2 id="信号量"><a href="#信号量" class="headerlink" title="信号量"></a>信号量</h2><h3 id="信号量原语"><a href="#信号量原语" class="headerlink" title="信号量原语"></a>信号量原语</h3><p>引发进程之间竞态条件的代码称为关键代码段或者临界区。</p>
-<p>Dijkstra提出信号量（Semaphore）<br>信号量是一种特殊的变量，它只能取自然数值并且只支持两种操作：等待（wait）和信号（signal）。不过在Linux&#x2F;UNIX中，“等待”和“信号”都已经有了特殊的含义，所以对信号量这两个操作更常用的称呼是P、V操作。</p>
-<ul>
-<li>P(SV)，如果SV的值大于0，就将它减一；如果SV的值为0，则挂起进程的执行</li>
-<li>V(SV)，如果有其他进程因为等待SV而挂起，则唤醒之；如果没用，则将SV加一</li>
-</ul>
-<p>Linux信号量的API都定义在sys&#x2F;sem.h头文件中，主要包含3个系统调用：semget、semop和semct。它们都被设计为操作一组信号量，即信号量集，而不是单个信号量。</p>
-<h3 id="semget系统调用"><a href="#semget系统调用" class="headerlink" title="semget系统调用"></a>semget系统调用</h3><p>semget系统调用创建一个新的信号量集，或者获取一个已经存在的信号量集。其定义如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">semget</span><span class="params">( <span class="type">key_t</span> key, <span class="type">int</span> num_sems, <span class="type">int</span> sem_flags )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>如果semget用于创建信号量集，则与之关联的内核数据结构体semid_ds将被创建并初始化。semid_ds结构体的定义如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="comment">/*该结构体用于描述IPC对象（信号量、共享内存和消息队列）的权限*/</span></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">ipc_perm</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">key_t</span> key;</span><br><span class="line">	<span class="type">uid_t</span> uid;</span><br><span class="line">	<span class="type">gid_t</span> gid;</span><br><span class="line">	<span class="type">uid_t</span> cuid;</span><br><span class="line">	<span class="type">gid_t</span> cgid;</span><br><span class="line">	<span class="type">mode_t</span> mode;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">semid_ds</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">ipc_perm</span> sem_perm;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> sem_nsems;</span><br><span class="line">	<span class="type">time_t</span> sem_otime;</span><br><span class="line">	<span class="type">time_t</span> sem_ctime;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>semget对semid_ds结构体的初始化包括：</p>
-<ul>
-<li>将sem_perm.cuid和sem_perm.uid设置为调用进程的有效用户ID</li>
-<li>将sem_perm.cgid和sem_perm.gid设置为调用进程的有效组ID</li>
-<li>将sem_perm.mode的最低9位设置为sem_flags参数的最低9位</li>
-<li>将sem_nsems设置为num_sems</li>
-<li>将sem_otime设置为0</li>
-<li>将sem_ctime设置为当前的系统时间</li>
-</ul>
-<h3 id="semop系统调用"><a href="#semop系统调用" class="headerlink" title="semop系统调用"></a>semop系统调用</h3><p>与每个信号量关联的一些重要的内核变量</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">unsigned</span> <span class="type">short</span> semval; <span class="comment">//信号量的值</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">short</span> semzcnt; <span class="comment">//等待信号量值变为0的进程数量</span></span><br><span class="line"><span class="type">unsigned</span> <span class="type">short</span> semncnt; <span class="comment">//等待信号量值增加的进程数量</span></span><br><span class="line"><span class="type">pid_t</span> sempid;      <span class="comment">//最后异常执行semop操作的进程ID</span></span><br></pre></td></tr></table></figure>
-
-<p>semop对信号量的操作实际上就是对这些内核变量的操作。semop的定义如下：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">semop</span><span class="params">( <span class="type">int</span> sem_id, <span class="keyword">struct</span> sembuf* sem_ops, <span class="type">size_t</span> num_sem_ops )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">sembuf</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">short</span> <span class="type">int</span> sem_num;l</span><br><span class="line">	<span class="type">short</span> <span class="type">int</span> sem_op;</span><br><span class="line">	<span class="type">short</span> <span class="type">int</span> sem_flg;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="semctl系统调用"><a href="#semctl系统调用" class="headerlink" title="semctl系统调用"></a>semctl系统调用</h3><p>semctl系统调用允许调用者对信号量进行直接控制。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/sem.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">semctl</span><span class="params">( <span class="type">int</span> sem_id, <span class="type">int</span> sem_num, <span class="type">int</span> command, ... )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h3 id="特殊键值IPC-PRIVATE"><a href="#特殊键值IPC-PRIVATE" class="headerlink" title="特殊键值IPC_PRIVATE"></a>特殊键值IPC_PRIVATE</h3><h2 id="共享内存"><a href="#共享内存" class="headerlink" title="共享内存"></a>共享内存</h2><p>共享内存是最高效的IPC机制，因为它不涉及进程之间的任何数据传输。这种高效率带来的问题是，我们必须用其他辅助手段来同步进程对共享内存的访问，否则会产生竞态条件。因此，共享内存通常和其他进程间通信方式一起使用。<br>Linux共享内存段 API都定义在sys&#x2F;shm.h头文件中，包括4个系统调用：shmget、shmat、shmdt 和 shmctl。</p>
-<h3 id="shmget系统调用"><a href="#shmget系统调用" class="headerlink" title="shmget系统调用"></a>shmget系统调用</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shmget</span><span class="params">( <span class="type">key_t</span> key, <span class="type">size_t</span> size, <span class="type">int</span> shmflg )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h3 id="shmat和shmdt系统调用"><a href="#shmat和shmdt系统调用" class="headerlink" title="shmat和shmdt系统调用"></a>shmat和shmdt系统调用</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">shmat</span><span class="params">( <span class="type">int</span> shm_id, <span class="type">const</span> <span class="type">void</span>* shm_addr, <span class="type">int</span> shmflg )</span></span>;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shmdt</span><span class="params">( <span class="type">const</span> <span class="type">void</span>* shm_addr )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h3 id="shmctl系统调用"><a href="#shmctl系统调用" class="headerlink" title="shmctl系统调用"></a>shmctl系统调用</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#inclde <span class="string">&lt;sys/shm.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shmctl</span><span class="params">( <span class="type">int</span> shm_id, <span class="type">int</span> command, <span class="keyword">struct</span> shmid_ds* buf )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h3 id="共享内存的POSIX方法"><a href="#共享内存的POSIX方法" class="headerlink" title="共享内存的POSIX方法"></a>共享内存的POSIX方法</h3><p>Linuxt提供了一种利用mmap在无关进程之间共享内存的方式。</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/stat.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shm_open</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* name, <span class="type">int</span> oflag, <span class="type">mode_t</span> mode )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">shm_unlink</span><span class="params">( <span class="type">const</span> <span class="type">char</span>* name )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h2 id="消息队列"><a href="#消息队列" class="headerlink" title="消息队列"></a>消息队列</h2><p>消息队列是在两个进程之间传递二进制块数据的一种简单有效的方式。每个数据块都有一个特定类型，接收方可以根据类型来有选择地接收数据，而不一定翔管道和命名管道那样必须以先进先出的方式接收数据。<br>linux消息队列的API都定义在sys&#x2F;msg.h头文件中，包括4个系统调用：msgget、msgsnd、msgrcv和msgctl。</p>
-<h3 id="msgget系统调用"><a href="#msgget系统调用" class="headerlink" title="msgget系统调用"></a>msgget系统调用</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgget</span><span class="params">( <span class="type">key_t</span> key, <span class="type">int</span> msgflg)</span></span>;</span><br></pre></td></tr></table></figure>
-
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">msqid_ds</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">struct</span> <span class="title class_">ipc_perm</span> msg_perm;</span><br><span class="line">	<span class="type">time_t</span> msg_stime;</span><br><span class="line">	<span class="type">time_t</span> msg_rtime;</span><br><span class="line">	<span class="type">time_t</span> msg_ctime;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> __msg_cbytes;</span><br><span class="line">	<span class="type">msgqnum_t</span> msg_qnum;</span><br><span class="line">	<span class="type">msglen_t</span> msg_qbytes;</span><br><span class="line">	<span class="type">pid_t</span> msg_lspid;</span><br><span class="line">	<span class="type">pit_t</span> msg_lpid;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="msgsnd系统调用"><a href="#msgsnd系统调用" class="headerlink" title="msgsnd系统调用"></a>msgsnd系统调用</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgsnd</span><span class="params">( <span class="type">int</span> msqid, <span class="type">const</span> <span class="type">void</span>* msg_ptr, <span class="type">size_t</span> msg_sz, <span class="type">int</span> msgflg )</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">msgbuf</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">long</span> mtype;</span><br><span class="line">	<span class="type">char</span> mtext[<span class="number">512</span>];</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
-
-<h3 id="msgrcv系统调用"><a href="#msgrcv系统调用" class="headerlink" title="msgrcv系统调用"></a>msgrcv系统调用</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgrcv</span><span class="params">( <span class="type">int</span> msqid, <span class="type">void</span>* msg_ptr, <span class="type">size_t</span> msg_sz, <span class="type">long</span> <span class="type">int</span> msgtype, <span class="type">int</span> msgflg )</span></span>; </span><br></pre></td></tr></table></figure>
-
-<h3 id="msgctl系统调用"><a href="#msgctl系统调用" class="headerlink" title="msgctl系统调用"></a>msgctl系统调用</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/msg.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">msgctl</span><span class="params">( <span class="type">int</span> msqid, <span class="type">int</span> command, <span class="keyword">struct</span> msqid_ds* buf )</span></span>;</span><br></pre></td></tr></table></figure>
-
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/18/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC13%E7%AB%A0%20%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/%E5%A4%9A%E8%BF%9B%E7%A8%8B%E7%BC%96%E7%A8%8B/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第11章 定时器/定时器" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/17/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC11%E7%AB%A0%20%E5%AE%9A%E6%97%B6%E5%99%A8/%E5%AE%9A%E6%97%B6%E5%99%A8/">定时器</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/17/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC11%E7%AB%A0%20%E5%AE%9A%E6%97%B6%E5%99%A8/%E5%AE%9A%E6%97%B6%E5%99%A8/" class="archive-article-date">
-  	<time datetime="2023-01-17T01:34:59.572Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-17</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="定时器"><a href="#定时器" class="headerlink" title="定时器"></a>定时器</h1><p>网络程序需要处理的第三类事件是定时事件。</p>
-<p>两种高效的管理定时器的容器：时间轮和时间堆</p>
-<p>定时是指在一段时间后触发某段代码的机制，我们可以在这段代码中依次处理所有到期的定时器。换言之，定时机制是定时器得以被处理的原动力。</p>
-<p>Linux提供了三种定时方法：</p>
-<ul>
-<li>socket 选项SO_RCVTIMEO和SO_SNDTIMEO</li>
-<li>SIGALRM信号</li>
-<li>I&#x2F;O复用系统调用的超时参数</li>
-</ul>
-<h2 id="socket选项SO-RCVTIMEO和SO-SNDTIMEO"><a href="#socket选项SO-RCVTIMEO和SO-SNDTIMEO" class="headerlink" title="socket选项SO_RCVTIMEO和SO_SNDTIMEO"></a>socket选项SO_RCVTIMEO和SO_SNDTIMEO</h2><p>socket选项SO_RCVTIMEO和SO_SNDTIMEO分别用来设置socket接收数据超时时间和发送数据超时时间。因此，这两个选项仅对与数据接收和发送相关的socket专用系统调用有效，这些系统调用包括send、sendmsg、recv、recvmsg、accept和connect。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230117095524.png" alt="image.png"><br>可以根据系统调用（send、sendmsg、recv、recvmsg、accept和connect)的返回值以及errno来判断超时时间是否已到，进而决定是否开始处理定时任务。</p>
-<h2 id="SIGALRM信号"><a href="#SIGALRM信号" class="headerlink" title="SIGALRM信号"></a>SIGALRM信号</h2><p>由alarm和setitimer函数设置的实时闹钟一旦超时，将触发SIGALRM信号，可以利用该信号处理定时任务。</p>
-<h3 id="基于升序链表的定时器"><a href="#基于升序链表的定时器" class="headerlink" title="基于升序链表的定时器"></a>基于升序链表的定时器</h3><p>定时器通常至少包含两个成员：一个超时时间和一个任务回调函数</p>
-<h3 id="处理非活动连接"><a href="#处理非活动连接" class="headerlink" title="处理非活动连接"></a>处理非活动连接</h3><p>服务器程序通常要定期处理非活动连接：给客户端发一个重连请求，或者关闭该连接，或者其他。<br>Linux在内核中提供了对连接是否处于活动状态的定期检查机制，我们可以通过socket选项KEEPALIVE来激活它。不过使用这种方式将使得应用程序对连接的管理变得复杂。因此，我们可以考虑在应用层实现类似KEEPALIVE的机制，以管理所有长时间处于非活动状态的连接。</p>
-<h2 id="IO复用系统调用的超时参数"><a href="#IO复用系统调用的超时参数" class="headerlink" title="IO复用系统调用的超时参数"></a>IO复用系统调用的超时参数</h2><p>Linux下的3组I&#x2F;O复用系统调用都带有超时参数，因此它们不仅能统一处理信号和I&#x2F;O事件，也能统一处理定时事件。但是由于I&#x2F;O复用系统调用可能在超时时间到期之前就返回（有I&#x2F;O事件发生），所以如果我们要利用它们来定时，就需要不断更新定时参数以反映剩余的时间。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/17/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC11%E7%AB%A0%20%E5%AE%9A%E6%97%B6%E5%99%A8/%E5%AE%9A%E6%97%B6%E5%99%A8/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第10章 信号/10.3 信号集" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/16/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.3%20%E4%BF%A1%E5%8F%B7%E9%9B%86/">信号集</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/16/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.3%20%E4%BF%A1%E5%8F%B7%E9%9B%86/" class="archive-article-date">
-  	<time datetime="2023-01-16T03:38:14.219Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-16</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="信号集函数"><a href="#信号集函数" class="headerlink" title="信号集函数"></a>信号集函数</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;bits/sigset.h&gt;</span></span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> _SIGSET_NWORDS (1024 / (8 * sizeof (unsigned long int)))</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span></span><br><span class="line">&#123;</span><br><span class="line">	<span class="type">unsigned</span> <span class="type">long</span> <span class="type">int</span> __val[_SIGSET_NWORDS];</span><br><span class="line">&#125;<span class="type">__sigset_t</span>;</span><br></pre></td></tr></table></figure>
-<p>sigset_t实际上是一个长整型数组，数组的每个元素的每个位表示一个信号。这种定义方式和文件描述符fd_set类似。Linux提供以下函数来设置、修改、删除和查询信号集：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigemptyset</span> <span class="params">(<span class="type">sigset_t</span>* _set)</span> </span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigfillset</span> <span class="params">(<span class="type">sigset_t</span>* _set)</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigaddset</span> <span class="params">(<span class="type">sigset_t</span>* _set, <span class="type">int</span> _signo)</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigdelset</span> <span class="params">(<span class="type">sigset_t</span>* _set, <span class="type">int</span> _signo)</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigismember</span> <span class="params">(_const <span class="type">sigset_t</span>* _set, <span class="type">int</span> _signo)</span></span></span><br></pre></td></tr></table></figure>
-
-<h1 id="进程信号掩码"><a href="#进程信号掩码" class="headerlink" title="进程信号掩码"></a>进程信号掩码</h1><p>可以利用sigaction结构体的sa_mask成员来设置进程的信号掩码。也可以用如下函数设置或查看进程的信号掩码：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigprocmask</span><span class="params">( <span class="type">int</span> _how, _const <span class="type">sigset_t</span>* _set, <span class="type">sigset_t</span>* _oset )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h1 id="被挂起的信号"><a href="#被挂起的信号" class="headerlink" title="被挂起的信号"></a>被挂起的信号</h1><p>被进程信号掩码屏蔽的信号如果被发送给进程，会被操作系统设置为该进程的一个被挂起的信号。如下函数可以获得进程当前被挂起的信号集：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigpending</span><span class="params">( <span class="type">sigset_t</span>* set )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<blockquote>
-<p>要始终清楚地直到进程在每个运行时刻的信号掩码，以及如何适当地处理捕获到的信号。在多进程、多线程环境中，我们要以进程、线程为单位来处理信号和信号掩码。我们不能设想新创建的进程、线程具有和父进程、主线程完成相同的信号特征。比如，fork调用产生的子进程将继承父信号的信号掩码，但具有一个空的挂起信号集。</p>
-</blockquote>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/16/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.3%20%E4%BF%A1%E5%8F%B7%E9%9B%86/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第10章 信号/10.2 信号函数" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.2%20%E4%BF%A1%E5%8F%B7%E5%87%BD%E6%95%B0/">信号函数</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.2%20%E4%BF%A1%E5%8F%B7%E5%87%BD%E6%95%B0/" class="archive-article-date">
-  	<time datetime="2023-01-15T08:27:13.726Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-15</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="signal系统调用"><a href="#signal系统调用" class="headerlink" title="signal系统调用"></a>signal系统调用</h1><p>要为一个信号设置处理函数，可以使用下面的signal系统调用：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">_sighandler_t</span> <span class="title">signal</span> <span class="params">( <span class="type">int</span> sig, <span class="type">_sighandler_t</span> _handler )</span></span></span><br></pre></td></tr></table></figure>
-
-<h1 id="sigaction-系统调用"><a href="#sigaction-系统调用" class="headerlink" title="sigaction 系统调用"></a>sigaction 系统调用</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">sigaction</span><span class="params">( <span class="type">int</span> sig, <span class="type">const</span> <span class="keyword">struct</span> sigaction* act, <span class="keyword">struct</span> sigaction* oact)</span></span>;</span><br></pre></td></tr></table></figure>
-
-<p>sigaction结构体描述了信号处理的细节</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">sigaction</span></span><br><span class="line">&#123;</span><br><span class="line"><span class="meta">#<span class="keyword">ifdef</span> __USE_POSIX199309</span></span><br><span class="line">	<span class="keyword">union</span></span><br><span class="line">	&#123;</span><br><span class="line">		<span class="type">_sighander_t</span> sa_handler;</span><br><span class="line">		<span class="built_in">void</span> (*sa_sigaction) ( <span class="type">int</span>, <span class="type">siginfo_t</span>*, <span class="type">void</span>* ); </span><br><span class="line">	&#125;_sigaction_handler;</span><br><span class="line"><span class="meta"># <span class="keyword">define</span> sa_handler __sigaction_handler.sa_handler;</span></span><br><span class="line"><span class="meta"># <span class="keyword">define</span> sa_sigaction __sigaction_handler.sa_sigaction;</span></span><br><span class="line"><span class="meta">#<span class="keyword">else</span></span></span><br><span class="line">	<span class="type">_sighandler_t</span> sa_handler</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">	<span class="type">_sigset_t</span> sa_mask;</span><br><span class="line">	<span class="type">int</span> sa_flags;</span><br><span class="line">	<span class="built_in">void</span> (*sa_restorer) (<span class="type">void</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>sa_mask成员设置进程的信号掩码（确切地说是在进程原有信号掩码的基础上增加信号掩码），以指定哪些信号不能发给本进程。<br>sa_flags成员用于设置程序收到信号值的行为。<br><img src="https://raw.githubusercontent.com/mowang111/image-hosting/master/typora_images/20230116113706.png" alt="image.png"></p>
-<p>sa_restorer成员以过时，最好不要使用。</p>
-
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.2%20%E4%BF%A1%E5%8F%B7%E5%87%BD%E6%95%B0/">展开全文 >></a>
-        </p>
-      
-
-      
-      <div class="clearfix"></div>
-    </div>
-  </div>
-</article>
-
-<aside class="wrap-side-operation">
-    <div class="mod-side-operation">
-        
-        <div class="jump-container" id="js-jump-container" style="display:none;">
-            <a href="javascript:void(0)" class="mod-side-operation__jump-to-top">
-                <i class="icon-font icon-back"></i>
-            </a>
-            <div id="js-jump-plan-container" class="jump-plan-container" style="top: -11px;">
-                <i class="icon-font icon-plane jump-plane"></i>
-            </div>
-        </div>
-        
-        
-    </div>
-</aside>
-
-
-
-
-  
-    <article id="post-网络编程/Linux高性能服务器编程/第10章 信号/10.1 Linux信号概述" class="article article-type-post  article-index" itemscope itemprop="blogPost">
-  <div class="article-inner">
-    
-      <header class="article-header">
-        
-  
-    <h1 itemprop="name">
-      <a class="article-title" href="/2023/01/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.1%20Linux%E4%BF%A1%E5%8F%B7%E6%A6%82%E8%BF%B0/">Linux信号概述</a>
-    </h1>
-  
-
-        
-        <a href="/2023/01/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.1%20Linux%E4%BF%A1%E5%8F%B7%E6%A6%82%E8%BF%B0/" class="archive-article-date">
-  	<time datetime="2023-01-15T08:09:28.232Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2023-01-15</time>
-</a>
-        
-      </header>
-    
-    <div class="article-entry" itemprop="articleBody">
-      
-        <h1 id="发送信号"><a href="#发送信号" class="headerlink" title="发送信号"></a>发送信号</h1><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/types.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">kill</span><span class="params">( <span class="type">pid_t</span> pid, <span class="type">int</span> sig )</span></span>;</span><br></pre></td></tr></table></figure>
-
-<h1 id="信号处理方式"><a href="#信号处理方式" class="headerlink" title="信号处理方式"></a>信号处理方式</h1><p>信号处理函数原型：</p>
-<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;signal.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">void</span> <span class="params">(*<span class="type">__sighandler_t</span>)</span> <span class="params">( <span class="type">int</span> )</span></span>;</span><br></pre></td></tr></table></figure>
-
-
-<h1 id="Linux信号"><a href="#Linux信号" class="headerlink" title="Linux信号"></a>Linux信号</h1><h1 id="中断系统调用"><a href="#中断系统调用" class="headerlink" title="中断系统调用"></a>中断系统调用</h1>
-      
-
-      
-    </div>
-    <div class="article-info article-info-index">
-      
-      
-	<div class="article-tag tagcloud">
-		<i class="icon-price-tags icon"></i>
-		<ul class="article-tag-list">
-			 
-        		<li class="article-tag-list-item">
-        			<a href="javascript:void(0)" class="js-tag article-tag-list-link color4">Linux高性能服务器编程</a>
-        		</li>
-      		
-		</ul>
-	</div>
-
-      
-
-      
-        <p class="article-more-link">
-          <a class="article-more-a" href="/2023/01/15/%E7%BD%91%E7%BB%9C%E7%BC%96%E7%A8%8B/Linux%E9%AB%98%E6%80%A7%E8%83%BD%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%BC%96%E7%A8%8B/%E7%AC%AC10%E7%AB%A0%20%E4%BF%A1%E5%8F%B7/10.1%20Linux%E4%BF%A1%E5%8F%B7%E6%A6%82%E8%BF%B0/">展开全文 >></a>
+          <a class="article-more-a" href="/2024/04/27/%E7%AE%97%E6%B3%95/0.%E7%AE%97%E6%B3%95%E5%A4%A7%E7%BA%B2/">展开全文 >></a>
         </p>
       
 
@@ -1341,43 +1740,19 @@ MathJax.Hub.Queue(function() {
           <ul class="article-tag-list" q-show="showTags">
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+                <a href="javascript:void(0)" class="js-tag color2">c</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+                <a href="javascript:void(0)" class="js-tag color4">c++</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">c#</a>
               </li>
              
               <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color5">操作系统</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">内存管理</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">进程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">算法</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">索引</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1389,23 +1764,43 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">算法</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color3">面试</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color2">Chrome</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">CDP</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">数据库</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color4">SQL</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color1">Linux</a>
+              </li>
+             
+              <li class="article-tag-list-item">
                 <a href="javascript:void(0)" class="js-tag color1">mysql</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">c++</a>
+                <a href="javascript:void(0)" class="js-tag color3">索引</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">日志</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color5">网络编程</a>
-              </li>
-             
-              <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color3">c#</a>
+                <a href="javascript:void(0)" class="js-tag color5">内存管理</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1413,7 +1808,11 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">c</a>
+                <a href="javascript:void(0)" class="js-tag color3">进程</a>
+              </li>
+             
+              <li class="article-tag-list-item">
+                <a href="javascript:void(0)" class="js-tag color5">网络编程</a>
               </li>
              
               <li class="article-tag-list-item">
@@ -1425,11 +1824,11 @@ MathJax.Hub.Queue(function() {
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color2">Chrome</a>
+                <a href="javascript:void(0)" class="js-tag color4">Linux高性能服务器编程</a>
               </li>
              
               <li class="article-tag-list-item">
-                <a href="javascript:void(0)" class="js-tag color4">CDP</a>
+                <a href="javascript:void(0)" class="js-tag color3">日志</a>
               </li>
             
             <div class="clearfix"></div>
