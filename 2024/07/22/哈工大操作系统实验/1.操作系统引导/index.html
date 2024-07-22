@@ -6,17 +6,17 @@
   <meta name="renderer" content="webkit">
   <meta http-equiv="X-UA-Compatible" content="IE=edge" >
   <link rel="dns-prefetch" href="https://mowang111.github.io">
-  <title>1.操作系统引导实验报告 | crz&#39;s blog</title>
+  <title>1.操作系统引导 | crz&#39;s blog</title>
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
   <meta name="description" content="此次实验的基本内容是：  阅读《Linux内核完全注释》的第6章，对计算机和Linux 0.11的引导过程进行初步的了解； 按照下面的要求改写0.11的引导程序bootsect.s 有兴趣同学可以做做进入保护模式前的设置程序setup.s。  改写bootsect.s主要完成如下功能：    bootsect.s能在屏幕上打印一段提示信息“XXX is booting…”，其中XXX是你给自己的操">
 <meta property="og:type" content="article">
-<meta property="og:title" content="1.操作系统引导实验报告">
-<meta property="og:url" content="https://mowang111.github.io/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/1.%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%BC%95%E5%AF%BC%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/index.html">
+<meta property="og:title" content="1.操作系统引导">
+<meta property="og:url" content="https://mowang111.github.io/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/1.%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%BC%95%E5%AF%BC/index.html">
 <meta property="og:site_name" content="crz&#39;s blog">
 <meta property="og:description" content="此次实验的基本内容是：  阅读《Linux内核完全注释》的第6章，对计算机和Linux 0.11的引导过程进行初步的了解； 按照下面的要求改写0.11的引导程序bootsect.s 有兴趣同学可以做做进入保护模式前的设置程序setup.s。  改写bootsect.s主要完成如下功能：    bootsect.s能在屏幕上打印一段提示信息“XXX is booting…”，其中XXX是你给自己的操">
 <meta property="og:locale" content="en_US">
-<meta property="article:published_time" content="2024-07-22T06:30:22.696Z">
-<meta property="article:modified_time" content="2024-07-22T06:32:28.381Z">
+<meta property="article:published_time" content="2024-07-22T06:41:31.490Z">
+<meta property="article:modified_time" content="2024-07-22T06:41:31.490Z">
 <meta property="article:author" content="crz">
 <meta property="article:tag" content="操作系统">
 <meta name="twitter:card" content="summary">
@@ -141,20 +141,20 @@
             <canvas data-colors="#eaeaea" data-sectionHeight="100" data-contentId="js-content" id="myCanvas1" class="anm-canvas"></canvas>
           </div>
           <div id="js-content" class="content-ll">
-            <article id="post-哈工大操作系统实验/1.操作系统引导实验报告" class="article article-type-post " itemscope itemprop="blogPost">
+            <article id="post-哈工大操作系统实验/1.操作系统引导" class="article article-type-post " itemscope itemprop="blogPost">
   <div class="article-inner">
     
       <header class="article-header">
         
   
     <h1 class="article-title" itemprop="name">
-      1.操作系统引导实验报告
+      1.操作系统引导
     </h1>
   
 
         
-        <a href="/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/1.%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%BC%95%E5%AF%BC%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" class="archive-article-date">
-  	<time datetime="2024-07-22T06:30:22.696Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-07-22</time>
+        <a href="/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/1.%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%BC%95%E5%AF%BC/" class="archive-article-date">
+  	<time datetime="2024-07-22T06:41:31.490Z" itemprop="datePublished"><i class="icon-calendar icon"></i>2024-07-22</time>
 </a>
         
       </header>
@@ -272,7 +272,7 @@
     <a class="close js-modal-close" href="javascript:;"><i class="icon icon-close"></i></a>
     <p>扫一扫，分享到微信</p>
     <div class="wx-qrcode">
-      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/1.%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%BC%95%E5%AF%BC%E5%AE%9E%E9%AA%8C%E6%8A%A5%E5%91%8A/" alt="微信分享二维码">
+      <img src="//pan.baidu.com/share/qrcode?url=https://mowang111.github.io/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/1.%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%BC%95%E5%AF%BC/" alt="微信分享二维码">
     </div>
 </div>
 
@@ -286,15 +286,20 @@
   
 <nav id="article-nav">
   
-    <a href="/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/5.%E4%BF%A1%E5%8F%B7%E9%87%8F%E7%9A%84%E5%AE%9E%E7%8E%B0%E4%B8%8E%E5%BA%94%E7%94%A8/" id="article-nav-newer" class="article-nav-link-wrap">
+    <a href="/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/2.%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8/" id="article-nav-newer" class="article-nav-link-wrap">
       <i class="icon-circle-left"></i>
       <div class="article-nav-title">
         
-          5.信号量的实现与应用
+          2.系统调用
         
       </div>
     </a>
   
+  
+    <a href="/2024/07/22/%E5%93%88%E5%B7%A5%E5%A4%A7%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%AE%9E%E9%AA%8C/4.%E5%9F%BA%E4%BA%8E%E5%86%85%E6%A0%B8%E6%A0%88%E5%AE%8C%E6%88%90%E8%BF%9B%E7%A8%8B%E5%88%87%E6%8D%A2/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">4.基于内核栈完成进程切换</div>
+      <i class="icon-circle-right"></i>
+    </a>
   
 </nav>
 
